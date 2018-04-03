@@ -4,25 +4,25 @@ USE capstoneDB;
 
 DROP TABLE IF EXISTS `users`;
 CREATE TABLE `users` (
-  `userID` int(11) NOT NULL DEFAULT '0',
-  `username` VARCHAR(45) NOT NULL DEFAULT '',
-  `password` VARCHAR(45) NOT NULL DEFAULT '',
-  `firstName` VARCHAR(45) NOT NULL DEFAULT '',
-  `lastName` VARCHAR(45) NOT NULL DEFAULT '',
+  `userID` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `username` VARCHAR(45) NOT NULL,
+  `password` VARCHAR(45) NOT NULL,
+  `firstName` VARCHAR(45) NOT NULL,
+  `lastName` VARCHAR(45) NOT NULL,
   PRIMARY KEY (`userID`)
 );
 
 DROP TABLE IF EXISTS `statuses`;
 CREATE TABLE `statuses` (
-  `code` int(5) NOT NULL DEFAULT '0',
-  `name` VARCHAR(45) NOT NULL DEFAULT '',
-  `description` VARCHAR(45) DEFAULT '',
+  `code` INT(3) UNSIGNED ZEROFILL NOT NULL,
+  `name` VARCHAR(45) NOT NULL,
+  `description` VARCHAR(45) NULL,
   PRIMARY KEY (`code`)
 );
 
 DROP TABLE IF EXISTS `term`;
 CREATE TABLE `term` (
-  `termCode` int(4) NOT NULL DEFAULT '0',
+  `termCode` INT(5) UNSIGNED ZEROFILL NOT NULL,
   `termStart` DATE NOT NULL DEFAULT '2000-01-01',
   `termEnd` DATE NOT NULL DEFAULT '2000-01-01',
   `gradeDeadline` DATE NOT NULL DEFAULT '2000-01-01',
@@ -32,8 +32,8 @@ CREATE TABLE `term` (
 
 DROP TABLE IF EXISTS `students`;
 CREATE TABLE `students` (
-  `userID` int(11) NOT NULL DEFAULT '0',
-  `mastersStart` int(4) NOT NULL DEFAULT '0',
+  `userID` INT UNSIGNED NOT NULL,
+  `mastersStart` INT(5) UNSIGNED ZEROFILL NOT NULL,
   PRIMARY KEY (`userID`),
   CONSTRAINT `students_userID_fk` FOREIGN KEY (`userID`) REFERENCES `users` (`userID`),
   CONSTRAINT `students_mastersStart_fk` FOREIGN KEY (`mastersStart`) REFERENCES `term` (`termCode`)
@@ -41,17 +41,17 @@ CREATE TABLE `students` (
 
 DROP TABLE IF EXISTS `phoneTypes`;
 CREATE TABLE `phoneTypes` (
-	`phoneCode` int(1) NOT NULL DEFAULT '0',
-    `name` VARCHAR(45) NOT NULL DEFAULT '',
-    `description` VARCHAR(45) DEFAULT '',
+	`phoneCode` INT UNSIGNED NOT NULL,
+    `name` VARCHAR(45) NOT NULL,
+    `description` VARCHAR(45) NULL,
     PRIMARY KEY (`phoneCode`)
 );
 
 DROP TABLE IF EXISTS `userPhones`;
 CREATE TABLE `userPhones` (
-	`userID` int(11) NOT NULL DEFAULT '0',
-    `number` VARCHAR(15) NOT NULL DEFAULT '',
-    `phoneType` int(1) NOT NULL DEFAULT '0',
+	`userID` INT UNSIGNED NOT NULL,
+    `number` VARCHAR(15) NOT NULL,
+    `phoneType` INT UNSIGNED NOT NULL,
     PRIMARY KEY (`userID`, `number`),
     CONSTRAINT `userPhones_userID_fk` FOREIGN KEY (`userID`) REFERENCES `users` (`userID`),
     CONSTRAINT `userPhones_phoneType_fk` FOREIGN KEY (`phoneType`) REFERENCES `phoneTypes` (`phoneCode`)
@@ -59,17 +59,17 @@ CREATE TABLE `userPhones` (
 
 DROP TABLE IF EXISTS `emailTypes`;
 CREATE TABLE `emailTypes` (
-	`emailCode` int(1) NOT NULL DEFAULT '0',
-    `name` VARCHAR(45) NOT NULL DEFAULT '',
-    `description` VARCHAR(45) DEFAULT '',
+	`emailCode` INT UNSIGNED NOT NULL,
+    `name` VARCHAR(45) NOT NULL,
+    `description` VARCHAR(45) NULL,
     PRIMARY KEY (`emailCode`)
 );
 
 DROP TABLE IF EXISTS `userEmails`;
 CREATE TABLE `userEmails` (
-	`userID` int(11) NOT NULL DEFAULT '0',
-    `email` VARCHAR(45) NOT NULL DEFAULT '',
-    `emailType` int(1) NOT NULL DEFAULT '0',
+	`userID` INT UNSIGNED NOT NULL,
+    `email` VARCHAR(45) NOT NULL,
+    `emailType` INT UNSIGNED NOT NULL,
     PRIMARY KEY (`userID`, `email`),
     CONSTRAINT `userEmails_userID_fk` FOREIGN KEY (`userID`) REFERENCES `users` (`userID`),
     CONSTRAINT `userEmails_emailType_fk` FOREIGN KEY (`emailType`) REFERENCES `emailTypes` (`emailCode`)
@@ -77,18 +77,18 @@ CREATE TABLE `userEmails` (
 
 DROP TABLE IF EXISTS `roles`;
 CREATE TABLE `roles` (
-	`code` int(1) NOT NULL DEFAULT '0',
-    `name` VARCHAR(45) NOT NULL DEFAULT '',
-    `description` VARCHAR(45) DEFAULT '',
+	`code` INT UNSIGNED NOT NULL,
+    `name` VARCHAR(45) NOT NULL,
+    `description` VARCHAR(45) NULL,
     PRIMARY KEY (`code`)
 );
 
 DROP TABLE IF EXISTS `userRoles`;
 CREATE TABLE `userRoles` (
-	`userID` int(11) NOT NULL DEFAULT '0',
-    `roleCode` int(1) NOT NULL DEFAULT '0',
-    `currentStatus` int(5) NOT NULL DEFAULT '0',
-    `statusTimestamp` DATETIME DEFAULT '2000-01-01 00:00:00',
+	`userID` INT UNSIGNED NOT NULL,
+    `roleCode` INT UNSIGNED NOT NULL,
+    `currentStatus` INT UNSIGNED NOT NULL,
+    `statusTimestamp` DATETIME NOT NULL,
     PRIMARY KEY (`userID`, `roleCode`),
     CONSTRAINT `userRoles_userID_fk` FOREIGN KEY (`userID`) REFERENCES `users` (`userID`),
     CONSTRAINT `userRoles_roleCode_fk` FOREIGN KEY (`roleCode`) REFERENCES `roles` (`code`),
@@ -97,16 +97,16 @@ CREATE TABLE `userRoles` (
 
 DROP TABLE IF EXISTS `capstone`;
 CREATE TABLE `capstone` (
-  `capstoneID` int(11) NOT NULL DEFAULT '0',
-  `studentID` int(11) NOT NULL DEFAULT '0',
-  `chairID` int(11) NOT NULL DEFAULT '0',
-  `capstoneStartTerm` int(4) NOT NULL DEFAULT '0',
-  `defenseDateApprovedBy` int(11) NOT NULL DEFAULT '0',
-  `defenseDate` DATETIME DEFAULT '2000-01-01 00:00:00',
-  `title` VARCHAR(100) DEFAULT '',
-  `abstract` VARCHAR(140) DEFAULT '',
-  `plagarismScore` INT,
-  `grade` INT(2) DEFAULT '0',
+  `capstoneID` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `studentID` INT UNSIGNED NOT NULL,
+  `chairID` INT UNSIGNED NOT NULL,
+  `capstoneStartTerm` INT(5) UNSIGNED ZEROFILL NOT NULL,
+  `defenseDateApprovedBy` INT UNSIGNED NULL,
+  `defenseDate` DATETIME NULL,
+  `title` VARCHAR(100) NOT NULL,
+  `abstract` VARCHAR(140) NOT NULL,
+  `plagarismScore` INT UNSIGNED NULL,
+  `grade` INT UNSIGNED NULL,
   PRIMARY KEY (`capstoneID`),
   CONSTRAINT `capstone_studentID_fk` FOREIGN KEY (`studentID`) REFERENCES `users` (`userID`),
   CONSTRAINT `capstone_chairID_fk` FOREIGN KEY (`chairID`) REFERENCES `users` (`userID`),
@@ -116,9 +116,9 @@ CREATE TABLE `capstone` (
 
 DROP TABLE IF EXISTS `statusHistoryEvent`;
 CREATE TABLE `statusHistoryEvent` (
-  `capstoneID` int(11) NOT NULL DEFAULT '0',
-  `statusCode` int(5) NOT NULL DEFAULT '0',
-  `timeStamp` DATETIME NOT NULL DEFAULT '2000-01-01 00:00:00',
+  `capstoneID` INT UNSIGNED NOT NULL,
+  `statusCode` INT UNSIGNED NOT NULL,
+  `timeStamp` DATETIME NOT NULL,
   PRIMARY KEY (`capstoneID`, `statusCode`, `timeStamp`),
   CONSTRAINT `statusHistoryEvent_capstoneID_fk` FOREIGN KEY (`capstoneID`) REFERENCES `capstone` (`capstoneID`),
   CONSTRAINT `statusHistoryEvent_statusCode_fk` FOREIGN KEY (`statusCode`) REFERENCES `statuses` (`code`)
@@ -126,12 +126,12 @@ CREATE TABLE `statusHistoryEvent` (
 
 DROP TABLE IF EXISTS `capstoneFollowers`;
 CREATE TABLE `capstoneFollowers` (
-  `capstoneID` int(11) NOT NULL DEFAULT '0',
-  `userID` int(11) NOT NULL DEFAULT '0',
-  `trackCapstone` BOOLEAN DEFAULT '0',
-  `onCommittee` BOOLEAN DEFAULT '0',
-  `currentStatus` int(5) NOT NULL DEFAULT '0',
-  `statusTimestamp` DATETIME DEFAULT '2000-01-01 00:00:00',
+  `capstoneID` INT UNSIGNED NOT NULL,
+  `userID` INT UNSIGNED NOT NULL,
+  `trackCapstone` BOOLEAN NOT NULL DEFAULT '0',
+  `onCommittee` BOOLEAN NOT NULL DEFAULT '0',
+  `currentStatus` INT UNSIGNED NOT NULL,
+  `statusTimestamp` DATETIME NOT NULL,
   PRIMARY KEY (`capstoneID`, `userID`),
   CONSTRAINT `capstoneFollowers_capstoneID_fk` FOREIGN KEY (`capstoneID`) REFERENCES `capstone` (`capstoneID`),
   CONSTRAINT `capstoneFollowers_userID_fk` FOREIGN KEY (`userID`) REFERENCES `users` (`userID`),
