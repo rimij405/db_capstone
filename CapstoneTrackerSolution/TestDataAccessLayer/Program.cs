@@ -58,7 +58,7 @@ namespace TestDataAccessLayer
                 console.Debug("Testing: Creating the MySqlDatabase.");
                 database = new MySqlDatabase(configuration);
                 database.Connect();
-                console.Debug("Created the database successfully:\nError: " + database.ToString());
+                console.Debug("Created the database successfully:\n" + database.ToString());
             }
             catch (Exception e)
             {
