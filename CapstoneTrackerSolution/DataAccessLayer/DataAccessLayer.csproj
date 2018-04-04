@@ -47,8 +47,16 @@
     <Compile Include="Database\MySqlConfiguration.cs" />
     <Compile Include="Database\MySqlDatabase.cs" />
     <Compile Include="Models\Capstone.cs" />
+    <Compile Include="Models\EmailTypes.cs" />
+    <Compile Include="Models\PhoneTypes.cs" />
+    <Compile Include="Models\Roles.cs" />
     <Compile Include="Models\Statuses.cs" />
+    <Compile Include="Models\StatusHistoryEvent.cs" />
     <Compile Include="Models\Students.cs" />
+    <Compile Include="Models\Term.cs" />
+    <Compile Include="Models\UserEmails.cs" />
+    <Compile Include="Models\UserPhones.cs" />
+    <Compile Include="Models\UserRoles.cs" />
     <Compile Include="Models\Users.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
