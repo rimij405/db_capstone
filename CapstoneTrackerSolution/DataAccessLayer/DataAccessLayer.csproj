@@ -43,13 +43,17 @@
   <ItemGroup>
     <Compile Include="Database\Interfaces\IConfiguration.cs" />
     <Compile Include="Database\Interfaces\IDatabase.cs" />
+    <Compile Include="Database\Interfaces\IDatabaseObject.cs" />
     <Compile Include="Database\MySqlConfiguration.cs" />
     <Compile Include="Database\MySqlDatabase.cs" />
+    <Compile Include="Models\Capstone.cs" />
+    <Compile Include="Models\Statuses.cs" />
+    <Compile Include="Models\Students.cs" />
+    <Compile Include="Models\Users.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Gateways\" />
-    <Folder Include="Models\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

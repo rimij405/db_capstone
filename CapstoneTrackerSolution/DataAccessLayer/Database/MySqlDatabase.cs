@@ -38,7 +38,15 @@ namespace ISTE.DAL.Database
 
         public bool Close()
         {
-            throw new NotImplementedException();
+            try
+            {
+                connection.Close();
+            }
+            catch(MySqlException E)
+            {
+                return false;
+            }
+            return true;
         }
         
         /// <summary>
@@ -54,15 +62,70 @@ namespace ISTE.DAL.Database
 
         public bool Connect()
         {
-            // TODO: Implement this.
-            // TODO: Implement the exceptions.
-
-            throw new NotImplementedException();
+            try
+            {
+                connection.Open();
+            }
+            catch (MySqlException E)
+            {
+                return false;
+            }
+            return true;
         }
 
         public bool IsConnected()
         {
             throw new NotImplementedException();
+        }
+
+        public List<List<string>> GetData(string sql)
+        {
+            List<List<string>> ary = new List<List<string>>();
+            if (Connect())
+            {
+                try
+                {
+                    MySqlCommand cmd = new MySqlCommand(sql, connection);
+                    MySqlDataReader rdr = cmd.ExecuteReader();
+                    int row = 0;
+                    while (rdr.Read())
+                    {
+                        ary.Add(new List<string>()); //add a new row
+                        for (int i = 0; i < rdr.FieldCount; i++)
+                        {
+                            ary[row].Add(rdr.GetValue(i).ToString()); // add a new column
+                        }
+                        row++;
+                    }
+                }
+                catch (MySqlException E)
+                {
+                    return null;
+                }
+            }
+            Close();
+            return ary;
+
+        }
+
+        // Open the database, execute a non-query, and close the database
+        public int SetData(string sql)
+        {
+            int rc = -1; // row changed
+            if (Connect())
+            {
+                try
+                {
+                    MySqlCommand cmd = new MySqlCommand(sql, connection);
+                    rc = cmd.ExecuteNonQuery();
+                }
+                catch (MySqlException E)
+                {
+                    return -1;
+                }
+            }
+            Close();
+            return rc;
         }
     }
 }
