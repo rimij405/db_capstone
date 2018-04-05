@@ -7,7 +7,7 @@
     <ProjectGuid>{DD66AD0B-74BF-4B26-862A-412AFAEF6608}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>DataAccessLayer</RootNamespace>
+    <RootNamespace>ISTE.DAL</RootNamespace>
     <AssemblyName>DataAccessLayer</AssemblyName>
     <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
@@ -47,9 +47,19 @@
     <Compile Include="Database\Exceptions\DataAccessLayerException.cs" />
     <Compile Include="Database\Exceptions\DatabaseCloseException.cs" />
     <Compile Include="Database\Exceptions\DatabaseConnectionException.cs" />
+    <Compile Include="Database\Interfaces\Fields\Field.cs" />
+    <Compile Include="Database\Interfaces\Fields\IFieldTypes.cs" />
+    <Compile Include="Database\Interfaces\IClamp.cs" />
     <Compile Include="Database\Interfaces\IConfiguration.cs" />
     <Compile Include="Database\Interfaces\IDatabase.cs" />
-    <Compile Include="Database\Interfaces\IDatabaseObject.cs" />
+    <Compile Include="Database\Interfaces\IDataRetriever.cs" />
+    <Compile Include="Database\Interfaces\IDataWriter.cs" />
+    <Compile Include="Database\Interfaces\Fields\IField.cs" />
+    <Compile Include="Database\Interfaces\Fields\IFieldType.cs" />
+    <Compile Include="Database\NonNullableField.cs" />
+    <Compile Include="Database\NullableField.cs" />
+    <Compile Include="Database\FieldTypes.cs" />
+    <Compile Include="Models\Interfaces\IDatabaseObject.cs" />
     <Compile Include="Database\Interfaces\ILoggable.cs" />
     <Compile Include="Database\MySqlConfiguration.cs" />
     <Compile Include="Database\MySqlDatabase.cs" />
@@ -69,6 +79,7 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Gateways\" />
+    <Folder Include="Models\Exceptions\" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Services\Services.csproj">

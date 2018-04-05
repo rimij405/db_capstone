@@ -39,6 +39,7 @@ namespace TestDataAccessLayer
             IConfiguration configuration;
             IDatabase database;
 
+            // TESTING MySqlConfiguration.
             try
             {
                 console.Debug("Testing: Creating MySqlConfiguration.");
@@ -53,6 +54,7 @@ namespace TestDataAccessLayer
                 throw new DataAccessLayerException("Failed to create the configuration.", e);
             }
 
+            // TESTING MySqlDatabase: Connect
             try
             {
                 console.Debug("Testing: Creating the MySqlDatabase.");
@@ -66,6 +68,8 @@ namespace TestDataAccessLayer
                 console.Pause("Press any key to exit the program...");
                 throw new DataAccessLayerException("Failed to create the database.", e);
             }
+
+
 
             // Wait for user input.
             console.Pause("Press any key to exit the program...");
