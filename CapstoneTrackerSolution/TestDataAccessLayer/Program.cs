@@ -36,8 +36,8 @@ namespace TestDataAccessLayer
             Printer console = new Printer("Test Data Access Layer Library", true);
             console.Debug("Printer initialized.");
 
-            MySqlConfiguration configuration;
-            MySqlDatabase database;
+            IConfiguration configuration;
+            IDatabase database;
 
             try
             {
@@ -50,13 +50,13 @@ namespace TestDataAccessLayer
             {
                 console.Debug("Failed to create the configuration.\nError: " + e.Message);
                 console.Pause("Press any key to exit the program...");
-                return;
+                throw new DataAccessLayerException("Failed to create the configuration.", e);
             }
 
             try
             {
                 console.Debug("Testing: Creating the MySqlDatabase.");
-                database = new MySqlDatabase(configuration);
+                database = new MySqlDatabase(configuration as MySqlConfiguration);
                 database.Connect();
                 console.Debug("Created the database successfully:\n" + database.ToString());
             }
@@ -64,7 +64,7 @@ namespace TestDataAccessLayer
             {
                 console.Debug("Failed to create the database.\n" + e.Message);
                 console.Pause("Press any key to exit the program...");
-                return;
+                throw new DataAccessLayerException("Failed to create the database.", e);
             }
 
             // Wait for user input.

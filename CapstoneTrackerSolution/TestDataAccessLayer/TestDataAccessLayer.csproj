@@ -53,7 +53,7 @@
       <Project>{dd66ad0b-74bf-4b26-862a-412afaef6608}</Project>
       <Name>DataAccessLayer</Name>
     </ProjectReference>
-    <ProjectReference Include="..\Printer.cs\Services.csproj">
+    <ProjectReference Include="..\Services\Services.csproj">
       <Project>{db4ff430-f936-4746-a50b-41d18815a2e0}</Project>
       <Name>Services</Name>
     </ProjectReference>

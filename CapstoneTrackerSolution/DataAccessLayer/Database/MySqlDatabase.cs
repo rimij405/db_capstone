@@ -25,28 +25,46 @@ namespace ISTE.DAL.Database
 
         // Fields.
 
+        /// <summary>
+        /// Connection object for connecting to the database.
+        /// </summary>
         private MySqlConnection connection = null;
-        private bool isConnected = false;
-        private bool isOpened = false;
 
         // Constructor(s).
 
+        /// <summary>
+        /// Constructor, configured by a configuration object.
+        /// </summary>
+        /// <param name="_config">Configuration object.</param>
         public MySqlDatabase(MySqlConfiguration _config)
         {
             this.Configure(_config);
         }
 
+        /// <summary>
+        /// Attempt to close the connection.
+        /// </summary>
+        /// <returns>Returns true if operation was successful.</returns>
         public bool Close()
         {
             try
             {
-                connection.Close();
+                // Check if it needs to be closed at all.
+                if (this.IsConnected())
+                {
+                    connection.Close();
+                }
+
+                // Database either was already closed or it closed successfully.
+                return true;
             }
-            catch(MySqlException E)
+            catch(MySqlException e)
             {
-                return false;
+                throw new DatabaseCloseException("Error occured when attempting to close the database.", e);
             }
-            return true;
+
+            // Error.
+            throw new DatabaseCloseException("Unreachable code triggered during database close operation.");
         }
         
         /// <summary>
@@ -56,26 +74,45 @@ namespace ISTE.DAL.Database
         /// <returns>Returns reference to this <see cref="IDatabase"/> object.</returns>
         public MySqlDatabase Configure(MySqlConfiguration configuration)
         {
-            this.connection = configuration.CreateConnection();
-            return this;
+            try
+            {
+                this.connection = configuration.CreateConnection();
+                return this;
+            }
+            catch (DataAccessLayerException e)
+            {
+                // Pass any exception that was thrown up from the configuration method.
+                throw new DatabaseConnectionException("Error occured in the connection configuration process.", e);
+            }            
         }
 
+        /// <summary>
+        /// Attempts to connect to the databse using the connection object.
+        /// </summary>
+        /// <returns>Returns true if successfully connected.</returns>
         public bool Connect()
         {
             try
             {
                 connection.Open();
+                return true;
             }
-            catch (MySqlException E)
+            catch (MySqlException e)
             {
-                return false;
+                throw new DatabaseConnectionException("Error occured in connection.", e);
             }
-            return true;
         }
 
+        /// <summary>
+        /// Checks the connection state to see if it's connected to the database.
+        /// </summary>
+        /// <returns>Returns true if connection is currently open.</returns>
         public bool IsConnected()
         {
-            throw new NotImplementedException();
+            if(this.connection == null) { return false; }
+            if (this.connection.State == System.Data.ConnectionState.Closed) { return false; }
+            if (this.connection.State == System.Data.ConnectionState.Open) { return true; }
+            return false;
         }
 
         public List<List<string>> GetData(string sql)

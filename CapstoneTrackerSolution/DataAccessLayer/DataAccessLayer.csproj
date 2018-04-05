@@ -20,6 +20,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <DocumentationFile>bin\Debug\DataAccessLayer.xml</DocumentationFile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -28,6 +29,8 @@
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <DocumentationFile>
+    </DocumentationFile>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="MySql.Data, Version=6.10.6.0, Culture=neutral, PublicKeyToken=c5687fc88969c44d, processorArchitecture=MSIL" />
@@ -41,9 +44,13 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Database\Exceptions\DataAccessLayerException.cs" />
+    <Compile Include="Database\Exceptions\DatabaseCloseException.cs" />
+    <Compile Include="Database\Exceptions\DatabaseConnectionException.cs" />
     <Compile Include="Database\Interfaces\IConfiguration.cs" />
     <Compile Include="Database\Interfaces\IDatabase.cs" />
     <Compile Include="Database\Interfaces\IDatabaseObject.cs" />
+    <Compile Include="Database\Interfaces\ILoggable.cs" />
     <Compile Include="Database\MySqlConfiguration.cs" />
     <Compile Include="Database\MySqlDatabase.cs" />
     <Compile Include="Models\Capstone.cs" />
@@ -62,6 +69,12 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Gateways\" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Services\Services.csproj">
+      <Project>{db4ff430-f936-4746-a50b-41d18815a2e0}</Project>
+      <Name>Services</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
