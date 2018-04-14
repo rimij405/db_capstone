@@ -2,7 +2,11 @@
     IResultSet.cs
     Ian Effendi
     ---
-    Contains the interfaces for the results.
+    Contains a family of cooperating interfaces:
+    - IResultPrinter - Print result set items.
+    - IResultSet - A collection of IRows.
+    - IRow - A collection of fields, and then a collection of entries associated with each of the fields.
+    - IEntry - A collection of field-data key/value pairs.
  */
 
 using System;
@@ -19,6 +23,9 @@ namespace ISTE.DAL.Database.Interfaces
     /// </summary>
     public interface IResultPrinter
     {
+
+        //////////////////////
+        // Service(s).
 
         /// <summary>
         /// Return a formatted header, using the field's in a particular row.
@@ -48,7 +55,10 @@ namespace ISTE.DAL.Database.Interfaces
     /// </summary>
     public interface IResultSet : ICollection<IRow>
     {
-       
+        
+        //////////////////////
+        // Service(s).
+
         /// <summary>
         /// Check if the result set has at least as many rows as the specified input.
         /// </summary>
@@ -63,16 +73,19 @@ namespace ISTE.DAL.Database.Interfaces
         bool IsEmpty();
 
         /// <summary>
-        /// Return the number of rows affected.
-        /// </summary>
-        /// <returns>Returns stored number of rows.</returns>
-        int GetRowsAffected();
-
-        /// <summary>
         /// Return a cloned copy of the results.
         /// </summary>
         /// <returns>Returns a results set.</returns>
         IResultSet Clone();
+
+        //////////////////////
+        // Accessor(s).
+
+        /// <summary>
+        /// Return the number of rows affected.
+        /// </summary>
+        /// <returns>Returns stored number of rows.</returns>
+        int GetRowsAffected();
 
     }
 
@@ -81,10 +94,13 @@ namespace ISTE.DAL.Database.Interfaces
     /// </summary>
     public interface IRow : ICollection<IEntry>, ICollection<string>
     {
+        //////////////////////
+        // Service(s).
+
         /// <summary>
-        /// Check if the row contains fields.
+        /// Check if the row contains entries.
         /// </summary>
-        /// <returns>Returns true if there is at least one field in this row.</returns>
+        /// <returns>Returns true if there is at least one entry in this row.</returns>
         bool HasEntries();
 
         /// <summary>
@@ -109,25 +125,66 @@ namespace ISTE.DAL.Database.Interfaces
         bool HasFields(params string[] fields);
 
         /// <summary>
-        /// Find index of a particular field/entry. Returns -1 if it doesn't exist.
+        /// Check if row contains the input index.
+        /// </summary>
+        /// <param name="fieldIndex">Index to accomodate.</param>
+        /// <returns>Returns true if not empty and index is within bounds.</returns>
+        bool HasIndex(int fieldIndex);
+        
+        /// <summary>
+        /// Return a clone of this row.
+        /// </summary>
+        /// <returns>Returns reference to this row's clone.</returns>
+        IRow Clone();
+
+        /// <summary>
+        /// Check if the row has no fields.
+        /// </summary>
+        /// <returns>Returns true if empty.</returns>
+        bool IsEmpty();
+        
+        //////////////////////
+        // Accessor(s).
+
+        /// <summary>
+        /// Find index of a particular field. Returns -1 if it doesn't exist.
         /// </summary>
         /// <param name="field">Field to search for.</param>
         /// <returns>Return the index of the given field.</returns>
-        int GetIndex(string field);
-                
+        int GetFieldIndex(string field);
+
         /// <summary>
-        /// Find entry by index.
+        /// Return field alias associated with a particular index.
         /// </summary>
-        /// <param name="index">Index of the field to search for.</param>
+        /// <param name="fieldIndex">Index of field to search for.</param>
+        /// <returns>Returns string holding the field alias. Will throw an index out of bounds exception when index is out of bounds.</returns>
+        string GetFieldName(int fieldIndex);
+
+        /// <summary>
+        /// Return field count. 
+        /// </summary>
+        /// <returns>Returns integer representing number of fields in a row.</returns>
+        int GetFieldCount();
+
+        /// <summary>
+        /// Find entry associated with a field, by the field index.
+        /// </summary>
+        /// <param name="fieldIndex">Index of the field to search for.</param>
         /// <returns>Returns the IEntry object.</returns>
-        IEntry GetEntry(int index);
+        IEntry GetEntry(int fieldIndex);
 
         /// <summary>
         /// Find first matching entry by field alias.
         /// </summary>
-        /// <param name="field">Field alias to look for.</param>
+        /// <param name="fieldName">Field alias to look for.</param>
         /// <returns>Returns the IEntry object.</returns>
-        IEntry GetEntry(string field);
+        IEntry GetEntry(string fieldName);
+
+        /// <summary>
+        /// Return entry count.
+        /// </summary>
+        /// <returns>Returns integer counting how many entries are in a field.</returns>
+        int GetEntryCount();
 
         /// <summary>
         /// Returns a row object containing entries that match with the input collection of field names. Missing fields will trigger an error.
@@ -151,61 +208,85 @@ namespace ISTE.DAL.Database.Interfaces
         /// <returns>Returns a new IRow object.</returns>
         IRow GetRange(int start, int length = -1);
 
-        /// <summary>
-        /// Return a clone of this row.
-        /// </summary>
-        /// <returns>Returns reference to this row.</returns>
-        IRow Clone();
+        //////////////////////
+        // Mutator(s).
 
         /// <summary>
-        /// Check if the row has no fields.
+        /// Set field at existing index to new value. Will change field name for associated entry. Will fail if field already exists or index is out of bounds.
         /// </summary>
-        /// <returns>Returns true if empty.</returns>
-        bool IsEmpty();
-        
+        /// <param name="fieldIndex">Field index to set.</param>
+        /// <param name="fieldAlias">Field alias to add.</param>
+        /// <returns>Returns reference to self.</returns>
+        IRow SetField(int fieldIndex, string fieldAlias);
+
         /// <summary>
-        /// Return field count. 
+        /// Add a field to the field name collection. 
         /// </summary>
-        /// <returns>Returns integer representing number of fields in a row.</returns>
-        int GetFieldCount();
+        /// <param name="fieldAlias">Field alias to add.</param>
+        /// <returns>Returns reference to self.</returns>
+        IRow AddField(string fieldAlias);
+
+        /// <summary>
+        /// Removes a field alias from the collection, along with its associated entry.
+        /// </summary>
+        /// <param name="field">Field alias to search for.</param>
+        /// <returns>Returns the removed entry.</returns>
+        IEntry RemoveField(string field);
+
+        /// <summary>
+        /// Removes a field alias from the collection, based on its index, along with its associated entry.
+        /// </summary>
+        /// <param name="fieldIndex">Field index to check.</param>
+        /// <returns>Returns the removed entry. Throws index out of bounds exception if field index is out of bounds.</returns>
+        IEntry RemoveField(int fieldIndex);
+
+        /// <summary>
+        /// Set entry at existing index to new value. Will fail if field doesn't exist.
+        /// </summary>
+        /// <param name="fieldAlias">Field to set entry for.</param>
+        /// <param name="entry">Entry to add.</param>
+        /// <returns>Returns reference to self.</returns>
+        IRow SetEntry(string fieldAlias, IEntry entry);
+
+        /// <summary>
+        /// Create and then add an entry to the collection, adding a field in the process. Will overwrite existing entry if the field already exists.
+        /// </summary>
+        /// <param name="field">Field alias to assign to new entry.</param>
+        /// <param name="value">Value to give to the particular entry.</param>
+        /// <returns>Returns the newly created entry.</returns>
+        IEntry AddEntry(string field, string value);
+
+        /// <summary>
+        /// Adds entry to the collection, also creating a field alias if it doesn't exist. Will replace existing entries associated with that field.
+        /// </summary>
+        /// <param name="entry">Entry to add.</param>
+        /// <returns>Returns the added entry.</returns>
+        IEntry AddEntry(IEntry entry);
+
+        /// <summary>
+        /// Removes entry from the collection. The associated field is not removed and instead is given a null entry.
+        /// </summary>
+        /// <param name="fieldIndex">Field index of entry affected.</param>
+        /// <returns>Returns the removed entry.</returns>
+        IEntry RemoveEntry(int fieldIndex);
+
+        /// <summary>
+        /// Removes entry from the collection. The associated field is not removed and instead is given a null entry.
+        /// </summary>
+        /// <param name="fieldAlias">Field alias of entry affected.</param>
+        /// <returns>Returns the removed entry.</returns>
+        IEntry RemoveEntry(string fieldAlias);
 
     }
-
+    
     /// <summary>
     /// IEntries wraps functionality for a key/value pair.
     /// </summary>
     public interface IEntry
     {
-        /// <summary>
-        /// Return the field for a particular entry.
-        /// </summary>
-        /// <returns>Returns string.</returns>
-        string GetField();
-
-        /// <summary>
-        /// Return the value for a particular entry.
-        /// </summary>
-        /// <returns>Returns string.</returns>
-        string GetValue();
-
-        /// <summary>
-        /// Return combined key/value pair for a field and its value.
-        /// </summary>
-        /// <returns>Returns a key value pair.</returns>
-        KeyValuePair<string, string> Get();
+        //////////////////////
+        // Service(s).
         
-        /// <summary>
-        /// Sets the values for a particular entry, using individual strings for the key and value.
-        /// </summary>
-        /// <returns>Returns reference to self.</returns>
-        IEntry Set(string field, string value);
-
-        /// <summary>
-        /// Sets the values for a particular entry, using a composite key/value pair.
-        /// </summary>
-        /// <returns>Returns reference to self.</returns>
-        IEntry Set(KeyValuePair<string, string> fieldValuePair);
-
         /// <summary>
         /// Clone the current entry and return a new, identical one.
         /// </summary>
@@ -225,12 +306,49 @@ namespace ISTE.DAL.Database.Interfaces
         /// <param name="value">Value to check against.</param>
         /// <returns>Returns true if matched.</returns>
         bool HasValue(string value);
-        
+
         /// <summary>
         /// Check if a given entry's value is null.
         /// </summary>
         /// <returns>Return true if value is an empty string or null.</returns>
         bool IsNull();
+
+        //////////////////////
+        // Accessor(s).
+
+        /// <summary>
+        /// Return the field for a particular entry.
+        /// </summary>
+        /// <returns>Returns string.</returns>
+        string GetField();
+
+        /// <summary>
+        /// Return the value for a particular entry.
+        /// </summary>
+        /// <returns>Returns string.</returns>
+        string GetValue();
+
+        /// <summary>
+        /// Return combined key/value pair for a field and its value.
+        /// </summary>
+        /// <returns>Returns a key value pair.</returns>
+        KeyValuePair<string, string> GetData();
+
+        //////////////////////
+        // Mutator(s).
+
+        /// <summary>
+        /// Sets the values for a particular entry, using individual strings for the key and value.
+        /// </summary>
+        /// <returns>Returns reference to self.</returns>
+        IEntry SetData(string field, string value);
+
+        /// <summary>
+        /// Sets the values for a particular entry, using a composite key/value pair.
+        /// </summary>
+        /// <returns>Returns reference to self.</returns>
+        IEntry SetData(KeyValuePair<string, string> fieldValuePair);
+
     }
 
 }

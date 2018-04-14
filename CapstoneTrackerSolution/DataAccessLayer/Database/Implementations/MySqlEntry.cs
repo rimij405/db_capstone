@@ -1,9 +1,9 @@
-﻿/*
-    MySqlEntry.cs
-    Ian Effendi
-    ---
-    Contains the implementation for IEntry.
- */
+﻿/**********************************************
+ *  MySqlEntry.cs
+ *  Ian Effendi
+ *  ---
+ *  Contains the implementation for IEntry.
+ *********************************************/
 
 using System;
 using System.Collections.Generic;
@@ -20,7 +20,9 @@ namespace ISTE.DAL.Database
     public class MySqlEntry : IEntry
     {
 
+        //////////////////////
         // Field(s).
+        //////////////////////
 
         /// <summary>
         /// The null value accepted by MySql.
@@ -28,7 +30,7 @@ namespace ISTE.DAL.Database
         public const string NULL_VALUE = "NULL";
 
         /// <summary>
-        /// Field value.
+        /// Field value. Stored as a trimmed, all-caps value.
         /// </summary>
         private string field;
 
@@ -37,7 +39,9 @@ namespace ISTE.DAL.Database
         /// </summary>
         private string value;
 
+        //////////////////////
         // Properties.
+        //////////////////////
 
         /// <summary>
         /// Relational table field.
@@ -57,7 +61,9 @@ namespace ISTE.DAL.Database
             private set { this.value = value; }
         }
 
+        //////////////////////
         // Constructor(s).
+        //////////////////////
 
         /// <summary>
         /// Construct a null entry using just a field value.
@@ -66,7 +72,7 @@ namespace ISTE.DAL.Database
         public MySqlEntry(string field)
         {
             // Default set.
-            this.Set(field, MySqlEntry.NULL_VALUE);
+            this.SetData(field, MySqlEntry.NULL_VALUE);
         }
 
         /// <summary>
@@ -77,7 +83,7 @@ namespace ISTE.DAL.Database
         public MySqlEntry(string field, string value)
         {
             // Set the field and value.
-            this.Set(field, value);
+            this.SetData(field, value);
         }
 
         /// <summary>
@@ -87,34 +93,15 @@ namespace ISTE.DAL.Database
         public MySqlEntry(IEntry entry)
         {
             // Set the field and value based off of the clone.
-            this.Set(entry.GetField(), entry.GetValue());
+            this.SetData(entry.GetField(), entry.GetValue());
         }
 
+        //////////////////////
         // Method(s).
+        //////////////////////
 
-        /// <summary>
-        /// Set the field.
-        /// </summary>
-        /// <param name="field">Field to set.</param>
-        /// <returns>Return reference to self.</returns>
-        private IEntry SetField(string field)
-        {
-            string f = field.Trim();
-            if(f.Length <= 0) { throw new DataAccessLayerException("The field data member cannot be empty."); }
-            this.Field = f;
-            return this;
-        }
-
-        /// <summary>
-        /// Set the value.
-        /// </summary>
-        /// <param name="value">Value to set.</param>
-        /// <returns>Return reference to self.</returns>
-        private IEntry SetValue(string value)
-        {
-            this.Value = value;
-            return this;
-        }
+        //////////////////////
+        // Service(s).
 
         /// <summary>
         /// Clone the entry and return the copy.
@@ -124,34 +111,7 @@ namespace ISTE.DAL.Database
         {
             return new MySqlEntry(this);
         }
-
-        /// <summary>
-        /// Create and return a key value pair linking the field to the value.
-        /// </summary>
-        /// <returns>Return key value pair object.</returns>
-        public KeyValuePair<string, string> Get()
-        {
-            return new KeyValuePair<string, string>(this.Field, this.Value);
-        }
-
-        /// <summary>
-        /// Return the field value.
-        /// </summary>
-        /// <returns>Return a string.</returns>
-        public string GetField()
-        {
-            return this.Field;
-        }
-
-        /// <summary>
-        /// Return the value as a string.
-        /// </summary>
-        /// <returns>Return a string.</returns>
-        public string GetValue()
-        {
-            return this.Value;
-        }
-
+        
         /// <summary>
         /// Check if this matches the input field. Case insensitive. Whitespace trimmed.
         /// </summary>
@@ -159,7 +119,7 @@ namespace ISTE.DAL.Database
         /// <returns>Returns true if match found.</returns>
         public bool HasField(string key)
         {
-            return (this.Field.ToUpper() == key.Trim().ToUpper());
+            return this.IsValidField(key) && (FormatField(key) == this.Field);
         }
 
         /// <summary>
@@ -181,13 +141,64 @@ namespace ISTE.DAL.Database
             return this.HasValue(MySqlEntry.NULL_VALUE);
         }
 
+        //////////////////////
+        // Helper(s).
+
+        /// <summary>
+        /// Returns a trimmed, all caps string, based off of input.
+        /// </summary>
+        /// <param name="input">Input to capitalize and trim of whitespace.</param>
+        /// <returns>Returns formatted string.</returns>
+        private string FormatField(string input)
+        {
+            if (input.Length <= 0) { return ""; }
+            return input.Trim().ToUpper();
+        }
+
+        /// <summary>
+        /// Checks if input is not empty.
+        /// </summary>
+        /// <param name="input">Input to check.</param>
+        /// <returns>Returns true if valid.</returns>
+        private bool IsValidField(string input)
+        {
+            if (input.Length <= 0) { return false; }
+            return true;
+        }
+
+        //////////////////////
+        // Mutator(s).
+
+        /// <summary>
+        /// Set the field.
+        /// </summary>
+        /// <param name="field">Field to set.</param>
+        /// <returns>Return reference to self.</returns>
+        private IEntry SetField(string field)
+        {
+            if(!this.IsValidField(field)) { throw new DataAccessLayerException("The field data member cannot be empty."); }
+            this.Field = this.FormatField(field);
+            return this;
+        }
+
+        /// <summary>
+        /// Set the value.
+        /// </summary>
+        /// <param name="value">Value to set.</param>
+        /// <returns>Return reference to self.</returns>
+        private IEntry SetValue(string value)
+        {
+            this.Value = value;
+            return this;
+        }
+
         /// <summary>
         /// Set the field and value at the same time.
         /// </summary>
         /// <param name="field">Field value.</param>
         /// <param name="value">Value.</param>
         /// <returns>Return reference to self.</returns>
-        public IEntry Set(string field, string value)
+        public IEntry SetData(string field, string value)
         {
             this.SetField(field);
             this.SetValue(value);
@@ -199,10 +210,41 @@ namespace ISTE.DAL.Database
         /// </summary>
         /// <param name="fieldValuePair">Key/value pair containing field (key) and value (value).</param>
         /// <returns>Return reference to self.</returns>
-        public IEntry Set(KeyValuePair<string, string> fieldValuePair)
+        public IEntry SetData(KeyValuePair<string, string> fieldValuePair)
         {
-            this.Set(fieldValuePair.Key, fieldValuePair.Value);
+            this.SetData(fieldValuePair.Key, fieldValuePair.Value);
             return this;
         }
+
+        //////////////////////
+        // Accessor(s).
+
+        /// <summary>
+        /// Return the field value.
+        /// </summary>
+        /// <returns>Return a string.</returns>
+        public string GetField()
+        {
+            return this.Field;
+        }
+
+        /// <summary>
+        /// Return the value as a string.
+        /// </summary>
+        /// <returns>Return a string.</returns>
+        public string GetValue()
+        {
+            return this.Value;
+        }
+
+        /// <summary>
+        /// Create and return a key value pair linking the field to the value.
+        /// </summary>
+        /// <returns>Return key value pair object.</returns>
+        public KeyValuePair<string, string> GetData()
+        {
+            return new KeyValuePair<string, string>(this.Field, this.Value);
+        }
+
     }
 }

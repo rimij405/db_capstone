@@ -24,7 +24,7 @@ namespace ISTE.DAL.Models
         /// Fetch information for this object from the database.
         /// </summary>
         /// <returns></returns>
-        bool Fetch(IDatabase);
+        // bool Fetch(IDatabase);
     
     }
 }
