@@ -49,7 +49,7 @@ namespace ISTE.DAL.Database
         public string Field
         {
             get { return this.field; }
-            private set { this.field = value; }
+            set { this.field = value; }
         }
 
         /// <summary>
@@ -139,6 +139,15 @@ namespace ISTE.DAL.Database
         public bool IsNull()
         {
             return this.HasValue(MySqlEntry.NULL_VALUE);
+        }
+
+        /// <summary>
+        /// Return a formatted string describing a single entry.
+        /// </summary>
+        /// <returns>Returns formatted string.</returns>
+        public override string ToString()
+        {
+            return $"MySqlEntry {{Field: {this.Field}, Value: {this.Value}, IsNull: {this.IsNull()}}}";
         }
 
         //////////////////////

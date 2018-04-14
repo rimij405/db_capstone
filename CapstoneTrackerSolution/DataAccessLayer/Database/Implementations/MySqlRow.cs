@@ -27,35 +27,35 @@ namespace ISTE.DAL.Database
         // Field(s).
         //////////////////////
 
-       /*********************************************************
-        * Developer's Note:
-        * 
-        * The entry collection stores entry objects. You may
-        * be wondering why we store the field name twice.
-        * 
-        * We trade off a slight count against performance,
-        * for the sake of convienience. This enables us to
-        * handle record data by passing a MySqlEntry object
-        * without sacrificing the context that a field gives us.
-        * 
-        * We then wrap them in an IRow object, because 
-        * it enables us more flexibility over when and where
-        * we construct our tabular data structures.
-        * *******************************************************/
+        /*********************************************************
+         * Developer's Note:
+         * 
+         * The entry collection stores entry objects. You may
+         * be wondering why we store the field name twice.
+         * 
+         * We trade off a slight count against performance,
+         * for the sake of convienience. This enables us to
+         * handle record data by passing a MySqlEntry object
+         * without sacrificing the context that a field gives us.
+         * 
+         * We then wrap them in an IRow object, because 
+         * it enables us more flexibility over when and where
+         * we construct our tabular data structures.
+         * *******************************************************/
 
         /// <summary>
         /// Represents a collection of <see cref="MySqlEntry"/> entries.
         /// </summary>
         private List<MySqlEntry> entryCollection;
 
-       /*********************************************************
-        * Developer's Note:
-        * 
-        * Fields stored are trimmed of whitespace and set to
-        * uppercase. Input checked against the collection should
-        * also be trimmed and set to uppercase as the collection
-        * is both whitespace and case insensitive.
-        * *******************************************************/
+        /*********************************************************
+         * Developer's Note:
+         * 
+         * Fields stored are trimmed of whitespace and set to
+         * uppercase. Input checked against the collection should
+         * also be trimmed and set to uppercase as the collection
+         * is both whitespace and case insensitive.
+         * *******************************************************/
 
         /// <summary>
         /// Represents a collection of <see cref="string"/> field names/aliases associated with <see cref="MySqlEntry"/> entries.
@@ -73,7 +73,7 @@ namespace ISTE.DAL.Database
         {
             get
             {
-                if(this.entryCollection == null) { this.entryCollection = new List<MySqlEntry>(); }
+                if (this.entryCollection == null) { this.entryCollection = new List<MySqlEntry>(); }
                 return this.entryCollection;
             }
         }
@@ -121,10 +121,10 @@ namespace ISTE.DAL.Database
         /// <returns></returns>
         public MySqlEntry this[string key]
         {
-            get { return this.GetEntry(key); }
+            get { return this.GetEntry(key) as MySqlEntry; }
             set { this.SetEntry(key, value as IEntry); }
         }
-        
+
         //////////////////////
         // Constructor(s).
         //////////////////////
@@ -151,7 +151,7 @@ namespace ISTE.DAL.Database
         /// </summary>
         /// <param name="entries">Entries inhabiting the row.</param>
         public MySqlRow(List<MySqlEntry> entries) { throw new NotImplementedException("Need to create mutators."); }
-        
+
         /// <summary>
         /// Construct a row from a collection of <see cref="MySqlEntry"/> entries.
         /// </summary>
@@ -181,14 +181,24 @@ namespace ISTE.DAL.Database
         }
 
         /// <summary>
+        /// Check if an entry exists where associated for a particular field.
+        /// </summary>
+        /// <param name="field">Field to check if entry exists for.</param>
+        /// <returns>Returns true if entry AND field exists.</returns>
+        public bool HasEntry(string field) {
+            string alias = this.FormatField(field);
+            return (this.HasEntries() && this.HasField(alias) && (this.GetEntry(alias) != null));
+        }
+
+        /// <summary>
         /// Check if row contains a particular field. If input is invalid, it will return false.
         /// </summary>
         /// <param name="field">Field to check for.</param>
         /// <returns>Returns true if field exists.</returns>
         public bool HasField(string field)
         {
-            string alias = FormatField(field);
-            return this.IsValidField(alias) && this.Fields.Contains(alias); 
+            string alias = this.FormatField(field);
+            return (this.IsValidField(alias) && this.Contains(alias));
         }
 
         /// <summary>
@@ -199,7 +209,7 @@ namespace ISTE.DAL.Database
         public bool HasFields(List<string> fields)
         {
             // Return false when no fields are input.
-            if(fields == null || fields.Count <= 0) { return false; }
+            if (fields == null || fields.Count <= 0) { return false; }
 
             foreach (string field in fields)
             {
@@ -251,6 +261,58 @@ namespace ISTE.DAL.Database
             return (this.Count > 0);
         }
 
+        /// <summary>
+        /// Remove all items from both collections.
+        /// </summary>
+        public void Clear() {
+            this.Fields.Clear();
+            this.Entries.Clear();
+        }
+
+        /// <summary>
+        /// Determines if collection has a specific entry.
+        /// </summary>
+        /// <param name="entry">Entry to check for.</param>
+        /// <returns>Returns true if match is made.</returns>
+        public bool Contains(IEntry entry) {
+            return this.Entries.Contains(entry);
+        }
+
+        /// <summary>
+        /// Determines if collection has a specific field.
+        /// </summary>
+        /// <param name="field">Field to check for.</param>
+        /// <returns>Returns true if match is made.</returns>
+        public bool Contains(string field) {
+            return this.Fields.Contains(field);
+        }
+
+        /// <summary>
+        /// Copies elements from <see cref="Entries"/> into the supplied array, starting at a particular array index.
+        /// </summary>
+        /// <param name="entryArray">Array to copy into.</param>
+        /// <param name="arrayIndex">Starting index.</param>
+        public void CopyTo(IEntry[] entryArray, int arrayIndex = 0) {
+            MySqlEntry[] array = new MySqlEntry[this.GetEntryCount()];
+            this.Entries.CopyTo(array);
+            int index = 0;
+            for (int i = arrayIndex; i < entryArray.Length; i++)
+            {
+                if (index <= 0 || index >= array.Length) { return; }
+                entryArray[i] = array[index];
+                index++;
+            }
+        }
+
+        /// <summary>
+        /// Copies elements from <see cref="Fields"/> into the supplied array, starting at a particular array index.
+        /// </summary>
+        /// <param name="fieldArray">Array to copy into.</param>
+        /// <param name="arrayIndex">Starting index.</param>
+        public void CopyTo(string[] fieldArray, int arrayIndex = 0) {
+            this.Fields.CopyTo(fieldArray, arrayIndex);
+        }
+
         //////////////////////
         // Helper(s).
 
@@ -272,7 +334,7 @@ namespace ISTE.DAL.Database
         /// <returns>Returns true if valid.</returns>
         private bool IsValidField(string input)
         {
-            if(input.Length <= 0) { return false; }
+            if (input.Length <= 0) { return false; }
             return true;
         }
 
@@ -284,9 +346,9 @@ namespace ISTE.DAL.Database
         /// </summary>
         /// <param name="field">Field to search for.</param>
         /// <returns>Return the index of the given field.</returns>
-        int GetFieldIndex(string field) {
+        public int GetFieldIndex(string field) {
             // Validate input.
-            if(!this.IsValidField(field)) { return -1; }
+            if (!this.IsValidField(field)) { return -1; }
 
             // Find the index.
             return this.Fields.IndexOf(FormatField(field));
@@ -297,9 +359,9 @@ namespace ISTE.DAL.Database
         /// </summary>
         /// <param name="fieldIndex">Index of field to search for.</param>
         /// <returns>Returns string holding the field alias. Will throw an index out of bounds exception when index is out of bounds.</returns>
-        string GetFieldName(int fieldIndex) {
+        public string GetFieldName(int fieldIndex) {
             // Validate input.
-            if(!this.HasIndex(fieldIndex)) { throw new IndexOutOfRangeException(); }
+            if (!this.HasIndex(fieldIndex)) { throw new IndexOutOfRangeException(); }
 
             // Return the value.
             return this.Fields[fieldIndex];
@@ -309,7 +371,7 @@ namespace ISTE.DAL.Database
         /// Return field count. 
         /// </summary>
         /// <returns>Returns integer representing number of fields in a row.</returns>
-        int GetFieldCount()
+        public int GetFieldCount()
         {
             return this.Fields.Count;
         }
@@ -319,7 +381,7 @@ namespace ISTE.DAL.Database
         /// </summary>
         /// <param name="fieldIndex">Index of the field to search for.</param>
         /// <returns>Returns the IEntry object.</returns>
-        IEntry GetEntry(int fieldIndex) {
+        public IEntry GetEntry(int fieldIndex) {
             // Validate input.
             if (!this.HasEntries() || !this.HasIndex(fieldIndex)) { throw new IndexOutOfRangeException(); }
 
@@ -332,14 +394,15 @@ namespace ISTE.DAL.Database
         /// </summary>
         /// <param name="fieldName">Field alias to look for.</param>
         /// <returns>Returns the IEntry object.</returns>
-        IEntry GetEntry(string fieldName) {
+        public IEntry GetEntry(string fieldName) {
             // Validate input.
-            if(!this.HasEntries() || !this.IsValidField(fieldName)) { return null; }
-
+            string alias = this.FormatField(fieldName);
+            if (!this.HasEntries() || !this.IsValidField(alias)) { return null; }
+            
             // Return value from the entries collection that matches.
-            foreach(MySqlEntry entry in this.Entries)
+            foreach (MySqlEntry entry in this.Entries)
             {
-                if (entry.HasField(FormatField(fieldName))) {
+                if (entry.HasField(alias)) {
                     return entry;
                 }
             }
@@ -352,7 +415,7 @@ namespace ISTE.DAL.Database
         /// Return entry count.
         /// </summary>
         /// <returns>Returns integer counting how many entries are in a field.</returns>
-        int GetEntryCount()
+        public int GetEntryCount()
         {
             return this.Entries.Count;
         }
@@ -362,14 +425,14 @@ namespace ISTE.DAL.Database
         /// </summary>
         /// <param name="fields">Fields to check for.</param>
         /// <returns>Returns a new IRow object.</returns>
-        IRow GetRange(List<string> fields) { throw new NotImplementedException("Need to create range methods."); }
+        public IRow GetRange(List<string> fields) { throw new NotImplementedException("Need to create range methods."); }
 
         /// <summary>
         /// Returns a row object containing entries that match with the input collection of field names. Missing fields will trigger an error.
         /// </summary>
         /// <param name="fields">Fields to check for.</param>
         /// <returns>Returns a new IRow object.</returns>
-        IRow GetRange(params string[] fields) { throw new NotImplementedException("Need to create range methods."); }
+        public IRow GetRange(params string[] fields) { throw new NotImplementedException("Need to create range methods."); }
 
         /// <summary>
         /// Returns a row object containing elements via a range of index values. If the start index is out of index bounds, it will trigger an error. The length will not trigger an error if not specified/if greater than the length of the row.
@@ -377,390 +440,262 @@ namespace ISTE.DAL.Database
         /// <param name="start">Starting index to begin range at.</param>
         /// <param name="length">Length of elements to search for. -1 by default.</param>
         /// <returns>Returns a new IRow object.</returns>
-        IRow GetRange(int start, int length = -1) { throw new NotImplementedException("Need to create range methods."); }
+        public IRow GetRange(int start, int length = -1) { throw new NotImplementedException("Need to create range methods."); }
 
         //////////////////////
         // Mutator(s).
 
-
-
-
-        #region Old
-
-        /*
-
-        // Field(s).
-
         /// <summary>
-        /// Collection of <see cref="MySqlEntry"/> entries.
+        /// Add entry to collection.
         /// </summary>
-        private List<MySqlEntry> entries;
-
-        /// <summary>
-        /// Collection of fields that are stored by the contained entries.
-        /// </summary>
-        private List<string> fields;
-
-        // Properties.
-
-        /// <summary>
-        /// Access to <see cref="MySqlEntry"/> collection.
-        /// </summary>
-        public List<MySqlEntry> Entries {
-            get {
-                if (this.entries == null)
+        /// <param name="entry">Entry to add.</param>
+        public void Add(IEntry entry) {
+            if (entry != null)
+            {
+                if (entry is MySqlEntry e)
                 {
-                    this.entries = new List<MySqlEntry>();
-                }
-                return this.entries;
-            }
-        }
-
-        /// <summary>
-        /// Access to <see cref="string"/> field collection.
-        /// </summary>
-        public List<string> Fields
-        {
-            get {
-                if (this.fields == null)
-                {
-                    this.fields = new List<string>();
-                }
-                return this.fields;
-            }
-        }
-
-        /// <summary>
-        /// Returns count of items in collection.
-        /// </summary>
-        public int Count {
-            get
-            {
-                return this.Entries.Count;
-            }
-        }
-
-        /// <summary>
-        /// Returns number of fields in a row.
-        /// </summary>
-        public int FieldCount {
-            get
-            {
-                return this.Fields.Count;
-            }
-        }
-
-        /// <summary>
-        /// Value determining if items can be added to the collection.
-        /// </summary>
-        public bool IsReadOnly {
-            get; set;
-        }
-
-        // Constructor(s).
-
-        /// <summary>
-        /// Create collection to store entries.
-        /// </summary>
-        public MySqlRow()
-        {
-            this.entries = new List<MySqlEntry>();
-            this.IsReadOnly = false;
-        }
-
-        /// <summary>
-        /// Create collection to store entities and then assign the readonly flag.
-        /// </summary>
-        /// <param name="isReadOnly">Value to set readonly flag to.</param>
-        public MySqlRow(bool isReadOnly) : this()
-        {
-            this.IsReadOnly = isReadOnly;
-        }
-
-        /// <summary>
-        /// Create collection from another collection.
-        /// </summary>
-        /// <param name="collection">Collection to initialize object with.</param>
-        public MySqlRow(List<MySqlEntry> collection) : this()
-        {
-            for (int i = 0; i < collection.Count; i++)
-            {
-                this.Add(collection[i]);
-            }
-        }
-
-        /// <summary>
-        /// Create collection from another collection.
-        /// </summary>
-        /// <param name="collection">Collection to initialize object with.</param>
-        public MySqlRow(params MySqlEntry[] collection) : this()
-        {
-            for (int i = 0; i < collection.Length; i++)
-            {
-                this.Add(collection[i]);
-            }
-        }
-
-        /// <summary>
-        /// Creates a deep copy of values inside the input <see cref="MySqlRow"/> object.
-        /// </summary>
-        /// <param name="row">Row to copy from.</param>
-        public MySqlRow(MySqlRow row) : this()
-        {
-            if (row.HasEntries())
-            {
-                for (int i = 0; i < row.Count; i++)
-                {
-                    this.Add(row.GetEntry(i));
-                }
-            }
-            this.IsReadOnly = row.IsReadOnly;
-        }
-
-        // Method(s).
-        
-        /// <summary>
-        /// Attempt to add <see cref="MySqlEntry"/> entry to collection.
-        /// </summary>
-        /// <param name="item">Item to attempt to add.</param>
-        public void Add(IEntry item)
-        {
-            // This if statement is 'is' pattern-matching. It checks to see if 'item' is a particular type, and casts it to that type under the 'entry' identifier, if successful.
-            if (item is MySqlEntry entry)
-            {
-                if (!this.Contains(entry))
-                {
-                    this.Entries.Add(entry);
+                    this.Entries.Add(e);
                 }
             }
         }
 
         /// <summary>
-        /// Attempt to add unique field to the <see cref="Fields"/> collection. Will not add if a copy already exists.
+        /// Set entry at existing index to new value. Will fail if field doesn't exist.
         /// </summary>
-        /// <param name="item">Field to add.</param>
-        public void Add(string item)
+        /// <param name="fieldAlias">Field to set entry for.</param>
+        /// <param name="entry">Entry to add.</param>
+        /// <returns>Returns reference to self.</returns>
+        public IRow SetEntry(string fieldAlias, IEntry entry)
         {
-            string field = item.Trim().ToUpper();
-            if (field.Length > 0 && !this.Contains(field))
-            {
-                this.Fields.Add(field);
-            }
+            // Validate the inputs.
+            string alias = this.FormatField(fieldAlias);
+            if(!this.IsValidField(alias) || !this.HasField(alias) || !this.HasEntry(alias)) { return this; }
+
+            // Overwrite existing field's entry.
+            this.Entries[this.GetFieldIndex(alias)] = entry as MySqlEntry;
+
+            // Reference to self.
+            return this;
         }
 
         /// <summary>
-        /// Clears the entire collection of all entries and their fields.
+        /// Create and then add an entry to the collection, adding a field in the process. Will overwrite existing entry if the field already exists.
         /// </summary>
-        public void Clear()
+        /// <param name="field">Field alias to assign to new entry.</param>
+        /// <param name="value">Value to give to the particular entry.</param>
+        /// <returns>Returns the newly created entry.</returns>
+        public IEntry AddEntry(string field, string value)
         {
-            this.Entries.Clear();
-            this.Fields.Clear();
+            // Validate the inputs.
+            string alias = this.FormatField(field);
+            if(!this.IsValidField(alias)) { return null; }
+
+            // Create the entry object.
+            MySqlEntry entry = new MySqlEntry(alias, value);
+            
+            // Add entry, overwriting if there are conflicts.
+            this.AddEntry(entry);
+
+            // Return the added object.
+            return entry;
         }
 
         /// <summary>
-        /// Clones object and returns a copy.
+        /// Adds entry to the collection, also creating a field alias if it doesn't exist. Will replace existing entries associated with that field.
         /// </summary>
-        /// <returns>Returns cloned copy.</returns>
-        public IRow Clone()
+        /// <param name="entry">Entry to add.</param>
+        /// <returns>Returns the added entry.</returns>
+        public IEntry AddEntry(IEntry entry)
         {
-            return new MySqlRow(this);
-        }
-
-        /// <summary>
-        /// Check if MySqlRow already contains the input entry.
-        /// </summary>
-        /// <param name="item">Entry to check for.</param>
-        /// <returns>Returns true if match is found.</returns>
-        public bool Contains(IEntry item)
-        {
-            if (item is MySqlEntry entry)
-            {
-                return this.Entries.Contains(entry);
-            }
-            return false;
-        }
-
-        /// <summary>
-        /// Check if MySqlRow already contains the input field.
-        /// </summary>
-        /// <param name="item">Input to check.</param>
-        /// <returns>Returns true if match is found.</returns>
-        public bool Contains(string item)
-        {
-            string field = item.Trim();
-            if (field.Length > 0)
-            {
-                return this.Fields.Contains(field);
-            }
-            return false;
-        }
-
-        /// <summary>
-        /// Copy range of entries to an input array.
-        /// </summary>
-        /// <param name="array">Array to copy values into.</param>
-        /// <param name="arrayIndex">Represents index in which copying begins in the accompanying <paramref name="array"/>.</param>
-        public void CopyTo(IEntry[] array, int arrayIndex)
-        {
-            if (this.HasEntries() && arrayIndex < array.Length && arrayIndex >= 0)
-            {
-                int index = 0;
-                for (int i = arrayIndex; i < array.Length; i++)
+            // Validate the inputs.
+            if(entry != null) {
+                // Get field.
+                if (!this.HasField(entry.GetField()))
                 {
-                    if(index < 0 || index >= this.Count) { return; }
-                    array[i] = this.Entries[index];
-                    index++;
+                    this.AddField(entry.GetField());
                 }
+
+                // Set entry.
+                this.SetEntry(entry.GetField(), entry);
+            }
+
+            return entry;
+        }
+
+        /// <summary>
+        /// Add field to collection.
+        /// </summary>
+        /// <param name="field">Field to add.</param>
+        public void Add(string field) {
+            string alias = this.FormatField(field);
+            if (this.IsValidField(alias)) {
+                this.Fields.Add(alias);
             }
         }
 
         /// <summary>
-        /// Copy range of fields to an input array.
+        /// Set field at existing index to new value. Will change field name for associated entry. Will fail if field already exists or index is out of bounds.
         /// </summary>
-        /// <param name="array">Array to copy values into.</param>
-        /// <param name="arrayIndex">Represents index in which copying begins in the accompanying <paramref name="array"/>.</param>
-        public void CopyTo(string[] array, int arrayIndex)
-        {
-            if (this.HasFields() && arrayIndex < array.Length && arrayIndex >= 0)
-            {
-                int index = 0;
-                for (int i = arrayIndex; i < array.Length; i++)
-                {
-                    if (index < 0 || index >= this.FieldCount) { return; }
-                    array[i] = this.Fields[index];
-                    index++;
-                }
+        /// <param name="fieldIndex">Field index to set.</param>
+        /// <param name="fieldAlias">Field alias to add.</param>
+        /// <returns>Returns reference to self.</returns>
+        public IRow SetField(int fieldIndex, string fieldAlias) {
+            // Validate index. If invalid, throw index out of bounds exception.
+            if (!this.HasIndex(fieldIndex)) { throw new IndexOutOfRangeException(); }
+
+            // Validate field alias. If invalid, do nothing.
+            string alias = this.FormatField(fieldAlias);
+            if (!this.IsValidField(alias) || !this.HasField(alias)) { return this; }
+
+            // Set the field at a particular index and change the field for the entry at that index.
+            this.Fields[fieldIndex] = alias;
+
+            // Overwrite field in the associated entry.
+            MySqlEntry e = (this.GetEntry(fieldIndex) as MySqlEntry);
+            if (e != null) { e.Field = alias; }
+            
+            // Return reference to self.
+            return this;
+        }
+
+        /// <summary>
+        /// Add a field to the field name collection, if unique, and add a corresponding empty entry.
+        /// </summary>
+        /// <param name="fieldAlias">Field alias to add.</param>
+        /// <returns>Returns reference to self.</returns>
+        public IRow AddField(string fieldAlias) {
+            // Validate field alias. If invalid - or it already exists - do nothing.
+            string alias = this.FormatField(fieldAlias);
+            if (!this.IsValidField(alias) || this.HasField(alias)) { return this; }
+
+            // Add the field.
+            this.Add(alias);
+
+            // Add empty entry.
+            this.Add(new MySqlEntry(alias));
+
+            // Return reference to self.
+            return this;
+        }
+
+        /// <summary>
+        /// Remove entry from collection.
+        /// </summary>
+        /// <param name="entry">Entry to remove.</param>
+        /// <returns>Returns true if removed successfully.</returns>
+        public bool Remove(IEntry entry) {            
+            return (entry is MySqlEntry e) && (this.Entries.Remove(e));
+        }
+
+        /// <summary>
+        /// Removes entry from the collection. The associated field is not removed and instead is given a null entry.
+        /// </summary>
+        /// <param name="fieldIndex">Field index of entry affected.</param>
+        /// <returns>Returns the removed entry.</returns>
+        public IEntry RemoveEntry(int fieldIndex) {
+            // Validate input.
+            if (this.HasIndex(fieldIndex)) {
+                IEntry e = this.Entries[fieldIndex] as IEntry;
+                return (this.Remove(e) ? e : null); // return null if it fails to remove any entry.
             }
+
+            // Return null.
+            return null;
         }
 
         /// <summary>
-        /// Return an entry from the collection, by index.
+        /// Removes entry from the collection. The associated field is not removed and instead is given a null entry.
         /// </summary>
-        /// <param name="index">Index to find entry with.</param>
-        /// <returns>Return the resulting entry.</returns>
-        public IEntry GetEntry(int index)
-        {
-            if(!this.HasEntries() || index < 0 || index >= this.Count) { return null; }
-            return this.Entries[index];
+        /// <param name="fieldAlias">Field alias of entry affected.</param>
+        /// <returns>Returns the removed entry.</returns>
+        public IEntry RemoveEntry(string fieldAlias) {
+            // Validate input.
+            string alias = this.FormatField(fieldAlias);
+            if(!this.IsValidField(alias) || !this.HasField(alias)) { return null; }
+            return RemoveEntry(this.GetFieldIndex(alias));
         }
 
         /// <summary>
-        /// Return an entry from the collection, by field.
+        /// Removes entry from the collection. The associated field is not removed and instead is given a null entry.
         /// </summary>
-        /// <param name="field">Field to find entry with.</param>
-        /// <returns>Return the resulting entry.</returns>
-        public IEntry GetEntry(string field)
-        {
-            string fieldName = field.Trim().ToUpper();
-            if(!this.HasEntries() || fieldName.Length <= 0 || !this.Contains(fieldName)) { return null; }
+        /// <param name="entry">Entry to move.</param>
+        /// <returns>Returns the removed entry.</returns>
+        public IEntry RemoveEntry(IEntry entry) {
+            return ((entry is MySqlEntry e) ? RemoveEntry(e.GetField()) : null);
+        }
 
-            // loop through collection and find first match.
-            foreach (MySqlEntry entry in this.Entries)
-            {
-                if (entry.Field.ToUpper() == fieldName)
-                {
-                    return entry;
-                }
+        /// <summary>
+        /// Remove field from collection.
+        /// </summary>
+        /// <param name="field">Field to remove.</param>
+        /// <returns>Returns true if removed successfully.</returns>
+        public bool Remove(string field) {
+            return this.Fields.Remove(field);
+        }
+
+        /// <summary>
+        /// Removes a field alias from the collection, along with its associated entry.
+        /// </summary>
+        /// <param name="field">Field alias to search for.</param>
+        /// <returns>Returns the removed entry.</returns>
+        public IEntry RemoveField(string field) {
+            // Validate input.
+            string alias = this.FormatField(field);
+            if(!this.IsValidField(alias) || !this.HasField(alias)) { return null; } // field doesn't exist.
+            
+            // if field exists, we need to remove the entry first.
+            IEntry entry = this.GetEntry(alias);
+
+            // only remove field and entry if entry is not null.
+            if (entry != null) {
+                this.RemoveEntry(alias);
+                return (this.Remove(alias) ? entry : null);
             }
 
             return null;
         }
 
         /// <summary>
-        /// Return the enumerator for the <see cref="MySqlEntry"/> collection.
+        /// Removes a field alias from the collection, based on its index, along with its associated entry.
         /// </summary>
-        /// <returns>Returns IEnumerator.</returns>
+        /// <param name="fieldIndex">Field index to check.</param>
+        /// <returns>Returns the removed entry. Throws index out of bounds exception if field index is out of bounds.</returns>
+        public IEntry RemoveField(int fieldIndex)
+        {
+            // Validate input.
+            if (this.HasIndex(fieldIndex)) {
+                return this.RemoveField(this.GetFieldName(fieldIndex));
+            }
+
+            // Only return null when index is invalid.
+            return null;
+        }
+
+        /// <summary>
+        /// Implementation wrapper.
+        /// </summary>
+        /// <returns>Returns enumerator.</returns>
         public IEnumerator<IEntry> GetEnumerator()
         {
             return this.Entries.GetEnumerator();
         }
 
         /// <summary>
-        /// Get the index of a particular field/entry in the row.
+        /// Implementation wrapper.
         /// </summary>
-        /// <param name="field">Name of the field the index would have.</param>
-        /// <returns>Returns integer representing field ordinance.</returns>
-        public int GetIndex(string field)
-        {
-            int index = -1; // error result when index not found.
-            string fieldName = field.Trim().ToUpper();
-            if(!this.HasEntries() || fieldName.Length <= 0 || !this.Contains(fieldName)) { return index; }
-            index = this.Fields.IndexOf(fieldName);
-            return index;
-        }
-
-        /// <summary>
-        /// Return a row that is a subset of only the included fields, in the presented order.
-        /// </summary>
-        /// <param name="fields">Fields to create subset with.</param>
-        /// <returns>Return subset collection.</returns>
-        public IRow GetRange(List<string> fields)
-        {
-            throw new NotImplementedException();
-        }
-
-        public IRow GetRange(params string[] fields)
-        {
-            throw new NotImplementedException();
-        }
-
-        public IRow GetRange(int start, int length = -1)
-        {
-            throw new NotImplementedException();
-        }
-
-        /// <summary>
-        /// Che
-        /// </summary>
-        /// <returns></returns>
-        public bool HasEntries()
-        {
-            throw new NotImplementedException();
-        }
-
-        public bool HasField(string field)
-        {
-            throw new NotImplementedException();
-        }
-
-        public bool HasFields(List<string> fields)
-        {
-            throw new NotImplementedException();
-        }
-
-        public bool HasFields(params string[] fields)
-        {
-            throw new NotImplementedException();
-        }
-
-        public bool IsEmpty()
-        {
-            throw new NotImplementedException();
-        }
-
-        public bool Remove(IEntry item)
-        {
-            throw new NotImplementedException();
-        }
-
-        public bool Remove(string item)
-        {
-            throw new NotImplementedException();
-        }
-
+        /// <returns>Returns enumerator.</returns>
         IEnumerator<string> IEnumerable<string>.GetEnumerator()
         {
-            throw new NotImplementedException();
+            return this.Fields.GetEnumerator();
         }
 
+        /// <summary>
+        /// Implementation wrapper.
+        /// </summary>
+        /// <returns>Returns enumerator.</returns>
         IEnumerator IEnumerable.GetEnumerator()
         {
-            throw new NotImplementedException();
+            return this.GetEnumerator();
         }
-
-    */
-
-        #endregion
-
     }
 }

@@ -104,6 +104,13 @@ namespace ISTE.DAL.Database.Interfaces
         bool HasEntries();
 
         /// <summary>
+        /// Check if an entry exists where associated for a particular field.
+        /// </summary>
+        /// <param name="field">Field to check if entry exists for.</param>
+        /// <returns>Returns true if entry AND field exists.</returns>
+        bool HasEntry(string field);
+        
+        /// <summary>
         /// Check if row contains a particular field.
         /// </summary>
         /// <param name="field">Field to check for.</param>
@@ -269,7 +276,7 @@ namespace ISTE.DAL.Database.Interfaces
         /// <param name="fieldIndex">Field index of entry affected.</param>
         /// <returns>Returns the removed entry.</returns>
         IEntry RemoveEntry(int fieldIndex);
-
+        
         /// <summary>
         /// Removes entry from the collection. The associated field is not removed and instead is given a null entry.
         /// </summary>
@@ -277,6 +284,13 @@ namespace ISTE.DAL.Database.Interfaces
         /// <returns>Returns the removed entry.</returns>
         IEntry RemoveEntry(string fieldAlias);
 
+        /// <summary>
+        /// Removes entry from the collection. The associated field is not removed and instead is given a null entry.
+        /// </summary>
+        /// <param name="entry">Entry to move.</param>
+        /// <returns>Returns the removed entry.</returns>
+        IEntry RemoveEntry(IEntry entry);
+        
     }
     
     /// <summary>
