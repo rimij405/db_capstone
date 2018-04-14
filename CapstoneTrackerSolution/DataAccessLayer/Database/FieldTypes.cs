@@ -227,72 +227,198 @@ namespace ISTE.DAL.Database
         }
     }
 
+    /// <summary>
+    /// Provides an inclusive range of integers.
+    /// </summary>
     public class MySqlIntegerRange : MySqlInteger, IClampedIntegerFieldType
     {
+        // Field(s).
+
+        /// <summary>
+        /// Inclusive maximum value in this range.
+        /// </summary>
+        private int maximum = 0;
+
+        /// <summary>
+        /// Inclusive minimum value in this range.
+        /// </summary>
+        private int minimum = 0;
+
+        /// <summary>
+        /// Clamp value of input between minimum and maximum.
+        /// </summary>
+        /// <param name="value">Value to clamp.</param>
+        /// <returns>Return clamped value.</returns>
         public int Clamp(int value)
         {
-            throw new NotImplementedException();
+            if (IsBetween(value)) { return value; }
+            else
+            {
+                if(value > maximum) { return maximum; }
+                return minimum;
+            }
         }
 
-        public IClamp<int> IsBetween(int value)
+        /// <summary>
+        /// Checks if input is between extents.
+        /// </summary>
+        /// <param name="value">Value to check.</param>
+        /// <returns>Return true if value is between extents.</returns>
+        public bool IsBetween(int value)
         {
-            throw new NotImplementedException();
+            return ((value <= maximum) && (value >= minimum));
         }
 
+        /// <summary>
+        /// Sets inclusive maximum extent.
+        /// </summary>
+        /// <param name="max">Value to set.</param>
+        /// <returns>Return reference to self.</returns>
         public IClamp<int> SetMaximum(int max)
         {
-            throw new NotImplementedException();
+            this.maximum = max;
+            return this;
         }
 
+        /// <summary>
+        /// Sets inclusive minimum extent.
+        /// </summary>
+        /// <param name="min">Value to set.</param>
+        /// <returns>Return reference to self.</returns>
         public IClamp<int> SetMinimum(int min)
         {
-            throw new NotImplementedException();
+            this.minimum = min;
+            return this;
         }
     }
 
+    /// <summary>
+    /// Provides an inclusive range of doubles.
+    /// </summary>
     public class MySqlDoubleRange : MySqlDouble, IClampedDoubleFieldType
     {
+        // Field(s).
+
+        /// <summary>
+        /// Inclusive maximum value in this range.
+        /// </summary>
+        private double maximum = 0;
+
+        /// <summary>
+        /// Inclusive minimum value in this range.
+        /// </summary>
+        private double minimum = 0;
+
+        /// <summary>
+        /// Clamp value of input between minimum and maximum.
+        /// </summary>
+        /// <param name="value">Value to clamp.</param>
+        /// <returns>Return clamped value.</returns>
         public double Clamp(double value)
         {
-            throw new NotImplementedException();
+            if (IsBetween(value)) { return value; }
+            else
+            {
+                if (value > maximum) { return maximum; }
+                return minimum;
+            }
         }
 
-        public IClamp<double> IsBetween(double value)
+        /// <summary>
+        /// Checks if input is between extents.
+        /// </summary>
+        /// <param name="value">Value to check.</param>
+        /// <returns>Return true if value is between extents.</returns>
+        public bool IsBetween(double value)
         {
-            throw new NotImplementedException();
+            return ((value <= maximum) && (value >= minimum));
         }
 
+        /// <summary>
+        /// Sets inclusive maximum extent.
+        /// </summary>
+        /// <param name="max">Value to set.</param>
+        /// <returns>Return reference to self.</returns>
         public IClamp<double> SetMaximum(double max)
         {
-            throw new NotImplementedException();
+            this.maximum = max;
+            return this;
         }
 
+        /// <summary>
+        /// Sets inclusive minimum extent.
+        /// </summary>
+        /// <param name="min">Value to set.</param>
+        /// <returns>Return reference to self.</returns>
         public IClamp<double> SetMinimum(double min)
         {
-            throw new NotImplementedException();
+            this.minimum = min;
+            return this;
         }
     }
 
+    /// <summary>
+    /// Provides an inclusive range of DateTime objects.
+    /// </summary>
     public class MySqlDateTimeRange : MySqlDateTime, IClampedDateFieldType
     {
+        // Field(s).
+
+        /// <summary>
+        /// Inclusive maximum value in this range.
+        /// </summary>
+        private DateTime maximum = new DateTime();
+
+        /// <summary>
+        /// Inclusive minimum value in this range.
+        /// </summary>
+        private DateTime minimum = new DateTime();
+
+        /// <summary>
+        /// Clamp value of input between minimum and maximum.
+        /// </summary>
+        /// <param name="value">Value to clamp.</param>
+        /// <returns>Return clamped value.</returns>
         public DateTime Clamp(DateTime value)
         {
-            throw new NotImplementedException();
+            if (IsBetween(value)) { return value; }
+            else
+            {
+                if (value > maximum) { return maximum; }
+                return minimum;
+            }
         }
 
-        public IClamp<DateTime> IsBetween(DateTime value)
+        /// <summary>
+        /// Checks if input is between extents.
+        /// </summary>
+        /// <param name="value">Value to check.</param>
+        /// <returns>Return true if value is between extents.</returns>
+        public bool IsBetween(DateTime value)
         {
-            throw new NotImplementedException();
+            return ((value <= maximum) && (value >= minimum));
         }
 
+        /// <summary>
+        /// Sets inclusive maximum extent.
+        /// </summary>
+        /// <param name="max">Value to set.</param>
+        /// <returns>Return reference to self.</returns>
         public IClamp<DateTime> SetMaximum(DateTime max)
         {
-            throw new NotImplementedException();
+            this.maximum = max;
+            return this;
         }
 
+        /// <summary>
+        /// Sets inclusive minimum extent.
+        /// </summary>
+        /// <param name="min">Value to set.</param>
+        /// <returns>Return reference to self.</returns>
         public IClamp<DateTime> SetMinimum(DateTime min)
         {
-            throw new NotImplementedException();
+            this.minimum = min;
+            return this;
         }
     }
 

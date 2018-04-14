@@ -47,7 +47,7 @@ namespace ISTE.DAL.Database
         /// Check if input value is between minimum and maximum.
         /// </summary>
         /// <param name="value">Value to check.</param>
-        /// <returns>Returns reference to self.</returns>
-        IClamp<TComparable> IsBetween(TComparable value);        
+        /// <returns>Returns boolean.</returns>
+        bool IsBetween(TComparable value);        
     }
 }
