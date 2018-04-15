@@ -12,9 +12,16 @@ namespace PresentationLayer
 {
     public partial class UserPage : Form
     {
+        FormHandler fh = FormHandler.Instance;
+
         public UserPage()
         {
             InitializeComponent();
+        }
+
+        public void UserPage_FormClosed()
+        {
+            fh.GetLogin().Close();
         }
     }
 }

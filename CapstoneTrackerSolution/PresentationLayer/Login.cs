@@ -12,9 +12,25 @@ namespace PresentationLayer
 {
     public partial class Login : Form
     {
+        FormHandler fh = FormHandler.Instance;
+
         public Login()
         {
             InitializeComponent();
+        }
+
+        private void loginButton_Click(object sender, EventArgs e)
+        {
+            if (username.Text != "" && password.Text != "")
+            {
+                fh.CreateUserPage();
+                fh.GetUserPage().Show();
+                fh.GetLogin().Close();
+            }
+            else
+            {
+                error.Visible = true;
+            }
         }
     }
 }
