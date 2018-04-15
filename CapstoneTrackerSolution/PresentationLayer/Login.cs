@@ -23,9 +23,12 @@ namespace PresentationLayer
         {
             if (username.Text != "" && password.Text != "")
             {
-                fh.CreateUserPage();
+                if (fh.GetUserPage() == null) // in case page has already been created
+                {
+                    fh.CreateUserPage();
+                }
                 fh.GetUserPage().Show();
-                fh.GetLogin().Close();
+                fh.GetLogin().Hide();
             }
             else
             {
