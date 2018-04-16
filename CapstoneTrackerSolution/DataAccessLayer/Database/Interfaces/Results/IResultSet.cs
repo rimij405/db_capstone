@@ -23,6 +23,9 @@ namespace ISTE.DAL.Database.Interfaces
     /// </summary>
     public interface IResultPrinter
     {
+        //////////////////////
+        // Method(s).
+        //////////////////////
 
         //////////////////////
         // Service(s).
@@ -47,37 +50,227 @@ namespace ISTE.DAL.Database.Interfaces
         /// <param name="results">Records to generate formatted string from.</param>
         /// <returns>Returns formatted string.</returns>
         string FormatResultSet(IResultSet results);
+    }
 
+    /// <summary>
+    /// Interface for allowing clonable collections/items.
+    /// </summary>
+    public interface IReplicate
+    {
+        //////////////////////
+        // Method(s).
+        //////////////////////
+
+        //////////////////////
+        // Service(s).
+
+        /// <summary>
+        /// Return a cloned deep-copy of this object.
+        /// </summary>
+        /// <returns>Returns a clone of this object.</returns>
+        IReplicate Clone();
+    }
+
+    /// <summary>
+    /// Implementations of this interface can have a 'null' value.
+    /// </summary>
+    public interface INullable
+    {
+        //////////////////////
+        // Properties.
+        //////////////////////
+        
+        /// <summary>
+        /// Check if the instance is a custom version of null.
+        /// </summary>
+        bool IsNull { get; }
+
+        //////////////////////
+        // Method(s).
+        //////////////////////
+
+        //////////////////////
+        // Service(s).
+
+        /// <summary>
+        /// When called, turns the instance into its 'null' form.
+        /// </summary>
+        /// <returns>Returns reference to self.</returns>
+        INullable MakeNull();
+    }
+
+    /// <summary>
+    /// Implementations of this interface can be empty.
+    /// </summary>
+    public interface IEmpty
+    {
+        /// <summary>
+        /// Check if this can be empty.
+        /// </summary>
+        bool IsEmpty { get; }
+    }
+
+    /// <summary>
+    /// Implementations of this interface can validate the field name.
+    /// </summary>
+    public interface IFieldNameValidator
+    {
+        //////////////////////
+        // Method(s).
+        //////////////////////
+
+        //////////////////////
+        // Service(s).
+
+        /// <summary>
+        /// Check if implementation has the given input field.
+        /// </summary>
+        /// <param name="fieldname">Field to check for.</param>
+        /// <returns>Returns true if implementation has matching fieldname.</returns>
+        bool HasField(string fieldname);
+
+        /// <summary>
+        /// Formats a particular field using this function.
+        /// </summary>
+        /// <param name="input">Input string to check.</param>
+        /// <returns>Returns a formatted fieldname string.</returns>
+        string FormatField(string input);
+
+        /// <summary>
+        /// Checks if the input string is a valid match.
+        /// </summary>
+        /// <param name="input">Input string to check.</param>
+        /// <returns>Returns true if input can be a valid field name.</returns>
+        bool IsValidField(string input);
+    }
+
+    /// <summary>
+    /// Custom collection wrapper functions.
+    /// </summary>
+    /// <typeparam name="TItem">Type of object stored by this collection.</typeparam>
+    public interface ICollectionWrapper<TItem> : ICollection<TItem>, IReplicate, IEmpty where TItem : IComparable
+    {
+        //////////////////////
+        // Properties.
+        //////////////////////
+
+        /// <summary>
+        /// Check if the collection has at least this many items.
+        /// </summary>
+        /// <param name="count">Amount of rows to check if collection has.</param>
+        /// <returns>Returns true if count is greater than or equal to input value.</returns>
+        bool HasAtLeastThisMany(int count);
+
+        /// <summary>
+        /// Check if the collection has exactly this many items.
+        /// </summary>
+        /// <param name="count">Amount of rows to check if collection has.</param>
+        /// <returns>Returns true if count is equal to input value.</returns>
+        bool HasExactlyThisMany(int count);
+
+        /// <summary>
+        /// Check if it has a particular index.
+        /// </summary>
+        /// <param name="index">Index to check for.</param>
+        /// <returns>Returns true if the index is in bounds. False, if otherwise.</returns>
+        bool HasIndex(int index);
+
+        //////////////////////
+        // Method(s).
+        //////////////////////
+
+        //////////////////////
+        // Accessor(s).
+
+        /// <summary>
+        /// Return the index of the item stored in a particular collection.
+        /// </summary>
+        /// <param name="item">Item to search for.</param>
+        /// <returns>Returns index of item in the collection. Returns -1 if not found.</returns>
+        int GetIndex(TItem item);
+
+        /// <summary>
+        /// Return the item at the specified index.
+        /// </summary>
+        /// <param name="index">Index to retrieve item from.</param>
+        /// <returns>Returns item if index is in bounds. Throws exception if out of bounds.</returns>
+        TItem GetItem(int index);
+
+        //////////////////////
+        // Mutator(s).
+
+        /// <summary>
+        /// Replace item at specified index, if index is in bounds.
+        /// </summary>
+        /// <param name="index">Index to replace item at.</param>
+        /// <param name="item">Item to be set.</param>
+        /// <returns>Return reference to self.</returns>
+        IResultSet SetItem(int index, TItem item);
+
+        /// <summary>
+        /// Add a item to the collection.
+        /// </summary>
+        /// <param name="item">Item to add.</param>
+        /// <returns>Return reference to self.</returns>
+        IResultSet AddItem(TItem item);
+
+        /// <summary>
+        /// Add a collection of items to the collection.
+        /// </summary>
+        /// <param name="items">Items to add.</param>
+        /// <returns>Return reference to self.</returns>
+        IResultSet AddItems(List<TItem> items);
+
+        /// <summary>
+        /// Add a collection of items to the collection.
+        /// </summary>
+        /// <param name="items">Items to add.</param>
+        /// <returns>Return reference to self.</returns>
+        IResultSet AddItems(params TItem[] items);
+
+        /// <summary>
+        /// Remove item from the collection.
+        /// </summary>
+        /// <param name="index">Index of the item to remove.</param>
+        /// <returns>Return removed item. Returns null if no item found.</returns>
+        TItem RemoveItem(int index);
+
+        /// <summary>
+        /// Remove item if it exists in the collection.
+        /// </summary>
+        /// <param name="item">Item to remove.</param>
+        /// <returns>Return removed item. Returns null if no item found.</returns>
+        TItem RemoveItem(TItem item);
     }
 
     /// <summary>
     /// IResultSet is a collection of IRows.
     /// </summary>
-    public interface IResultSet : ICollection<IRow>
+    public interface IResultSet : ICollectionWrapper<IRow>
     {
+        //////////////////////
+        // Properties.
+        //////////////////////
+
+        /// <summary>
+        /// Collection of <see cref="IRow"/> rows.
+        /// </summary>
+        List<IRow> Rows { get; }
+
+        /// <summary>
+        /// Number of rows affected by an SQL query.
+        /// </summary>
+        int RowsAffected { get; }
+
+        /// <summary>
+        /// SQL query associated with a result set.
+        /// </summary>
+        string Query { get; }
         
         //////////////////////
-        // Service(s).
-
-        /// <summary>
-        /// Check if the result set has at least as many rows as the specified input.
-        /// </summary>
-        /// <param name="count">Amount of rows to check if result set has.</param>
-        /// <returns>Returns true if count is greater than or equal to input value.</returns>
-        bool HasThisMany(int count);
-
-        /// <summary>
-        /// Check if result set has any rows.
-        /// </summary>
-        /// <returns>Returns true if empty.</returns>
-        bool IsEmpty();
-
-        /// <summary>
-        /// Return a cloned copy of the results.
-        /// </summary>
-        /// <returns>Returns a results set.</returns>
-        IResultSet Clone();
-
+        // Method(s).
+        //////////////////////
+        
         //////////////////////
         // Accessor(s).
 
@@ -87,232 +280,403 @@ namespace ISTE.DAL.Database.Interfaces
         /// <returns>Returns stored number of rows.</returns>
         int GetRowsAffected();
 
+        /// <summary>
+        /// Query associated with this result set.
+        /// </summary>
+        /// <returns>Returns the stored query.</returns>
+        string GetQuery();
+
+        /// <summary>
+        /// Return a subset of cloned rows from the current instance, using the input parameters to narrow selection.
+        /// </summary>
+        /// <param name="start">Start index of subset parsing.</param>
+        /// <param name="length">Length of subset parsing.</param>
+        /// <returns>Returns new collection of rows.</returns>
+        List<IRow> GetRange(int start = 0, int length = -1);
+
+        /// <summary>
+        /// Return an entry from a given [row, col] indexing system.
+        /// </summary>
+        /// <param name="rowIndex">Row index to access.</param>
+        /// <param name="fieldIndex">Field index to access.</param>
+        /// <returns>Returns entry. Will throw exception if index out of bounds.</returns>
+        IEntry GetEntry(int rowIndex, int fieldIndex);
+
+        /// <summary>
+        /// Return an entry from a given [row, key] indexing system.
+        /// </summary>
+        /// <param name="rowIndex">Row index to access.</param>
+        /// <param name="fieldKey">Field to access.</param>
+        /// <returns>Returns entry. Will throw exception if index out of bounds. Returns null if field cannot be found.</returns>
+        IEntry GetEntry(int rowIndex, string fieldKey);
+
+        /// <summary>
+        /// Creates a list of entries corresponding to the input fieldindex from all rows.
+        /// </summary>
+        /// <param name="fieldIndex">Field index to access entries from.</param>
+        /// <returns>Returns collection of entries (by reference).</returns>
+        List<IEntry> GetEntries(int fieldIndex);
+
+        /// <summary>
+        /// Creates a list of entries corresponding to the input fieldindex from all rows.
+        /// </summary>
+        /// <param name="fieldname">Field to access entries from.</param>
+        /// <returns>Returns collection of entries (by reference).</returns>
+        List<IEntry> GetEntries(string fieldname);
+        
+        //////////////////////
+        // Mutator(s).
+
+        /// <summary>
+        /// Set the value of rows affected due to query execution.
+        /// </summary>
+        /// <param name="rowsAffected">Value to set.</param>
+        /// <returns>Returns reference to self.</returns>
+        IResultSet SetRowsAffected(int rowsAffected);
+
+        /// <summary>
+        /// Set the SQL query associated with this result set.
+        /// </summary>
+        /// <param name="query">Query to set.</param>
+        /// <returns>Returns reference to self.</returns>
+        IResultSet SetQuery(string query);
+                
     }
 
     /// <summary>
     /// IRows wrap functionality for a collection of entries.
     /// </summary>
-    public interface IRow : ICollection<IEntry>, ICollection<string>
+    public interface IRow : ICollectionWrapper<IEntry>, ICollectionWrapper<string>, INullable, IComparable, IFieldNameValidator
     {
+
+        //////////////////////
+        // Properties.
+        //////////////////////
+
+        /// <summary>
+        /// Check if this collection contains any non-zero amount of fields.
+        /// </summary>
+        bool HasFields { get; }
+
+        //////////////////////
+        // Method(s).
+        //////////////////////
+
         //////////////////////
         // Service(s).
 
         /// <summary>
-        /// Check if the row contains entries.
+        /// Check if all fields are present in a row.
         /// </summary>
-        /// <returns>Returns true if there is at least one entry in this row.</returns>
-        bool HasEntries();
+        /// <param name="fieldnames">Collection of field names to look for.</param>
+        /// <returns>Returns true if ALL names are found.</returns>
+        bool Contains(List<string> fieldnames);
 
         /// <summary>
-        /// Check if an entry exists where associated for a particular field.
+        /// Check if all fields are present in a row.
         /// </summary>
-        /// <param name="field">Field to check if entry exists for.</param>
-        /// <returns>Returns true if entry AND field exists.</returns>
-        bool HasEntry(string field);
-        
-        /// <summary>
-        /// Check if row contains a particular field.
-        /// </summary>
-        /// <param name="field">Field to check for.</param>
-        /// <returns>Returns true if field exists.</returns>
-        bool HasField(string field);
+        /// <param name="fieldnames">Collection of field names to look for.</param>
+        /// <returns>Returns true if ALL names are found.</returns>
+        bool Contains(params string[] fieldnames);
 
         /// <summary>
-        /// Check if row contains all fields in a set of fields.
+        /// Check if all entries are present, with matching fields AND matching values.
         /// </summary>
-        /// <param name="fields">Fields to check for.</param>
-        /// <returns>Returns true if ALL field exists.</returns>
-        bool HasFields(List<string> fields);
+        /// <param name="entries">Collection of entries to compare.</param>
+        /// <returns>Returns true if ALL entries and fields are found.</returns>
+        bool Contains(List<IEntry> entries);
 
         /// <summary>
-        /// Check if row contains all fields in a set of fields.
+        /// Check if all entries are present, with matching fields AND matching values.
         /// </summary>
-        /// <param name="fields">Fields to check for.</param>
-        /// <returns>Returns true if ALL field exists.</returns>
-        bool HasFields(params string[] fields);
+        /// <param name="entries">Collection of entries to compare.</param>
+        /// <returns>Returns true if ALL entries and fields are found.</returns>
+        bool Contains(params IEntry[] entries);
 
-        /// <summary>
-        /// Check if row contains the input index.
-        /// </summary>
-        /// <param name="fieldIndex">Index to accomodate.</param>
-        /// <returns>Returns true if not empty and index is within bounds.</returns>
-        bool HasIndex(int fieldIndex);
-        
-        /// <summary>
-        /// Return a clone of this row.
-        /// </summary>
-        /// <returns>Returns reference to this row's clone.</returns>
-        IRow Clone();
-
-        /// <summary>
-        /// Check if the row has no fields.
-        /// </summary>
-        /// <returns>Returns true if empty.</returns>
-        bool IsEmpty();
-        
         //////////////////////
         // Accessor(s).
 
         /// <summary>
-        /// Find index of a particular field. Returns -1 if it doesn't exist.
+        /// Get tabular data linking a fieldname to a value.
         /// </summary>
-        /// <param name="field">Field to search for.</param>
-        /// <returns>Return the index of the given field.</returns>
-        int GetFieldIndex(string field);
+        /// <param name="index">Field index to get data from.</param>
+        /// <returns>Returns key/value pair if field exists at index. Throws exception if index out of bounds.</returns>
+        KeyValuePair<string, string> GetData(int index);
 
         /// <summary>
-        /// Return field alias associated with a particular index.
+        /// Get tabular data linking a fieldname to a value.
         /// </summary>
-        /// <param name="fieldIndex">Index of field to search for.</param>
-        /// <returns>Returns string holding the field alias. Will throw an index out of bounds exception when index is out of bounds.</returns>
-        string GetFieldName(int fieldIndex);
+        /// <param name="fieldname">Fieldname to search data from.</param>
+        /// <returns>Returns key/value pair if field exists at index. Returns null if fieldname doesn't exist.</returns>
+        KeyValuePair<string, string> GetData(string fieldname);
 
         /// <summary>
-        /// Return field count. 
+        /// Return the fieldname at the specified index.
         /// </summary>
-        /// <returns>Returns integer representing number of fields in a row.</returns>
-        int GetFieldCount();
+        /// <param name="index">Field index to access.</param>
+        /// <returns>Returns formatted fieldname. Throws exception if index out of bounds.</returns>
+        string GetFieldName(int index);
 
         /// <summary>
-        /// Find entry associated with a field, by the field index.
+        /// Return entry at field index.
         /// </summary>
-        /// <param name="fieldIndex">Index of the field to search for.</param>
-        /// <returns>Returns the IEntry object.</returns>
-        IEntry GetEntry(int fieldIndex);
+        /// <param name="index">Field index to access.</param>
+        /// <returns>Returns entry. Throws exception if index out of bounds.</returns>
+        IEntry GetEntry(int index);
 
         /// <summary>
-        /// Find first matching entry by field alias.
+        /// Return entry associated with the field.
         /// </summary>
-        /// <param name="fieldName">Field alias to look for.</param>
-        /// <returns>Returns the IEntry object.</returns>
-        IEntry GetEntry(string fieldName);
+        /// <param name="fieldname">Field to access.</param>
+        /// <returns>Returns entry. Returns null if field doesn't exist.</returns>
+        IEntry GetEntry(string fieldname);
 
         /// <summary>
-        /// Return entry count.
+        /// Return entry value from the specified index.
         /// </summary>
-        /// <returns>Returns integer counting how many entries are in a field.</returns>
-        int GetEntryCount();
+        /// <param name="index">Field index to access.</param>
+        /// <returns>Returns stored value. Throws exception if index out of bounds.</returns>
+        string GetValue(int index);
 
         /// <summary>
-        /// Returns a row object containing entries that match with the input collection of field names. Missing fields will trigger an error.
+        /// Return entry value from the specified field.
         /// </summary>
-        /// <param name="fields">Fields to check for.</param>
-        /// <returns>Returns a new IRow object.</returns>
-        IRow GetRange(List<string> fields);
+        /// <param name="fieldname">Field to access.</param>
+        /// <returns>Returns stored value. Returns a "NULL" if the field doesn't exist.</returns>
+        string GetValue(string fieldname);
 
         /// <summary>
-        /// Returns a row object containing entries that match with the input collection of field names. Missing fields will trigger an error.
+        /// Returns a subset of this row, as a new row, using the input values.
         /// </summary>
-        /// <param name="fields">Fields to check for.</param>
-        /// <returns>Returns a new IRow object.</returns>
-        IRow GetRange(params string[] fields);
+        /// <param name="start">Starting index to begin subset parsing.</param>
+        /// <param name="length">Length of subset parsing.</param>
+        /// <returns>Returns a new row.</returns>
+        IRow GetRowRange(int start = 0, int length = -1);
 
         /// <summary>
-        /// Returns a row object containing elements via a range of index values. If the start index is out of index bounds, it will trigger an error. The length will not trigger an error if not specified/if greater than the length of the row.
+        /// Returns a subset of this row, as a new row, containing all the input fieldnames.
+        /// <para>Fieldnames that don't exist in the current row will have null entries in the returned value.</para>
         /// </summary>
-        /// <param name="start">Starting index to begin range at.</param>
-        /// <param name="length">Length of elements to search for. -1 by default.</param>
-        /// <returns>Returns a new IRow object.</returns>
-        IRow GetRange(int start, int length = -1);
+        /// <param name="fieldnames">Collection of fieldnames that should be in the new row.</param>
+        /// <returns>Returns a new row.</returns>
+        IRow GetRowRange(List<string> fieldnames);
+
+        /// <summary>
+        /// Returns a subset of this row, as a new row, containing all the input fieldnames.
+        /// <para>Fieldnames that don't exist in the current row will have null entries in the returned value.</para>
+        /// </summary>
+        /// <param name="fieldnames">Collection of fieldnames that should be in the new row.</param>
+        /// <returns>Returns a new row.</returns>
+        IRow GetRowRange(params string[] fieldnames);
+
+        /// <summary>
+        /// Returns a subset of this row, as a list of entries, using the input values.
+        /// </summary>
+        /// <param name="start">Starting index to begin subset parsing.</param>
+        /// <param name="length">Length of subset parsing.</param>
+        /// <returns>Returns a new collection of entries.</returns>
+        List<IEntry> GetRange(int start = 0, int length = -1);
+
+        /// <summary>
+        /// Returns a subset of this row, as a list of entries, containing all the input fieldnames.
+        /// <para>Fieldnames that don't exist in the current row will be ignored.</para>
+        /// </summary>
+        /// <param name="fieldnames">Collection of fieldnames that should be in the new collection.</param>
+        /// <returns>Returns a new collection of entries.</returns>
+        List<IEntry> GetRange(List<string> fieldnames);
+
+        /// <summary>
+        /// Returns a subset of this row, as a list of entries, containing all the input fieldnames.
+        /// <para>Fieldnames that don't exist in the current row will be ignored.</para>
+        /// </summary>
+        /// <param name="fieldnames">Collection of fieldnames that should be in the new collection.</param>
+        /// <returns>Returns a new collection of entries.</returns>
+        List<IEntry> GetRange(params string[] fieldnames);
 
         //////////////////////
         // Mutator(s).
 
         /// <summary>
-        /// Set field at existing index to new value. Will change field name for associated entry. Will fail if field already exists or index is out of bounds.
+        /// Set the fieldname at a particular index, formatting the input, renaming the entry associated with the index.
         /// </summary>
-        /// <param name="fieldIndex">Field index to set.</param>
-        /// <param name="fieldAlias">Field alias to add.</param>
+        /// <param name="index">Field index to access.</param>
+        /// <param name="fieldname">Field to set.</param>
         /// <returns>Returns reference to self.</returns>
-        IRow SetField(int fieldIndex, string fieldAlias);
+        IRow SetFieldName(int index, string fieldname);
 
         /// <summary>
-        /// Add a field to the field name collection. 
+        /// Set entry at field index to the input entry reference.
         /// </summary>
-        /// <param name="fieldAlias">Field alias to add.</param>
+        /// <param name="index">Field index to access.</param>
+        /// <param name="entry">Entry to set.</param>
         /// <returns>Returns reference to self.</returns>
-        IRow AddField(string fieldAlias);
+        IRow SetEntry(int index, IEntry entry);
 
         /// <summary>
-        /// Removes a field alias from the collection, along with its associated entry.
+        /// Set entry with matching fieldname to the input entry clone. Will overwrite fieldname on cloned entry.
         /// </summary>
-        /// <param name="field">Field alias to search for.</param>
-        /// <returns>Returns the removed entry.</returns>
-        IEntry RemoveField(string field);
-
-        /// <summary>
-        /// Removes a field alias from the collection, based on its index, along with its associated entry.
-        /// </summary>
-        /// <param name="fieldIndex">Field index to check.</param>
-        /// <returns>Returns the removed entry. Throws index out of bounds exception if field index is out of bounds.</returns>
-        IEntry RemoveField(int fieldIndex);
-
-        /// <summary>
-        /// Set entry at existing index to new value. Will fail if field doesn't exist.
-        /// </summary>
-        /// <param name="fieldAlias">Field to set entry for.</param>
-        /// <param name="entry">Entry to add.</param>
+        /// <param name="fieldname">Field to access.</param>
+        /// <param name="entry">Entry to set.</param>
         /// <returns>Returns reference to self.</returns>
-        IRow SetEntry(string fieldAlias, IEntry entry);
+        IRow SetEntry(string fieldname, IEntry entry);
 
         /// <summary>
-        /// Create and then add an entry to the collection, adding a field in the process. Will overwrite existing entry if the field already exists.
+        /// Set entry with matching fieldname to the input entry reference. Will only add if the entry's field exists in the row.
         /// </summary>
-        /// <param name="field">Field alias to assign to new entry.</param>
-        /// <param name="value">Value to give to the particular entry.</param>
-        /// <returns>Returns the newly created entry.</returns>
-        IEntry AddEntry(string field, string value);
+        /// <param name="entry">Entry to set.</param>
+        /// <returns>Returns reference to self.</returns>
+        IRow SetEntry(IEntry entry);
 
         /// <summary>
-        /// Adds entry to the collection, also creating a field alias if it doesn't exist. Will replace existing entries associated with that field.
+        /// Set entry value at a particular field index.
         /// </summary>
-        /// <param name="entry">Entry to add.</param>
-        /// <returns>Returns the added entry.</returns>
+        /// <param name="index">Field index to access.</param>
+        /// <param name="value">Value to set on entry.</param>
+        /// <returns>Returns reference to self. Throws exception if index out of bounds.</returns>
+        IRow SetValue(int index, string value);
+
+        /// <summary>
+        /// Set entry value at a particular field.
+        /// </summary>
+        /// <param name="fieldname">Field to access.</param>
+        /// <param name="value">Value to set on entry.</param>
+        /// <returns>Returns reference to self. Returns null if field doesn't exist.</returns>
+        IRow SetValue(string fieldname, string value);
+
+        /// <summary>
+        /// Insert field (and corresponding null entry) at specified index.
+        /// <para>All elements from the matching index onwards are shifted to the right.</para>
+        /// <para>This operation will return null if the field already exists.</para>
+        /// </summary>
+        /// <param name="index">Field index to access.</param>
+        /// <param name="fieldname">Fieldname to create field with.</param>
+        /// <returns>Returns null entry.</returns>
+        IEntry InsertField(int index, string fieldname);
+
+        /// <summary>
+        /// Insert entry at specified index, using the entry's fieldname.
+        /// <para>This operation will return null if the field already exists.</para>
+        /// </summary>
+        /// <param name="index">Field index to access.</param>
+        /// <param name="entry">Entry to create field and entry with.</param>
+        /// <returns>Returns reference to inserted entry.</returns>
+        IEntry InsertEntry(int index, IEntry entry);
+
+        /// <summary>
+        /// Insert entry at specified index, using the input fieldname.
+        /// <para>Entry is cloned and fieldname on entry's clone is overwritten with input.</para>
+        /// <para>This operation will return null if the field already exists.</para>
+        /// </summary>
+        /// <param name="index">Field index to access.</param>
+        /// <param name="fieldname">Fieldname to create field with.</param>
+        /// <param name="entry">Entry to create field and entry with.</param>
+        /// <returns>Returns reference to inserted entry.</returns>
+        IEntry InsertEntry(int index, string fieldname, IEntry entry);
+
+        /// <summary>
+        /// Insert new entry at specified index, using the input fieldname and input value.
+        /// <para>This operation will return null if the field already exists.</para>
+        /// </summary>
+        /// <param name="index">Field index to access.</param>
+        /// <param name="fieldname">Fieldname to create field with.</param>
+        /// <param name="value">Value to create entry with.</param>
+        /// <returns>Returns reference to inserted entry.</returns>
+        IEntry InsertEntry(int index, string fieldname, string value);
+
+        /// <summary>
+        /// Add a unqiue fieldname, formatting the input and creating a null entry to go along with it.
+        /// <para>This operation will return null if the field already exists.</para>
+        /// </summary>
+        /// <param name="fieldname">Unique field to add.</param>
+        /// <returns>Return null entry that has been associated with the field.</returns>
+        IEntry AddField(string fieldname);
+
+        /// <summary>
+        /// Add entry, if and only if, it has a unique fieldname.
+        /// <para>This operation will return null if the field already exists.</para>
+        /// </summary>
+        /// <param name="entry">Entry to add to the collection.</param>
+        /// <returns>Returns reference to added entry.</returns>
         IEntry AddEntry(IEntry entry);
 
         /// <summary>
-        /// Removes entry from the collection. The associated field is not removed and instead is given a null entry.
+        /// Add entry, using input unique fieldname. Will clone entry and overwrite clone's fieldname with input.
+        /// <para>This operation will return null if the field already exists.</para>
         /// </summary>
-        /// <param name="fieldIndex">Field index of entry affected.</param>
-        /// <returns>Returns the removed entry.</returns>
-        IEntry RemoveEntry(int fieldIndex);
-        
-        /// <summary>
-        /// Removes entry from the collection. The associated field is not removed and instead is given a null entry.
-        /// </summary>
-        /// <param name="fieldAlias">Field alias of entry affected.</param>
-        /// <returns>Returns the removed entry.</returns>
-        IEntry RemoveEntry(string fieldAlias);
+        /// <param name="fieldname">Unique field to add.</param>
+        /// <param name="entry">Entry to add to the collection.</param>
+        /// <returns>Returns reference to added entry.</returns>
+        IEntry AddEntry(string fieldname, IEntry entry);
 
         /// <summary>
-        /// Removes entry from the collection. The associated field is not removed and instead is given a null entry.
+        /// Add entry, using input unique fieldname and input value.
         /// </summary>
-        /// <param name="entry">Entry to move.</param>
-        /// <returns>Returns the removed entry.</returns>
-        IEntry RemoveEntry(IEntry entry);
+        /// <param name="fieldname">Unique field to add.</param>
+        /// <param name="value">Value to create new entry with.</param>
+        /// <returns>Returns reference to newly created entry.</returns>
+        IEntry AddEntry(string fieldname, string value);
+
+        /// <summary>
+        /// Remove field at input index and associated entry from the collection.
+        /// </summary>
+        /// <param name="index">Field index to access.</param>
+        /// <returns>Returns clone of removed entry. Will throw exception if index out of bounds.</returns>
+        IEntry RemoveField(int index);
+
+        /// <summary>
+        /// Remove field and associated entry from the collection.
+        /// </summary>
+        /// <param name="fieldname">Field to access.</param>
+        /// <returns>Returns clone of removed entry. Returns null if field does not exist.</returns>
+        IEntry RemoveField(string fieldname);
         
+        /// <summary>
+        /// Will make entry associated with the field index null.
+        /// </summary>
+        /// <param name="index">Field index to access.</param>
+        /// <returns>Returns clone of removed entry. Will throw exception if index out of bounds.</returns>
+        IEntry RemoveEntry(int index);
+
+        /// <summary>
+        /// Will make entry associated with the field null.
+        /// </summary>
+        /// <param name="fieldname">Field to access.</param>
+        /// <returns>Returns clone of removed entry. Returns null if field does not exist.</returns>
+        IEntry RemoveEntry(string fieldname);
+
+        /// <summary>
+        /// Will make entry associated with the field null.
+        /// </summary>
+        /// <param name="entry">Entry to attempt to remove.</param>
+        /// <returns>Returns clone of removed entry. Returns null if field does not exist.</returns>
+        IEntry RemoveEntry(IEntry entry);                
     }
-    
+
     /// <summary>
     /// IEntries wraps functionality for a key/value pair.
     /// </summary>
-    public interface IEntry
+    public interface IEntry : IReplicate, INullable, IFieldNameValidator, IComparable
     {
         //////////////////////
-        // Service(s).
-        
-        /// <summary>
-        /// Clone the current entry and return a new, identical one.
-        /// </summary>
-        /// <returns>Returns a copy of this entry.</returns>
-        IEntry Clone();
+        // Properties.
+        //////////////////////
 
         /// <summary>
-        /// Checks if key matches input.
+        /// Field associated with an entry.
         /// </summary>
-        /// <param name="key">Value to check against.</param>
-        /// <returns>Returns true if matched.</returns>
-        bool HasField(string key);
+        string Field { get; }
+
+        /// <summary>
+        /// Value associated with a field.
+        /// </summary>
+        string Value { get; }
+
+        //////////////////////
+        // Method(s).
+        //////////////////////
+
+        //////////////////////
+        // Service(s).
 
         /// <summary>
         /// Checks if value matches input. Returns false when value is 'NULL'.
@@ -320,13 +684,7 @@ namespace ISTE.DAL.Database.Interfaces
         /// <param name="value">Value to check against.</param>
         /// <returns>Returns true if matched.</returns>
         bool HasValue(string value);
-
-        /// <summary>
-        /// Check if a given entry's value is null.
-        /// </summary>
-        /// <returns>Return true if value is an empty string or null.</returns>
-        bool IsNull();
-
+        
         //////////////////////
         // Accessor(s).
 

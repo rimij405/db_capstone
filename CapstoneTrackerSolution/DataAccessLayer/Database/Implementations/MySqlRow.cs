@@ -138,31 +138,73 @@ namespace ISTE.DAL.Database
         /// Construct a row with a predetermined set of fields.
         /// </summary>
         /// <param name="fields">Fields to construct object with.</param>
-        public MySqlRow(List<string> fields) { throw new NotImplementedException("Need to create mutators."); }
+        public MySqlRow(List<string> fields)
+        {
+            // Validate input.
+            if (fields == null || fields.Count <= 0) { return; }
+            
+            foreach(string field in fields)
+            {
+                this.AddField(field);
+            }
+        }
 
         /// <summary>
         /// Construct a row with a predetermined set of fields.
         /// </summary>
         /// <param name="fields">Fields to construct object with.</param>
-        public MySqlRow(params string[] fields) { throw new NotImplementedException("Need to create mutators."); }
+        public MySqlRow(params string[] fields)
+            : this(fields.ToList<string>())
+        {
+            // Call other constructor.
+        }
 
         /// <summary>
         /// Construct a row from a collection of <see cref="MySqlEntry"/> entries.
         /// </summary>
         /// <param name="entries">Entries inhabiting the row.</param>
-        public MySqlRow(List<MySqlEntry> entries) { throw new NotImplementedException("Need to create mutators."); }
+        public MySqlRow(List<MySqlEntry> entries)
+        {
+            // Validate input.
+            if (entries == null || entries.Count <= 0) { return; }
+
+            foreach (MySqlEntry entry in entries)
+            {
+                this.AddEntry(entry);
+            }
+        }
 
         /// <summary>
         /// Construct a row from a collection of <see cref="MySqlEntry"/> entries.
         /// </summary>
         /// <param name="entries">Entries inhabiting the row.</param>
-        public MySqlRow(params MySqlEntry[] entries) { throw new NotImplementedException("Need to create mutators."); }
+        public MySqlRow(params MySqlEntry[] entries)
+            : this(entries.ToList<MySqlEntry>())
+        {
+            // Call other constructor.
+        }
 
         /// <summary>
         /// Copy constructor.
         /// </summary>
         /// <param name="row">Other row to clone.</param>
-        public MySqlRow(MySqlRow row) { throw new NotImplementedException("Need to create clone method."); }
+        public MySqlRow(MySqlRow row)
+        {
+            // Clone.
+            if (row != null) {
+                foreach(string field in row.Fields)
+                {
+                    this.Fields.Add(field);
+                }
+
+                foreach(MySqlEntry entry in row.Entries)
+                {
+                    this.Entries.Add(entry.Clone() as MySqlEntry);
+                }
+
+                this.IsReadOnly = row.IsReadOnly;
+            }
+        }
 
         //////////////////////
         // Method(s).
@@ -258,7 +300,7 @@ namespace ISTE.DAL.Database
         /// </summary>
         /// <returns>Returns true if empty.</returns>
         public bool IsEmpty() {
-            return (this.Count > 0);
+            return (this.Count <= 0);
         }
 
         /// <summary>
@@ -311,6 +353,22 @@ namespace ISTE.DAL.Database
         /// <param name="arrayIndex">Starting index.</param>
         public void CopyTo(string[] fieldArray, int arrayIndex = 0) {
             this.Fields.CopyTo(fieldArray, arrayIndex);
+        }
+
+        /// <summary>
+        /// Format the row as a string.
+        /// </summary>
+        /// <returns>Return information as a formatted string.</returns>
+        public override string ToString()
+        {
+            string format = $"  MySqlRow: {((this.Count > 0) ? "{" : "{}" )}";
+
+            for (int index = 0; index < this.Count; index++)
+            {
+                format += "\n    " + $"{{ Field: {this.Fields[index]}, Entry: ({this.Entries[index]}) }}{(((index + 1) < this.Count && this.Count > 1) ? "," : "\n  }")}";
+            }
+
+            return format;
         }
 
         //////////////////////
@@ -469,7 +527,9 @@ namespace ISTE.DAL.Database
         {
             // Validate the inputs.
             string alias = this.FormatField(fieldAlias);
-            if(!this.IsValidField(alias) || !this.HasField(alias) || !this.HasEntry(alias)) { return this; }
+            if(!this.IsValidField(alias) || !this.HasField(alias) || !this.HasEntry(alias)) {
+                return this;
+            }
 
             // Overwrite existing field's entry.
             this.Entries[this.GetFieldIndex(alias)] = entry as MySqlEntry;
@@ -479,7 +539,28 @@ namespace ISTE.DAL.Database
         }
 
         /// <summary>
-        /// Create and then add an entry to the collection, adding a field in the process. Will overwrite existing entry if the field already exists.
+        /// Set entry at existing index to new value. Will fail if field doesn't exist.
+        /// </summary>
+        /// <param name="fieldAlias">Field to set entry for.</param>
+        /// <param name="value">Value to assign to entry.</param>
+        /// <returns>Returns reference to self.</returns>
+        public IRow SetEntry(string fieldAlias, string value)
+        {
+            // Validate the inputs.
+            string alias = this.FormatField(fieldAlias);
+            if (!this.IsValidField(alias) || !this.HasField(alias) || !this.HasEntry(alias) || value.Length == 0) {
+                return this;
+            }
+
+            // Overwrite existing field's entry.
+            this.Entries[this.GetFieldIndex(alias)].SetData(alias, value);
+
+            // Reference to self.
+            return this;
+        }
+
+        /// <summary>
+        /// Create and then add an entry to the collection, adding a field in the process. Will throw error if field already exists.
         /// </summary>
         /// <param name="field">Field alias to assign to new entry.</param>
         /// <param name="value">Value to give to the particular entry.</param>
@@ -488,20 +569,16 @@ namespace ISTE.DAL.Database
         {
             // Validate the inputs.
             string alias = this.FormatField(field);
-            if(!this.IsValidField(alias)) { return null; }
 
             // Create the entry object.
             MySqlEntry entry = new MySqlEntry(alias, value);
             
             // Add entry, overwriting if there are conflicts.
-            this.AddEntry(entry);
-
-            // Return the added object.
-            return entry;
+            return this.AddEntry(entry); // Return the added object.            
         }
 
         /// <summary>
-        /// Adds entry to the collection, also creating a field alias if it doesn't exist. Will replace existing entries associated with that field.
+        /// Adds entry to the collection, also creating a field alias if it doesn't exist. Will throw error if field already exists.
         /// </summary>
         /// <param name="entry">Entry to add.</param>
         /// <returns>Returns the added entry.</returns>
@@ -509,14 +586,20 @@ namespace ISTE.DAL.Database
         {
             // Validate the inputs.
             if(entry != null) {
-                // Get field.
+
+                // Check if this already has supplied field.
                 if (!this.HasField(entry.GetField()))
                 {
+                    // Add the field if it doesn't have it.
                     this.AddField(entry.GetField());
+
+                    // Add the entry to the collection.
+                    this.SetEntry(entry.GetField(), entry);
+
+                    return entry;
                 }
 
-                // Set entry.
-                this.SetEntry(entry.GetField(), entry);
+                throw new InvalidOperationException("Cannot add entry as one already exists with the matching field.");
             }
 
             return entry;

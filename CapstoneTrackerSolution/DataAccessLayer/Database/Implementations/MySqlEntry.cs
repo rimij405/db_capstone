@@ -17,7 +17,7 @@ namespace ISTE.DAL.Database
     /// <summary>
     /// Represents a field-value pair to be returned from a MySqlDatabase class via a MySqlResultSet.
     /// </summary>
-    public class MySqlEntry : IEntry
+    public struct MySqlEntry : IEntry
     {
 
         //////////////////////
@@ -61,10 +61,18 @@ namespace ISTE.DAL.Database
             private set { this.value = value; }
         }
 
+        /// <summary>
+        /// Check if the currently stored value is null.
+        /// </summary>
+        public bool IsNull
+        {
+            get { return this.HasValue(MySqlEntry.NULL_VALUE); }
+        }
+
         //////////////////////
         // Constructor(s).
         //////////////////////
-
+        
         /// <summary>
         /// Construct a null entry using just a field value.
         /// </summary>
@@ -72,6 +80,8 @@ namespace ISTE.DAL.Database
         public MySqlEntry(string field)
         {
             // Default set.
+            this.field = "";
+            this.value = "NULL";
             this.SetData(field, MySqlEntry.NULL_VALUE);
         }
 
@@ -82,6 +92,9 @@ namespace ISTE.DAL.Database
         /// <param name="value">Value.</param>
         public MySqlEntry(string field, string value)
         {
+            // Default set.
+            this.field = "";
+            this.value = "NULL";
             // Set the field and value.
             this.SetData(field, value);
         }
@@ -92,6 +105,9 @@ namespace ISTE.DAL.Database
         /// <param name="entry">Entry to copy from.</param>
         public MySqlEntry(IEntry entry)
         {
+            // Default set.
+            this.field = "";
+            this.value = "NULL";
             // Set the field and value based off of the clone.
             this.SetData(entry.GetField(), entry.GetValue());
         }
@@ -103,15 +119,6 @@ namespace ISTE.DAL.Database
         //////////////////////
         // Service(s).
 
-        /// <summary>
-        /// Clone the entry and return the copy.
-        /// </summary>
-        /// <returns>Return clone of self.</returns>
-        public IEntry Clone()
-        {
-            return new MySqlEntry(this);
-        }
-        
         /// <summary>
         /// Check if this matches the input field. Case insensitive. Whitespace trimmed.
         /// </summary>
@@ -131,34 +138,41 @@ namespace ISTE.DAL.Database
         {
             return (this.Value == value);
         }
-
-        /// <summary>
-        /// Check if the currently stored value is null.
-        /// </summary>
-        /// <returns>Returns true if current value is "NULL".</returns>
-        public bool IsNull()
-        {
-            return this.HasValue(MySqlEntry.NULL_VALUE);
-        }
-
+        
         /// <summary>
         /// Return a formatted string describing a single entry.
         /// </summary>
         /// <returns>Returns formatted string.</returns>
         public override string ToString()
         {
-            return $"MySqlEntry {{Field: {this.Field}, Value: {this.Value}, IsNull: {this.IsNull()}}}";
+            return $"MySqlEntry {{Field: {this.Field}, Value: {this.Value}, IsNull: {this.IsNull}}}";
         }
 
-        //////////////////////
-        // Helper(s).
+        /// <summary>
+        /// Clone the entry and return the copy.
+        /// </summary>
+        /// <returns>Return clone of self.</returns>
+        public IReplicate Clone()
+        {
+            return new MySqlEntry(this);
+        }
 
+        /// <summary>
+        /// Sets the value to null.
+        /// </summary>
+        /// <returns>Returns reference to self.</returns>
+        public INullable MakeNull()
+        {
+            this.SetValue(MySqlEntry.NULL_VALUE);
+            return this;
+        }
+        
         /// <summary>
         /// Returns a trimmed, all caps string, based off of input.
         /// </summary>
         /// <param name="input">Input to capitalize and trim of whitespace.</param>
         /// <returns>Returns formatted string.</returns>
-        private string FormatField(string input)
+        public string FormatField(string input)
         {
             if (input.Length <= 0) { return ""; }
             return input.Trim().ToUpper();
@@ -169,10 +183,53 @@ namespace ISTE.DAL.Database
         /// </summary>
         /// <param name="input">Input to check.</param>
         /// <returns>Returns true if valid.</returns>
-        private bool IsValidField(string input)
+        public bool IsValidField(string input)
         {
             if (input.Length <= 0) { return false; }
             return true;
+        }
+
+        /// <summary>
+        /// Compare MySqlEntry to another type of <see cref="IEntry"/> by it's value.
+        /// </summary>
+        /// <param name="obj">Entry to compare with.</param>
+        /// <returns>Returns integer declaring sort order in relation to the object passed in.</returns>
+        public int CompareTo(object obj)
+        {
+            if (obj != null && obj is IEntry entry)
+            {
+
+                // If the same, return 0.
+                if (this.Equals(obj)) { return 0; }
+
+                // Check if fields match.
+                // If true: Return based on the value comparison.
+                // Else: Fields don't match, return based on the field name comparison.
+                return ((this.Field.Equals(entry.Field)) ? (this.Value.CompareTo(entry.Value)) : (this.Field.CompareTo(entry.Field)));
+                
+            }
+
+            // If not of a compatible type, return nothing.
+            throw new ArgumentException("Input object is not of type IEntry.");
+        }
+
+        /// <summary>
+        /// Checks equality between entries.
+        /// </summary>
+        /// <param name="obj">Object to check equality with.</param>
+        /// <returns>Returns true if equal and of same IEntry type. Returns false, if otherwise.</returns>
+        public override bool Equals(object obj)
+        {
+            return ((obj is IEntry entry) && (this.Field == entry.Field) && (this.Value == entry.Value));
+        }
+
+        /// <summary>
+        /// Gets the entry hashcode.
+        /// </summary>
+        /// <returns>Returns hashcode.</returns>
+        public override int GetHashCode()
+        {
+            return this.Field.GetHashCode() ^ this.Value.GetHashCode();
         }
 
         //////////////////////
@@ -253,7 +310,6 @@ namespace ISTE.DAL.Database
         public KeyValuePair<string, string> GetData()
         {
             return new KeyValuePair<string, string>(this.Field, this.Value);
-        }
-
+        }        
     }
 }

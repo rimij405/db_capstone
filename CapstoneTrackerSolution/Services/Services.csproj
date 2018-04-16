@@ -41,9 +41,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="CustomException.cs" />
-    <Compile Include="Logger.cs" />
-    <Compile Include="Printer.cs" />
+    <Compile Include="ErrorHandling\CustomException.cs" />
+    <Compile Include="IO\Logger.cs" />
+    <Compile Include="IO\Printer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
