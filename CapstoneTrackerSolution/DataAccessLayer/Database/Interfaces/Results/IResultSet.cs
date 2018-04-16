@@ -4,6 +4,12 @@
     ---
     Contains a family of cooperating interfaces:
     - IResultPrinter - Print result set items.
+    - IReplicate - Allows implementations to be cloned with a deep copy.
+    - INulllable - Allows objects to wrap a 'null' value.
+    - IEmpty - Allows objects to be considered as 'empty'.
+    - IFieldNameValidator - A series of functions designed to make field name handling easier.
+    - ICollectionWrapper - A series of functions designed to make field entries and rows easier to handle.
+    - ICollectionWrapper<T> - A series of type-specific functions for adding and removing type T elements.
     - IResultSet - A collection of IRows.
     - IRow - A collection of fields, and then a collection of entries associated with each of the fields.
     - IEntry - A collection of field-data key/value pairs.
@@ -145,14 +151,16 @@ namespace ISTE.DAL.Database.Interfaces
     }
 
     /// <summary>
-    /// Custom collection wrapper functions.
+    /// General ICollectionWrapper with implementation propreties and methods.
     /// </summary>
-    /// <typeparam name="TItem">Type of object stored by this collection.</typeparam>
-    public interface ICollectionWrapper<TItem> : ICollection<TItem>, IReplicate, IEmpty where TItem : IComparable
+    public interface ICollectionWrapper : IReplicate, IEmpty
     {
         //////////////////////
-        // Properties.
+        // Method(s).
         //////////////////////
+
+        //////////////////////
+        // Service(s).
 
         /// <summary>
         /// Check if the collection has at least this many items.
@@ -174,7 +182,14 @@ namespace ISTE.DAL.Database.Interfaces
         /// <param name="index">Index to check for.</param>
         /// <returns>Returns true if the index is in bounds. False, if otherwise.</returns>
         bool HasIndex(int index);
+    }
 
+    /// <summary>
+    /// Custom collection wrapper functions that are type specific.
+    /// </summary>
+    /// <typeparam name="TItem">Type of object stored by this collection.</typeparam>
+    public interface ICollectionWrapper<TItem> : ICollection<TItem>, ICollectionWrapper where TItem : IComparable
+    {
         //////////////////////
         // Method(s).
         //////////////////////
@@ -193,8 +208,9 @@ namespace ISTE.DAL.Database.Interfaces
         /// Return the item at the specified index.
         /// </summary>
         /// <param name="index">Index to retrieve item from.</param>
-        /// <returns>Returns item if index is in bounds. Throws exception if out of bounds.</returns>
-        TItem GetItem(int index);
+        /// <param name="item">Item to be output.</param>
+        /// <returns>Returns true if successfully obtained item. Returns item if index is in bounds.</returns>
+        bool GetItem(int index, out TItem item);
 
         //////////////////////
         // Mutator(s).
@@ -204,36 +220,37 @@ namespace ISTE.DAL.Database.Interfaces
         /// </summary>
         /// <param name="index">Index to replace item at.</param>
         /// <param name="item">Item to be set.</param>
-        /// <returns>Return reference to self.</returns>
-        IResultSet SetItem(int index, TItem item);
+        /// <returns>Return reference to item.</returns>
+        TItem SetItem(int index, TItem item);
 
         /// <summary>
         /// Add a item to the collection.
         /// </summary>
         /// <param name="item">Item to add.</param>
-        /// <returns>Return reference to self.</returns>
-        IResultSet AddItem(TItem item);
+        /// <returns>Return reference to item.</returns>
+        TItem AddItem(TItem item);
 
         /// <summary>
         /// Add a collection of items to the collection.
         /// </summary>
         /// <param name="items">Items to add.</param>
-        /// <returns>Return reference to self.</returns>
-        IResultSet AddItems(List<TItem> items);
+        /// <returns>Return reference to item.</returns>
+        List<TItem> AddItems(List<TItem> items);
 
         /// <summary>
         /// Add a collection of items to the collection.
         /// </summary>
         /// <param name="items">Items to add.</param>
-        /// <returns>Return reference to self.</returns>
-        IResultSet AddItems(params TItem[] items);
+        /// <returns>Return reference to item.</returns>
+        List<TItem> AddItems(params TItem[] items);
 
         /// <summary>
         /// Remove item from the collection.
         /// </summary>
         /// <param name="index">Index of the item to remove.</param>
-        /// <returns>Return removed item. Returns null if no item found.</returns>
-        TItem RemoveItem(int index);
+        /// <param name="item">Item to remove.</param>
+        /// <returns>Returns false if no item found.</returns>
+        bool RemoveItem(int index, out TItem item);
 
         /// <summary>
         /// Remove item if it exists in the collection.
@@ -246,7 +263,7 @@ namespace ISTE.DAL.Database.Interfaces
     /// <summary>
     /// IResultSet is a collection of IRows.
     /// </summary>
-    public interface IResultSet : ICollectionWrapper<IRow>
+    public interface IResultSet : ICollectionWrapper<IRow>, IReplicate, IEmpty, IComparable
     {
         //////////////////////
         // Properties.
@@ -266,7 +283,7 @@ namespace ISTE.DAL.Database.Interfaces
         /// SQL query associated with a result set.
         /// </summary>
         string Query { get; }
-        
+
         //////////////////////
         // Method(s).
         //////////////////////
@@ -286,6 +303,41 @@ namespace ISTE.DAL.Database.Interfaces
         /// <returns>Returns the stored query.</returns>
         string GetQuery();
 
+        /// <summary>
+        /// Returns a row based on its index value.
+        /// </summary>
+        /// <param name="rowIndex">Row index to access.</param>
+        /// <returns>Returns a single row.</returns>
+        IRow GetRow(int rowIndex);
+
+        /// <summary>
+        /// Returns a header based on the row index.
+        /// </summary>
+        /// <param name="rowIndex">Row index to access.</param>
+        /// <returns>Returns collection of row</returns>
+        List<string> GetRowHeader(int rowIndex);
+
+        /// <summary>
+        /// Returns the collection of entries in a single row.
+        /// </summary>
+        /// <param name="rowIndex">Row index to access.</param>
+        /// <returns>Returns collection of entries.</returns>
+        List<IEntry> GetRowEntries(int rowIndex);
+
+        /// <summary>
+        /// Returns collection of data entries in a single row.
+        /// </summary>
+        /// <param name="rowIndex">Row index to access.</param>
+        /// <returns>Returns collection of entry data pairs.</returns>
+        List<KeyValuePair<string, string>> GetRowData(int rowIndex);
+
+        /// <summary>
+        /// Returns collection of data entries in a single row.
+        /// </summary>
+        /// <param name="rowIndex">Row index to access.</param>
+        /// <returns>Returns collection of entry data pairs.</returns>
+        IDictionary<string, string> GetRowMap(int rowIndex);
+        
         /// <summary>
         /// Return a subset of cloned rows from the current instance, using the input parameters to narrow selection.
         /// </summary>
@@ -311,6 +363,22 @@ namespace ISTE.DAL.Database.Interfaces
         IEntry GetEntry(int rowIndex, string fieldKey);
 
         /// <summary>
+        /// Return data from entry from a given [row, col] indexing system.
+        /// </summary>
+        /// <param name="rowIndex">Row index to access.</param>
+        /// <param name="fieldIndex">Field index to access.</param>
+        /// <returns>Returns entry. Will throw exception if index out of bounds.</returns>
+        KeyValuePair<string, string> GetEntryData(int rowIndex, int fieldIndex);
+
+        /// <summary>
+        /// Return data from entry from a given [row, key] indexing system.
+        /// </summary>
+        /// <param name="rowIndex">Row index to access.</param>
+        /// <param name="fieldKey">Field to access.</param>
+        /// <returns>Returns entry. Will throw exception if index out of bounds. Returns null if field cannot be found.</returns>
+        KeyValuePair<string, string> GetEntryData(int rowIndex, string fieldKey);
+
+        /// <summary>
         /// Creates a list of entries corresponding to the input fieldindex from all rows.
         /// </summary>
         /// <param name="fieldIndex">Field index to access entries from.</param>
@@ -323,6 +391,20 @@ namespace ISTE.DAL.Database.Interfaces
         /// <param name="fieldname">Field to access entries from.</param>
         /// <returns>Returns collection of entries (by reference).</returns>
         List<IEntry> GetEntries(string fieldname);
+
+        /// <summary>
+        /// Creates a collection of data pairs corresponding to the input fieldindex from all rows.
+        /// </summary>
+        /// <param name="fieldIndex">Field index to access entries from.</param>
+        /// <returns>Returns collection of entries (by value).</returns>
+        List<KeyValuePair<string, string>> GetEntryData(int fieldIndex);
+
+        /// <summary>
+        /// Creates a collection of data pairs corresponding to the input fieldindex from all rows.
+        /// </summary>
+        /// <param name="fieldname">Field to access entries from.</param>
+        /// <returns>Returns collection of entries (by reference).</returns>
+        List<KeyValuePair<string, string>> GetEntryData(string fieldname);
         
         //////////////////////
         // Mutator(s).
@@ -340,7 +422,101 @@ namespace ISTE.DAL.Database.Interfaces
         /// <param name="query">Query to set.</param>
         /// <returns>Returns reference to self.</returns>
         IResultSet SetQuery(string query);
-                
+
+        /// <summary>
+        /// Set row at a particular index.
+        /// </summary>
+        /// <param name="rowIndex">Row index to access.</param>
+        /// <param name="row">Row to set.</param>
+        /// <returns>Returns reference to self.</returns>
+        IResultSet SetRow(int rowIndex, IRow row);
+
+        /// <summary>
+        /// Set row at a particular index.
+        /// </summary>
+        /// <param name="rowIndex">Row index to access.</param>
+        /// <param name="entries">Row entries to set.</param>
+        /// <returns>Returns reference to self.</returns>
+        IResultSet SetRow(int rowIndex, List<IEntry> entries);
+
+        /// <summary>
+        /// Set row at a particular index.
+        /// </summary>
+        /// <param name="rowIndex">Row index to access.</param>
+        /// <param name="data">Row entry data to set.</param>
+        /// <returns>Returns reference to self.</returns>
+        IResultSet SetRow(int rowIndex, List<KeyValuePair<string, string>> data);
+
+        /// <summary>
+        /// Set row at a particular index.
+        /// </summary>
+        /// <param name="rowIndex">Row index to access.</param>
+        /// <param name="data">Row entry data to set.</param>
+        /// <returns>Returns reference to self.</returns>
+        IResultSet SetRow(int rowIndex, IDictionary<string, string> data);
+
+        /// <summary>
+        /// Add a row to the result set.
+        /// </summary>
+        /// <param name="row">Row to add.</param>
+        /// <returns>Returns reference to self.</returns>
+        IResultSet AddRow(IRow row);
+
+        /// <summary>
+        /// Add a new row to the result set, containing the entries.
+        /// </summary>
+        /// <param name="entries">Entries to place into a new row.</param>
+        /// <returns>Returns reference to self.</returns>
+        IResultSet AddRow(List<IEntry> entries);
+
+        /// <summary>
+        /// Add a new row to the result set, containing the entries.
+        /// </summary>
+        /// <param name="data">Data to place into a new row.</param>
+        /// <returns>Returns reference to self.</returns>
+        IResultSet AddRow(List<KeyValuePair<string, string>> data);
+
+        /// <summary>
+        /// Add a new row to the result set, containing the entries.
+        /// </summary>
+        /// <param name="data">Data to place into a new row.</param>
+        /// <returns>Returns reference to self.</returns>
+        IResultSet AddRow(IDictionary<string, string> data);
+
+        /// <summary>
+        /// Add a collection of rows to the result set.
+        /// </summary>
+        /// <param name="resultSet">Result set rows to concatenate.</param>
+        /// <returns>Returns reference to self.</returns>
+        IResultSet AddRows(IResultSet resultSet);
+
+        /// <summary>
+        /// Add a collection of rows to the result set.
+        /// </summary>
+        /// <param name="rows">Rows to add.</param>
+        /// <returns>Returns reference to self.</returns>
+        IResultSet AddRows(List<IRow> rows);
+
+        /// <summary>
+        /// Add a collection of rows to the result set.
+        /// </summary>
+        /// <param name="rows">Rows to add.</param>
+        /// <returns>Returns reference to self.</returns>
+        IResultSet AddRows(params IRow[] rows);
+
+        /// <summary>
+        /// Remove row based on row index.
+        /// </summary>
+        /// <param name="rowIndex">Row index to access.</param>
+        /// <returns>Returns removed row. Will throw exception if index out of bounds.</returns>
+        IRow RemoveRow(int rowIndex);
+
+        /// <summary>
+        /// Remove row based on row matching.
+        /// </summary>
+        /// <param name="row">Row to remove.</param>
+        /// <returns>Returns removed row. Returns null if row is not found.</returns>
+        IRow RemoveRow(IRow row);                        
     }
 
     /// <summary>
@@ -357,6 +533,26 @@ namespace ISTE.DAL.Database.Interfaces
         /// Check if this collection contains any non-zero amount of fields.
         /// </summary>
         bool HasFields { get; }
+
+        /// <summary>
+        /// Return the field collection.
+        /// </summary>
+        List<string> Fields { get; }
+
+        /// <summary>
+        /// Return the entry collection.
+        /// </summary>
+        List<IEntry> Entries { get; }
+
+        /// <summary>
+        /// Return the field count.
+        /// </summary>
+        int FieldCount { get; }
+
+        /// <summary>
+        /// Return the entry count.
+        /// </summary>
+        int EntryCount { get; }
 
         //////////////////////
         // Method(s).
@@ -395,7 +591,7 @@ namespace ISTE.DAL.Database.Interfaces
 
         //////////////////////
         // Accessor(s).
-
+        
         /// <summary>
         /// Get tabular data linking a fieldname to a value.
         /// </summary>
@@ -592,6 +788,20 @@ namespace ISTE.DAL.Database.Interfaces
         IEntry AddField(string fieldname);
 
         /// <summary>
+        /// Add set of fieldnames, creating null entries to go with it. Duplicates are ignored.
+        /// </summary>
+        /// <param name="fieldnames">Fieldnames to add.</param>
+        /// <returns>Return reference to added entries.</returns>
+        List<IEntry> AddFields(List<string> fieldnames);
+
+        /// <summary>
+        /// Add set of fieldnames, creating null entries to go with it. Duplicates are ignored.
+        /// </summary>
+        /// <param name="fieldnames">Fieldnames to add.</param>
+        /// <returns>Return reference to added entries.</returns>
+        List<IEntry> AddFields(params string[] fieldnames);
+
+        /// <summary>
         /// Add entry, if and only if, it has a unique fieldname.
         /// <para>This operation will return null if the field already exists.</para>
         /// </summary>
@@ -615,6 +825,20 @@ namespace ISTE.DAL.Database.Interfaces
         /// <param name="value">Value to create new entry with.</param>
         /// <returns>Returns reference to newly created entry.</returns>
         IEntry AddEntry(string fieldname, string value);
+
+        /// <summary>
+        /// Add entries. Duplicate fields will be ignored.
+        /// </summary>
+        /// <param name="entries">Entries to add.</param>
+        /// <returns>Return reference to added entries.</returns>
+        List<IEntry> AddEntries(List<IEntry> entries);
+
+        /// <summary>
+        /// Add entries. Duplicate fields will be ignored.
+        /// </summary>
+        /// <param name="entries">Entries to add.</param>
+        /// <returns>Return reference to added entries.</returns>
+        List<IEntry> AddEntries(params IEntry[] entries);
 
         /// <summary>
         /// Remove field at input index and associated entry from the collection.

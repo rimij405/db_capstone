@@ -46,6 +46,9 @@ namespace ISTE.DAL.Database
         // Properties.
         //////////////////////
 
+        //////
+        // IResultSet
+
         /// <summary>
         /// Collection of <see cref="IRow"/> rows.
         /// </summary>
@@ -75,6 +78,9 @@ namespace ISTE.DAL.Database
             get { return this.query; }
             private set { this.query = value.Trim().Replace('\n', ' '); }
         }
+        
+        //////
+        // ICollection
 
         /// <summary>
         /// Flag determines if result set is readonly.
@@ -91,6 +97,9 @@ namespace ISTE.DAL.Database
         {
             get { return this.Rows.Count; }
         }
+
+        //////
+        // IEmpty
 
         /// <summary>
         /// Check if result set has any rows.
@@ -113,25 +122,34 @@ namespace ISTE.DAL.Database
         }
 
         /// <summary>
-        /// Return a collection of rows from the specified range.
+        /// Return an entry from the result set.
         /// </summary>
-        /// <param name="index">Starting index.</param>
-        /// <param name="length">From starting index, how many other elements should be returned.</param>
-        /// <returns>Return ranged collection of rows.</returns>
-        public List<IRow> this[int index, int length]
+        /// <param name="rowIndex">Row index to access.</param>
+        /// <param name="fieldIndex">Field index to access.</param>
+        /// <returns>Return entry at coordinate.</returns>
+        public IEntry this[int rowIndex, int fieldIndex]
         {
             get
             {
-                List<IRow> range = new List<IRow>();
-                for (int i = index; i < this.Count; i++)
-                {
-                    if (range.Count < length)
+                if (this.HasIndex(rowIndex)) {
+                    IRow row = this[rowIndex];
+                    if(row != null && row.HasIndex(fieldIndex))
                     {
-                        range.Add(this[i]);
+                        return row.GetEntry(fieldIndex);
                     }
                 }
-                // TODO: fix this to be a 2D array.
-                // return range;
+                return null;
+            }
+            private set
+            {
+                if (this.HasIndex(rowIndex))
+                {
+                    IRow row = this[rowIndex];
+                    if (row != null && row.HasIndex(fieldIndex))
+                    {
+                        row.SetEntry(fieldIndex, value);
+                    }
+                }
             }
         }
 
@@ -211,6 +229,108 @@ namespace ISTE.DAL.Database
         // Service(s).
 
         /// <summary>
+        /// Return this result set's metadata as a string.
+        /// </summary>
+        /// <returns>Returns the result set as a formatted string.</returns>
+        public override string ToString()
+        {
+            // Example:
+            // [MySqlResultSet] {(Empty set). 'SELECT * FROM capstonedb.users' - 0 rows affected.}
+            return $"[MySqlResultSet] {{({((this.IsEmpty) ? "Empty set" : $"{this.Count} total elements")}). '{((this.Query.Length == 0) ? "No query set" : this.Query)}' - {this.RowsAffected} rows affected.}}";
+        }
+
+        //////
+        // IComparable
+
+        /// <summary>
+        /// Check if reference is the same, or if all rows match.
+        /// </summary>
+        /// <param name="obj">IResultSet to be compared.</param>
+        /// <returns>Returns true if equal. False, if otherwise.</returns>
+        public override bool Equals(object obj)
+        {
+            if (obj is MySqlResultSet set)
+            {
+                if (this.Count == set.Count)
+                {
+                    for (int index = 0; index < this.Count; index++)
+                    {
+                        IRow rowA = this[index];
+                        IRow rowB = set.GetRow(index);
+                        if (!rowA.Equals(rowB)) { return false; }                        
+                    }
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Returns the hashcode of all the internal rows.
+        /// </summary>
+        /// <returns>Returns hashcode compilation of all rows.</returns>
+        public override int GetHashCode()
+        {
+            int hash = base.GetHashCode();
+            foreach (IRow row in this.Rows)
+            {
+                hash = hash ^ row.GetHashCode();
+            }
+            return hash;
+        }
+
+        /// <summary>
+        /// Compare two record sets. Matches based on row-to-row comparison.
+        /// </summary>
+        /// <param name="obj">IResultSet to be compared.</param>
+        /// <returns>Returns zero if equal. Returns greater value if more rows and unequal. Returns smaller value if less rows.</returns>
+        public int CompareTo(object obj)
+        {
+            if (obj != null && obj is IResultSet set)
+            {
+
+                // If the same, return 0.
+                if (this.Equals(obj)) { return 0; }
+
+                // If not the same, find the difference.
+                // If the row count is the same, check if rows are different.
+                if (this.Count == set.Count)
+                {
+                    // If difference, return the compare between them.
+                    for (int index = 0; index < this.Count; index++)
+                    {
+                        IRow rowA = this[index];
+                        IRow rowB = set.GetRow(index);
+                        if (rowA == null)
+                        {
+                            if (rowB == null) { continue; }
+                            else { return -1; }
+                        }
+                        else
+                        {
+                            if (rowB == null) { return 1; }
+                            int comparison = rowA.CompareTo(rowB);
+                            if (comparison != 0) { return comparison; }
+                        }
+                    }
+
+                    // If no conflict found, return as equal.
+                    return 0;
+                }
+                else
+                {
+                    return this.Count.CompareTo(set.Count);
+                }
+            }
+
+            // If not of a compatible type, return nothing.
+            throw new ArgumentException("Input object is not of type IResultSet.");
+        }
+
+        //////
+        // ICollectionWrapper
+
+        /// <summary>
         /// Check if the result set has at least as many rows as the specified input.
         /// </summary>
         /// <param name="count">Amount of rows to check if result set has.</param>
@@ -239,7 +359,10 @@ namespace ISTE.DAL.Database
         {
             return (index >= 0 && index < this.Count);
         }
-        
+
+        //////
+        // ICollection
+
         /// <summary>
         /// Clear the collection.
         /// </summary>
@@ -267,17 +390,9 @@ namespace ISTE.DAL.Database
         {
             this.Rows.CopyTo(array, arrayIndex);
         }
-
-        /// <summary>
-        /// Return this result set's metadata as a string.
-        /// </summary>
-        /// <returns>Returns the result set as a formatted string.</returns>
-        public override string ToString()
-        {
-            // Example:
-            // [MySqlResultSet] {(Empty set). 'SELECT * FROM capstonedb.users' - 0 rows affected.}
-            return $"[MySqlResultSet] {{({((this.IsEmpty) ? "Empty set" : $"{this.Count} total elements")}). '{((this.Query.Length == 0) ? "No query set" : this.Query)}' - {this.RowsAffected} rows affected.}}";
-        }
+        
+        //////
+        // IReplicate
 
         /// <summary>
         /// Return a cloned copy of the results.
@@ -290,6 +405,9 @@ namespace ISTE.DAL.Database
 
         //////////////////////
         // Accessor(s).
+
+        //////
+        // IResultSet
 
         /// <summary>
         /// Return the number of rows affected.
@@ -310,6 +428,235 @@ namespace ISTE.DAL.Database
         }
 
         /// <summary>
+        /// Returns a row based on its index value.
+        /// </summary>
+        /// <param name="rowIndex">Row index to access.</param>
+        /// <returns>Returns a single row.</returns>
+        public IRow GetRow(int rowIndex)
+        {
+            // Validate input.
+            if (rowIndex < 0 || rowIndex >= this.Count) { return null; }
+
+            // Return row at index.
+            return this[rowIndex];
+        }
+
+        /// <summary>
+        /// Returns a header based on the row index.
+        /// </summary>
+        /// <param name="rowIndex">Row index to access.</param>
+        /// <returns>Returns collection of row</returns>
+        public List<string> GetRowHeader(int rowIndex)
+        {
+            List<string> header = new List<string>();
+            IRow row = this.GetRow(rowIndex);
+            if (row != null && row.HasFields)
+            {
+                foreach (string field in row.Fields)
+                {
+                    header.Add(field);
+                }
+            }
+            return header;
+        }
+
+        /// <summary>
+        /// Returns the collection of entries referenced by a single row.
+        /// </summary>
+        /// <param name="rowIndex">Row index to access.</param>
+        /// <returns>Returns collection of entries (by ref).</returns>
+        public List<IEntry> GetRowEntries(int rowIndex)
+        {
+            List<IEntry> rowEntries = new List<IEntry>();
+            IRow row = this.GetRow(rowIndex);
+            if (row != null)
+            {
+                foreach (IEntry entry in row.Entries)
+                {
+                    rowEntries.Add(entry);
+                }
+            }
+            return rowEntries;
+        }
+
+        /// <summary>
+        /// Returns collection of data entries in a single row.
+        /// </summary>
+        /// <param name="rowIndex">Row index to access.</param>
+        /// <returns>Returns collection of entry data pairs.</returns>
+        public List<KeyValuePair<string, string>> GetRowData(int rowIndex)
+        {
+            return this.GetRowMap(rowIndex).ToList<KeyValuePair<string, string>>();
+        }
+
+        /// <summary>
+        /// Returns collection of data entries in a single row.
+        /// </summary>
+        /// <param name="rowIndex">Row index to access.</param>
+        /// <returns>Returns collection of entry data pairs.</returns>
+        public IDictionary<string, string> GetRowMap(int rowIndex)
+        {
+            IDictionary<string, string> dictionary = new Dictionary<string, string>();
+            IRow row = this.GetRow(rowIndex);
+            if(row != null)
+            {
+                foreach (IEntry entry in row.Entries)
+                {
+                    dictionary.Add(entry.GetData());
+                }
+            }
+            return dictionary;
+        }
+
+        /// <summary>
+        /// Return a subset of cloned rows from the current instance, using the input parameters to narrow selection.
+        /// </summary>
+        /// <param name="start">Start index of subset parsing.</param>
+        /// <param name="length">Length of subset parsing.</param>
+        /// <returns>Returns new collection of rows.</returns>
+        public List<IRow> GetRange(int start = 0, int length = -1)
+        {
+            List<IRow> subset = new List<IRow>();
+
+            if (start > 0 && start < this.Count)
+            {
+                foreach (IRow row in this.Rows)
+                {
+                    if (length == -1 || subset.Count < length)
+                    {
+                        // Add entry (and its associated field).
+                        subset.Add(row);
+                    }
+                }
+            }
+
+            return subset;
+        }
+
+        /// <summary>
+        /// Return an entry from a given [row, col] indexing system.
+        /// </summary>
+        /// <param name="rowIndex">Row index to access.</param>
+        /// <param name="fieldIndex">Field index to access.</param>
+        /// <returns>Returns entry. Will throw exception if index out of bounds.</returns>
+        public IEntry GetEntry(int rowIndex, int fieldIndex)
+        {
+            IRow row = this.GetRow(rowIndex);
+            if (row == null) { return null; }
+            return row.GetEntry(fieldIndex);
+        }
+
+        /// <summary>
+        /// Return an entry from a given [row, key] indexing system.
+        /// </summary>
+        /// <param name="rowIndex">Row index to access.</param>
+        /// <param name="fieldKey">Field to access.</param>
+        /// <returns>Returns entry. Will throw exception if index out of bounds. Returns null if field cannot be found.</returns>
+        public IEntry GetEntry(int rowIndex, string fieldKey)
+        {
+            IRow row = this.GetRow(rowIndex);
+            if(row == null) { return null; }
+            return row.GetEntry(fieldKey);
+        }
+
+        /// <summary>
+        /// Return data from entry from a given [row, col] indexing system.
+        /// </summary>
+        /// <param name="rowIndex">Row index to access.</param>
+        /// <param name="fieldIndex">Field index to access.</param>
+        /// <returns>Returns entry. Will throw exception if index out of bounds.</returns>
+        public KeyValuePair<string, string> GetEntryData(int rowIndex, int fieldIndex)
+        {
+            IRow row = this.GetRow(rowIndex);
+            if (row == null) { return new KeyValuePair<string, string>("", ""); }
+            IEntry entry = row.GetEntry(rowIndex);
+            return (entry == null) ? new KeyValuePair<string, string>("", "") : entry.GetData();
+        }
+
+        /// <summary>
+        /// Return data from entry from a given [row, key] indexing system.
+        /// </summary>
+        /// <param name="rowIndex">Row index to access.</param>
+        /// <param name="fieldKey">Field to access.</param>
+        /// <returns>Returns entry. Will throw exception if index out of bounds. Returns null if field cannot be found.</returns>
+        public KeyValuePair<string, string> GetEntryData(int rowIndex, string fieldKey)
+        {
+            IRow row = this.GetRow(rowIndex);
+            if(row == null) { return new KeyValuePair<string, string>("", ""); }
+            IEntry entry = row.GetEntry(fieldKey);
+            return (entry == null) ? new KeyValuePair<string, string>("", "") : entry.GetData();
+        }
+
+        /// <summary>
+        /// Creates a list of entries corresponding to the input fieldindex from all rows.
+        /// </summary>
+        /// <param name="fieldIndex">Field index to access entries from.</param>
+        /// <returns>Returns collection of entries (by reference).</returns>
+        public List<IEntry> GetEntries(int fieldIndex)
+        {
+            List<IEntry> entries = new List<IEntry>();
+            foreach (IRow row in this.Rows)
+            {
+                IEntry entry = row.GetEntry(fieldIndex);
+                if (entry != null) { entries.Add(entry); }
+            }
+            return entries;
+        }
+
+        /// <summary>
+        /// Creates a list of entries corresponding to the input fieldindex from all rows.
+        /// </summary>
+        /// <param name="fieldname">Field to access entries from.</param>
+        /// <returns>Returns collection of entries (by reference).</returns>
+        public List<IEntry> GetEntries(string fieldname)
+        {
+            List<IEntry> entries = null;
+            if (!this.IsEmpty)
+            {
+                int index = this.Rows[0].GetIndex(fieldname);
+                if (index != -1) { entries = this.GetEntries(index); }
+            }
+            return entries ?? new List<IEntry>();
+        }
+
+        /// <summary>
+        /// Creates a collection of data pairs corresponding to the input fieldindex from all rows.
+        /// </summary>
+        /// <param name="fieldIndex">Field index to access entries from.</param>
+        /// <returns>Returns collection of entries (by value).</returns>
+        public List<KeyValuePair<string, string>> GetEntryData(int fieldIndex)
+        {
+            List<KeyValuePair<string, string>> data = new List<KeyValuePair<string, string>>();
+
+            foreach (IRow row in this.Rows)
+            {
+                IEntry entry = row.GetEntry(fieldIndex);
+                if(entry != null) { data.Add(entry.GetData()); }
+            }
+
+            return data;
+        }
+
+        /// <summary>
+        /// Creates a collection of data pairs corresponding to the input fieldindex from all rows.
+        /// </summary>
+        /// <param name="fieldname">Field to access entries from.</param>
+        /// <returns>Returns collection of entries (by reference).</returns>
+        public List<KeyValuePair<string, string>> GetEntryData(string fieldname)
+        {
+            List<KeyValuePair<string, string>> data = null;
+            if (!this.IsEmpty)
+            {
+                int index = this.Rows[0].GetIndex(fieldname);
+                if (index != -1) { data = this.GetEntryData(index); }
+            }
+            return data ?? new List<KeyValuePair<string, string>>();
+        }
+        
+        //////
+        // ICollectionWrapper<IRow>
+
+        /// <summary>
         /// Return the index of a row if it's in the collection.
         /// </summary>
         /// <param name="row">Row to find index for.</param>
@@ -321,11 +668,12 @@ namespace ISTE.DAL.Database
         }
 
         /// <summary>
-        /// Return row at specified index.
+        /// Return the row at the specified index.
         /// </summary>
-        /// <param name="index">Index of the row to return.</param>
-        /// <returns>Return row at index.</returns>
-        public IRow GetItem(int index)
+        /// <param name="index">Index to retrieve item from.</param>
+        /// <param name="item">Item to be output.</param>
+        /// <returns>Returns true if successfully obtained item. Returns item if index is in bounds.</returns>
+        public bool GetItem(int index, out IRow item)
         {
             // Validate input.
             if (!this.HasIndex(index))
@@ -334,9 +682,10 @@ namespace ISTE.DAL.Database
             }
 
             // Return reference.
-            return this[index];
+            item = this[index];
+            return item != null;
         }
-
+        
         /// <summary>
         /// Returns an enumerator that iterates through the collection.
         /// </summary>
@@ -357,6 +706,9 @@ namespace ISTE.DAL.Database
 
         //////////////////////
         // Mutator(s).
+
+        //////
+        // IResultSet
 
         /// <summary>
         /// Set the value of rows affected due to query execution.
@@ -382,15 +734,207 @@ namespace ISTE.DAL.Database
         }
 
         /// <summary>
+        /// Set row at a particular index.
+        /// </summary>
+        /// <param name="rowIndex">Row index to access.</param>
+        /// <param name="row">Row to set.</param>
+        /// <returns>Returns reference to self.</returns>
+        public IResultSet SetRow(int rowIndex, IRow row)
+        {
+            if(this.IsReadOnly || !this.HasIndex(rowIndex) || row == null) { return null; }
+            this.Rows[rowIndex] = row;
+            return this;
+        }
+
+        /// <summary>
+        /// Set row at a particular index.
+        /// </summary>
+        /// <param name="rowIndex">Row index to access.</param>
+        /// <param name="entries">Row entries to set.</param>
+        /// <returns>Returns reference to self.</returns>
+        public IResultSet SetRow(int rowIndex, List<IEntry> entries)
+        {
+            if (this.IsReadOnly || entries == null) { return null; }
+            return this.SetRow(rowIndex, new MySqlRow(entries));
+        }
+
+        /// <summary>
+        /// Set row at a particular index.
+        /// </summary>
+        /// <param name="rowIndex">Row index to access.</param>
+        /// <param name="data">Row entry data to set.</param>
+        /// <returns>Returns reference to self.</returns>
+        public IResultSet SetRow(int rowIndex, List<KeyValuePair<string, string>> data)
+        {
+            if (this.IsReadOnly || data == null) { return null; }
+            List<IEntry> entries = new List<IEntry>();
+            foreach (KeyValuePair<string, string> datum in data)
+            {
+                entries.Add(new MySqlEntry(datum));
+            }
+            return this.SetRow(rowIndex, entries);
+        }
+
+        /// <summary>
+        /// Set row at a particular index.
+        /// </summary>
+        /// <param name="rowIndex">Row index to access.</param>
+        /// <param name="data">Row entry data to set.</param>
+        /// <returns>Returns reference to self.</returns>
+        public IResultSet SetRow(int rowIndex, IDictionary<string, string> data)
+        {
+            if(this.IsReadOnly || data == null) { return null; }
+            return this.SetRow(rowIndex, data.ToList<KeyValuePair<string, string>>());
+        }
+
+        /// <summary>
+        /// Add a row to the result set.
+        /// </summary>
+        /// <param name="row">Row to add.</param>
+        /// <returns>Returns reference to self.</returns>
+        public IResultSet AddRow(IRow row)
+        {
+            // Add row if not null.
+            if (this.IsReadOnly || row == null) { return null; }
+            this.Rows.Add(row);
+            return this;
+        }
+
+        /// <summary>
+        /// Add a new row to the result set, containing the entries.
+        /// </summary>
+        /// <param name="entries">Entries to place into a new row.</param>
+        /// <returns>Returns reference to self.</returns>
+        public IResultSet AddRow(List<IEntry> entries)
+        {
+            if (this.IsReadOnly || entries == null) { return null; }
+            return this.AddRow(new MySqlRow(entries));
+        }
+
+        /// <summary>
+        /// Add a new row to the result set, containing the entries.
+        /// </summary>
+        /// <param name="entries">Entries to place into a new row.</param>
+        /// <returns>Returns reference to self.</returns>
+        public IResultSet AddRow(params IEntry[] entries)
+        {
+            if (this.IsReadOnly || entries == null) { return null; }
+            return this.AddRow(entries.ToList<IEntry>());
+        }
+
+        /// <summary>
+        /// Add a new row to the result set, containing the entries.
+        /// </summary>
+        /// <param name="data">Data to place into a new row.</param>
+        /// <returns>Returns reference to self.</returns>
+        public IResultSet AddRow(List<KeyValuePair<string, string>> data)
+        {
+            if (this.IsReadOnly || data == null) { return null; }
+            List<IEntry> entries = new List<IEntry>();
+            foreach (KeyValuePair<string, string> datum in data)
+            {
+                entries.Add(new MySqlEntry(datum));
+            }
+            return this.AddRow(entries);
+        }
+
+        /// <summary>
+        /// Add a new row to the result set, containing the entries.
+        /// </summary>
+        /// <param name="data">Data to place into a new row.</param>
+        /// <returns>Returns reference to self.</returns>
+        public IResultSet AddRow(params KeyValuePair<string, string>[] data)
+        {
+            if (this.IsReadOnly || data == null) { return null; }
+            return this.AddRow(data.ToList<KeyValuePair<string, string>>());
+        }
+
+        /// <summary>
+        /// Add a new row to the result set, containing the entries.
+        /// </summary>
+        /// <param name="data">Data to place into a new row.</param>
+        /// <returns>Returns reference to self.</returns>
+        public IResultSet AddRow(IDictionary<string, string> data)
+        {
+            if (this.IsReadOnly || data == null) { return null; }
+            return this.AddRow(data.ToList<KeyValuePair<string, string>>());
+        }
+
+        /// <summary>
+        /// Add a collection of rows to the result set.
+        /// </summary>
+        /// <param name="resultSet">Result set rows to concatenate.</param>
+        /// <returns>Returns reference to self.</returns>
+        public IResultSet AddRows(IResultSet resultSet)
+        {
+            if (this.IsReadOnly || resultSet == null) { return null; }
+            return this.AddRows(resultSet.Rows);
+        }
+
+        /// <summary>
+        /// Add a collection of rows to the result set.
+        /// </summary>
+        /// <param name="rows">Rows to add.</param>
+        /// <returns>Returns reference to self.</returns>
+        public IResultSet AddRows(List<IRow> rows)
+        {
+            if (this.IsReadOnly || rows == null) { return null; }
+            foreach (IRow row in rows)
+            {
+                this.AddRow(row);
+            }
+            return this;
+        }
+
+        /// <summary>
+        /// Add a collection of rows to the result set.
+        /// </summary>
+        /// <param name="rows">Rows to add.</param>
+        /// <returns>Returns reference to self.</returns>
+        public IResultSet AddRows(params IRow[] rows)
+        {
+            if (this.IsReadOnly || rows == null) { return null; }
+            return this.AddRows(rows.ToList<IRow>());
+        }
+
+        /// <summary>
+        /// Remove row based on row index.
+        /// </summary>
+        /// <param name="rowIndex">Row index to access.</param>
+        /// <returns>Returns removed row. Will throw exception if index out of bounds.</returns>
+        public IRow RemoveRow(int rowIndex)
+        {
+            if (this.IsReadOnly || !this.HasIndex(rowIndex)) { return null; }
+
+            IRow row = this.Rows[rowIndex];
+            this.Rows.RemoveAt(rowIndex);
+            return row;
+        }
+
+        /// <summary>
+        /// Remove row based on row matching.
+        /// </summary>
+        /// <param name="row">Row to remove.</param>
+        /// <returns>Returns removed row. Returns null if row is not found.</returns>
+        public IRow RemoveRow(IRow row)
+        {
+            if (this.IsReadOnly) { return null; }
+            return this.RemoveRow(this.GetIndex(row));
+        }
+
+        //////
+        // ICollectionWrapper<IRow>
+
+        /// <summary>
         /// Replace row at specified index, if index is in bounds.
         /// </summary>
         /// <param name="index">Index to replace row at.</param>
         /// <param name="row">Row to be set.</param>
-        /// <returns>Return reference to self.</returns>
-        public IResultSet SetItem(int index, IRow row)
+        /// <returns>Return reference to row.</returns>
+        public IRow SetItem(int index, IRow row)
         {
             // If read only, do not do anything.
-            if (this.IsReadOnly) { return this; }
+            if (this.IsReadOnly) { return null; }
 
             // Validate input.
             if (!this.HasIndex(index))
@@ -401,39 +945,39 @@ namespace ISTE.DAL.Database
             // Overwrite row at current index.
             this[index] = row;
 
-            // Return reference to self.
-            return this;
+            // Return reference to row.
+            return row;
         }
 
         /// <summary>
         /// Add a row to the result set collection.
         /// </summary>
         /// <param name="row">Row to add.</param>
-        /// <returns>Return reference to self.</returns>
-        public IResultSet AddItem(IRow row)
+        /// <returns>Return reference to row.</returns>
+        public IRow AddItem(IRow row)
         {
             // If read only, do not do anything.
-            if (this.IsReadOnly) { return this; }
+            if (this.IsReadOnly) { return null; }
 
             this.Rows.Add(row);
-            return this;
+            return row;
         }
 
         /// <summary>
         /// Add a collection of rows to the result set.
         /// </summary>
         /// <param name="rows">Rows to add.</param>
-        /// <returns>Return reference to self.</returns>
-        public IResultSet AddItems(List<IRow> rows)
+        /// <returns>Return reference to rows.</returns>
+        public List<IRow> AddItems(List<IRow> rows)
         {
             // If read only, do not do anything.
-            if (this.IsReadOnly) { return this; }
+            if (this.IsReadOnly) { return null; }
 
             foreach (IRow row in rows)
             {
                 this.AddItem(row);
             }
-            return this;
+            return rows;
         }
 
         /// <summary>
@@ -441,10 +985,10 @@ namespace ISTE.DAL.Database
         /// </summary>
         /// <param name="rows">Rows to add.</param>
         /// <returns>Return reference to self.</returns>
-        public IResultSet AddItems(params IRow[] rows)
+        public List<IRow> AddItems(params IRow[] rows)
         {
             // If read only, do not do anything.
-            if (this.IsReadOnly) { return this; }
+            if (this.IsReadOnly) { return null; }
 
             return this.AddItems(rows.ToList<IRow>());
         }
@@ -498,6 +1042,22 @@ namespace ISTE.DAL.Database
             int index = this.GetIndex(row);
             return (index == -1) ? null : this.RemoveItem(index);
         }
+
+        /// <summary>
+        /// Remove row from the collection.
+        /// </summary>
+        /// <param name="index"></param>
+        /// <param name="row"></param>
+        /// <returns></returns>
+        public bool RemoveItem(int index, out IRow row)
+        {
+            // If read only, do not do anything.
+            row = null;
+            if (this.IsReadOnly) { return false; }
+
+            row = this.RemoveItem(index);
+            return (row != null);
+        }
                 
         /// <summary>
         /// Remove item from collection. Will return false if row doesn't exist in the collection.
@@ -506,7 +1066,7 @@ namespace ISTE.DAL.Database
         /// <returns>Returns true if operation is successful.</returns>
         public bool Remove(IRow item)
         {
-            return (this.RemoveItem(item) == null) ? false : true;
+            return (this.RemoveItem(item) != null);
         }
     }
 
