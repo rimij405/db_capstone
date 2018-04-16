@@ -95,7 +95,7 @@ namespace ISTE.DAL.Database
         /// </summary>
         public int Count
         {
-            get { return this.GetFieldCount(); }
+            get { return this.Fields.Count; }
         }
 
         /// <summary>
@@ -104,14 +104,20 @@ namespace ISTE.DAL.Database
         public bool IsReadOnly { get; set; }
 
         /// <summary>
+        /// Check if this collection contains any non-zero amount of fields.
+        /// </summary>
+        public bool HasFields
+        {
+            get { return (this.Count > 0); }
+        }
+        
+        /// <summary>
         /// Accessor and mutator for fieldname references at particular indices.
         /// </summary>
         /// <param name="index"></param>
         /// <returns></returns>
         public string this[int index]
         {
-            get { return this.GetFieldName(index); }
-            set { this.SetField(index, value); }
         }
 
         /// <summary>
@@ -121,8 +127,6 @@ namespace ISTE.DAL.Database
         /// <returns></returns>
         public MySqlEntry this[string key]
         {
-            get { return this.GetEntry(key) as MySqlEntry; }
-            set { this.SetEntry(key, value as IEntry); }
         }
 
         //////////////////////
@@ -199,7 +203,7 @@ namespace ISTE.DAL.Database
 
                 foreach(MySqlEntry entry in row.Entries)
                 {
-                    this.Entries.Add(entry.Clone() as MySqlEntry);
+                    this.Entries.Add((MySqlEntry)entry.Clone());
                 }
 
                 this.IsReadOnly = row.IsReadOnly;
@@ -214,24 +218,82 @@ namespace ISTE.DAL.Database
         // Service(s).
 
         /// <summary>
-        /// Check if the row contains entries.
+        /// Check if fieldname is in collection.
         /// </summary>
-        /// <returns>Returns true if there is at least one entry in this row.</returns>
-        public bool HasEntries()
+        /// <param name="fieldname">Field to search for.</param>
+        /// <returns>Returns true if found.</returns>
+        public bool Contains(string fieldname)
         {
-            return (this.GetEntryCount() > 0);
+            string alias = this.FormatField(fieldname);
+            return ((this.IsValidField(alias)) ? this.Fields.Contains(alias) : false);
         }
 
         /// <summary>
-        /// Check if an entry exists where associated for a particular field.
+        /// Check if entry is in collection.
         /// </summary>
-        /// <param name="field">Field to check if entry exists for.</param>
-        /// <returns>Returns true if entry AND field exists.</returns>
-        public bool HasEntry(string field) {
-            string alias = this.FormatField(field);
-            return (this.HasEntries() && this.HasField(alias) && (this.GetEntry(alias) != null));
+        /// <param name="entry">Entry to search for.</param>
+        /// <returns>Returns true if found.</returns>
+        public bool Contains(MySqlEntry entry)
+        {
+            return this.Entries.Contains(entry);
         }
 
+        /// <summary>
+        /// Check if all fields are present in a row.
+        /// </summary>
+        /// <param name="fieldnames">Collection of field names to look for.</param>
+        /// <returns>Returns true if ALL names are found.</returns>
+        public bool Contains(List<string> fieldnames)
+        {
+            if(fieldnames.Count <= 0) { return false; }
+
+            foreach(string field in fieldnames)
+            {
+                if (!this.Contains(field)) { return false; }
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// Check if all fields are present in a row.
+        /// </summary>
+        /// <param name="fieldnames">Collection of field names to look for.</param>
+        /// <returns>Returns true if ALL names are found.</returns>
+        public bool Contains(params string[] fieldnames)
+        {
+            if (fieldnames.Length <= 0) { return false; }
+            return this.Contains(fieldnames.ToList<string>());
+        }
+
+        /// <summary>
+        /// Check if all entries are present, with matching fields AND matching values.
+        /// </summary>
+        /// <param name="entries">Collection of entries to compare.</param>
+        /// <returns>Returns true if ALL entries and fields are found.</returns>
+        bool Contains(List<IEntry> entries)
+        {
+            if (entries.Count <= 0) { return false; }
+
+            foreach (IEntry entry in entries)
+            {
+                if (!this.Contains((MySqlEntry) entry)) { return false; }
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// Check if all entries are present, with matching fields AND matching values.
+        /// </summary>
+        /// <param name="entries">Collection of entries to compare.</param>
+        /// <returns>Returns true if ALL entries and fields are found.</returns>
+        bool Contains(params IEntry[] entries)
+        {
+            if (entries.Length <= 0) { return false; }
+            return this.Contains(entries.ToList<IEntry>());
+        }
+        
         /// <summary>
         /// Check if row contains a particular field. If input is invalid, it will return false.
         /// </summary>
@@ -310,25 +372,7 @@ namespace ISTE.DAL.Database
             this.Fields.Clear();
             this.Entries.Clear();
         }
-
-        /// <summary>
-        /// Determines if collection has a specific entry.
-        /// </summary>
-        /// <param name="entry">Entry to check for.</param>
-        /// <returns>Returns true if match is made.</returns>
-        public bool Contains(IEntry entry) {
-            return this.Entries.Contains(entry);
-        }
-
-        /// <summary>
-        /// Determines if collection has a specific field.
-        /// </summary>
-        /// <param name="field">Field to check for.</param>
-        /// <returns>Returns true if match is made.</returns>
-        public bool Contains(string field) {
-            return this.Fields.Contains(field);
-        }
-
+                
         /// <summary>
         /// Copies elements from <see cref="Entries"/> into the supplied array, starting at a particular array index.
         /// </summary>

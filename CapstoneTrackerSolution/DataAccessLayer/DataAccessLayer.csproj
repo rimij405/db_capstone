@@ -51,6 +51,7 @@
     <Compile Include="Database\Exceptions\DatabaseCloseException.cs" />
     <Compile Include="Database\Exceptions\DatabaseConnectionException.cs" />
     <Compile Include="Database\Implementations\MySqlEntry.cs" />
+    <Compile Include="Database\Implementations\MySqlResultSet.cs" />
     <Compile Include="Database\Implementations\MySqlRow.cs" />
     <Compile Include="Database\Interfaces\Fields\Field.cs" />
     <Compile Include="Database\Interfaces\Fields\IFieldTypes.cs" />
