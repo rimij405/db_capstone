@@ -94,7 +94,6 @@
             this.emails.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
             this.emails.Size = new System.Drawing.Size(380, 176);
             this.emails.TabIndex = 4;
-            this.emails.Text = "Emails go here";
             // 
             // phones
             // 
@@ -107,7 +106,6 @@
             this.phones.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
             this.phones.Size = new System.Drawing.Size(380, 176);
             this.phones.TabIndex = 5;
-            this.phones.Text = "Phone numbers go here";
             // 
             // viewUsers
             // 
@@ -160,7 +158,11 @@
             this.Controls.Add(this.userRole);
             this.Controls.Add(this.lastName);
             this.Controls.Add(this.firstName);
+            this.MaximizeBox = false;
+            this.MaximumSize = new System.Drawing.Size(640, 640);
+            this.MinimumSize = new System.Drawing.Size(640, 640);
             this.Name = "UserPage";
+            this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "UserPage";
             this.ResumeLayout(false);
             this.PerformLayout();

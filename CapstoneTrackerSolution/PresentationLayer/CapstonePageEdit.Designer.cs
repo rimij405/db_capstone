@@ -308,7 +308,11 @@
             this.Controls.Add(this.facultyLabel);
             this.Controls.Add(this.abstractLabel);
             this.Controls.Add(this.titleLabel);
+            this.MaximizeBox = false;
+            this.MaximumSize = new System.Drawing.Size(640, 640);
+            this.MinimumSize = new System.Drawing.Size(640, 640);
             this.Name = "CapstonePageEdit";
+            this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "CapstonePageEdit";
             this.ResumeLayout(false);
             this.PerformLayout();

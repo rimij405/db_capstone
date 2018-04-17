@@ -45,11 +45,10 @@ namespace PresentationLayer
         // check to make sure the user entered proper login info
         private bool ValidateLogin()
         {
-            if (username.Text != "" && password.Text != "")
-            {
-                return true;
-            }
-            return false;
+            if (fh.LoginSetPassword())
+                return fh.LoginSetUserName();
+            else
+                return false;
         }
     }
 }

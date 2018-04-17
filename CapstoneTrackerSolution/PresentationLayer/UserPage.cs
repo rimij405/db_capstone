@@ -25,9 +25,34 @@ namespace PresentationLayer
 
         private void LoadValues()
         {
-            if(isStaff || isFaculty)
+            string userRoleStr = fh.UPGetUserRole();
+            switch (userRoleStr)
             {
-                viewUsers.Visible = true;
+                case "Staff":
+                    isStaff = true;
+                    viewUsers.Visible = true;
+                    break;
+                case "Faculty":
+                    isFaculty = true;
+                    viewUsers.Visible = true;
+                    break;
+                default:
+                    viewUsers.Visible = false;
+                    break;
+            }
+
+            firstName.Text = fh.UPGetFirstName();
+            lastName.Text = fh.UPGetLastName();
+            userRole.Text = userRoleStr;
+            List<string> emailList = fh.UPGetEmails();
+            for(int i = 0; i < emailList.Count; i++)
+            {
+                emails.Text += emailList[i] + Environment.NewLine;
+            }
+            List<string> phoneList = fh.UPGetPhones();
+            for(int i = 0; i < phoneList.Count; i++)
+            {
+                phones.Text += phoneList[i] + Environment.NewLine;
             }
         }
 

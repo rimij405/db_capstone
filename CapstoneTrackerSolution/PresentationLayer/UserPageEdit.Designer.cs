@@ -182,7 +182,7 @@
             // emailAddText
             // 
             this.emailAddText.Location = new System.Drawing.Point(13, 368);
-            this.emailAddText.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.emailAddText.Margin = new System.Windows.Forms.Padding(2);
             this.emailAddText.Name = "emailAddText";
             this.emailAddText.Size = new System.Drawing.Size(308, 20);
             this.emailAddText.TabIndex = 19;
@@ -190,7 +190,7 @@
             // phoneAddText
             // 
             this.phoneAddText.Location = new System.Drawing.Point(12, 544);
-            this.phoneAddText.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.phoneAddText.Margin = new System.Windows.Forms.Padding(2);
             this.phoneAddText.Name = "phoneAddText";
             this.phoneAddText.Size = new System.Drawing.Size(308, 20);
             this.phoneAddText.TabIndex = 20;
@@ -198,7 +198,7 @@
             // emailAddButton
             // 
             this.emailAddButton.Location = new System.Drawing.Point(325, 368);
-            this.emailAddButton.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.emailAddButton.Margin = new System.Windows.Forms.Padding(2);
             this.emailAddButton.Name = "emailAddButton";
             this.emailAddButton.Size = new System.Drawing.Size(68, 19);
             this.emailAddButton.TabIndex = 21;
@@ -209,7 +209,7 @@
             // phoneAddButton
             // 
             this.phoneAddButton.Location = new System.Drawing.Point(323, 544);
-            this.phoneAddButton.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.phoneAddButton.Margin = new System.Windows.Forms.Padding(2);
             this.phoneAddButton.Name = "phoneAddButton";
             this.phoneAddButton.Size = new System.Drawing.Size(68, 19);
             this.phoneAddButton.TabIndex = 22;
@@ -259,7 +259,11 @@
             this.Controls.Add(this.userRole);
             this.Controls.Add(this.lastName);
             this.Controls.Add(this.firstName);
+            this.MaximizeBox = false;
+            this.MaximumSize = new System.Drawing.Size(640, 640);
+            this.MinimumSize = new System.Drawing.Size(640, 640);
             this.Name = "UserPageEdit";
+            this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "UserPageEdit";
             this.ResumeLayout(false);
             this.PerformLayout();

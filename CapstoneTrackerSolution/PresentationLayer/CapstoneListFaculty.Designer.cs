@@ -162,7 +162,11 @@
             this.Controls.Add(this.capstonePendingList);
             this.Controls.Add(this.currentLabel);
             this.Controls.Add(this.pendingLabel);
+            this.MaximizeBox = false;
+            this.MaximumSize = new System.Drawing.Size(640, 640);
+            this.MinimumSize = new System.Drawing.Size(640, 640);
             this.Name = "CapstoneListFaculty";
+            this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "CapstoneListFaculty";
             this.ResumeLayout(false);
             this.PerformLayout();

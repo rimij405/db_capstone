@@ -117,7 +117,11 @@
             this.Controls.Add(this.orderLabel);
             this.Controls.Add(this.usersList);
             this.Controls.Add(this.userPageReturn);
+            this.MaximizeBox = false;
+            this.MaximumSize = new System.Drawing.Size(640, 640);
+            this.MinimumSize = new System.Drawing.Size(640, 640);
             this.Name = "UserList";
+            this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "UserList";
             this.ResumeLayout(false);
             this.PerformLayout();

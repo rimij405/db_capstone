@@ -129,7 +129,11 @@
             this.Controls.Add(this.selectLabel);
             this.Controls.Add(this.orderValues);
             this.Controls.Add(this.orderLabel);
+            this.MaximizeBox = false;
+            this.MaximumSize = new System.Drawing.Size(640, 640);
+            this.MinimumSize = new System.Drawing.Size(640, 640);
             this.Name = "CapstoneListStaff";
+            this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "CapstoneListStaff";
             this.ResumeLayout(false);
             this.PerformLayout();
