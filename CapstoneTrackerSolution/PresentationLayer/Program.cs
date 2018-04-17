@@ -18,7 +18,8 @@ namespace PresentationLayer
             Application.SetCompatibleTextRenderingDefault(false);
             FormHandler fh = FormHandler.Instance;
             fh.CreateLogin();
-            Application.Run(fh.GetLogin());
+            fh.GetLogin().Show();
+            Application.Run();
         }
     }
 }

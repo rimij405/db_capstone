@@ -17,11 +17,17 @@ namespace PresentationLayer
         public Login()
         {
             InitializeComponent();
+            this.FormClosed += new FormClosedEventHandler(this.Login_FormClosed);
+        }
+
+        private void Login_FormClosed(object sender, FormClosedEventArgs e)
+        {
+            Application.Exit();
         }
 
         private void loginButton_Click(object sender, EventArgs e)
         {
-            if (username.Text != "" && password.Text != "")
+            if (ValidateLogin())
             {
                 if (fh.GetUserPage() == null) // in case page has already been created
                 {
@@ -34,6 +40,15 @@ namespace PresentationLayer
             {
                 error.Visible = true;
             }
+        }
+
+        // check to make sure the user entered proper login info
+        private bool ValidateLogin()
+        {
+            if (fh.LoginSetPassword())
+                return fh.LoginSetUserName();
+            else
+                return false;
         }
     }
 }
