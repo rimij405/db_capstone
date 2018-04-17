@@ -37,6 +37,7 @@
             this.capstoneGradeList = new System.Windows.Forms.ListBox();
             this.userPageReturn = new System.Windows.Forms.Button();
             this.error = new System.Windows.Forms.TextBox();
+            this.capstoneGradeLabel = new System.Windows.Forms.TextBox();
             this.SuspendLayout();
             // 
             // pendingLabel
@@ -57,7 +58,7 @@
             this.currentLabel.Location = new System.Drawing.Point(13, 274);
             this.currentLabel.Name = "currentLabel";
             this.currentLabel.ReadOnly = true;
-            this.currentLabel.Size = new System.Drawing.Size(600, 22);
+            this.currentLabel.Size = new System.Drawing.Size(419, 22);
             this.currentLabel.TabIndex = 3;
             this.currentLabel.Text = "Current Capstones:";
             // 
@@ -87,6 +88,7 @@
             this.acceptCapstone.TabIndex = 6;
             this.acceptCapstone.Text = "Accept Capstone \r\nInvitation";
             this.acceptCapstone.UseVisualStyleBackColor = false;
+            this.acceptCapstone.Click += new System.EventHandler(this.acceptCapstone_Click);
             // 
             // rejectCapstone
             // 
@@ -98,12 +100,14 @@
             this.rejectCapstone.TabIndex = 7;
             this.rejectCapstone.Text = "Decline Capstone\r\nInvitation\r\n";
             this.rejectCapstone.UseVisualStyleBackColor = false;
+            this.rejectCapstone.Click += new System.EventHandler(this.rejectCapstone_Click);
             // 
             // capstoneGradeList
             // 
             this.capstoneGradeList.FormattingEnabled = true;
             this.capstoneGradeList.Location = new System.Drawing.Point(442, 302);
             this.capstoneGradeList.Name = "capstoneGradeList";
+            this.capstoneGradeList.SelectionMode = System.Windows.Forms.SelectionMode.None;
             this.capstoneGradeList.Size = new System.Drawing.Size(171, 251);
             this.capstoneGradeList.TabIndex = 8;
             // 
@@ -132,11 +136,23 @@
             this.error.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
             this.error.Visible = false;
             // 
+            // capstoneGradeLabel
+            // 
+            this.capstoneGradeLabel.BorderStyle = System.Windows.Forms.BorderStyle.None;
+            this.capstoneGradeLabel.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.capstoneGradeLabel.Location = new System.Drawing.Point(442, 274);
+            this.capstoneGradeLabel.Name = "capstoneGradeLabel";
+            this.capstoneGradeLabel.ReadOnly = true;
+            this.capstoneGradeLabel.Size = new System.Drawing.Size(170, 22);
+            this.capstoneGradeLabel.TabIndex = 16;
+            this.capstoneGradeLabel.Text = "Grade:";
+            // 
             // CapstoneListFaculty
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(624, 601);
+            this.Controls.Add(this.capstoneGradeLabel);
             this.Controls.Add(this.error);
             this.Controls.Add(this.userPageReturn);
             this.Controls.Add(this.capstoneGradeList);
@@ -163,5 +179,6 @@
         private System.Windows.Forms.ListBox capstoneGradeList;
         private System.Windows.Forms.Button userPageReturn;
         private System.Windows.Forms.TextBox error;
+        private System.Windows.Forms.TextBox capstoneGradeLabel;
     }
 }

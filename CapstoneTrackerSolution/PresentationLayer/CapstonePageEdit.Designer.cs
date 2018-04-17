@@ -241,6 +241,7 @@
             this.gradeValue.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.gradeValue.Location = new System.Drawing.Point(477, 382);
             this.gradeValue.Name = "gradeValue";
+            this.gradeValue.ReadOnly = true;
             this.gradeValue.Size = new System.Drawing.Size(134, 24);
             this.gradeValue.TabIndex = 29;
             // 
@@ -262,6 +263,7 @@
             this.plagarismScoreValue.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.plagarismScoreValue.Location = new System.Drawing.Point(478, 456);
             this.plagarismScoreValue.Name = "plagarismScoreValue";
+            this.plagarismScoreValue.ReadOnly = true;
             this.plagarismScoreValue.Size = new System.Drawing.Size(134, 24);
             this.plagarismScoreValue.TabIndex = 31;
             // 

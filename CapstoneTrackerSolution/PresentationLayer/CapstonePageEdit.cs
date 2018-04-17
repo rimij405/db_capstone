@@ -41,10 +41,12 @@ namespace PresentationLayer
                 {
                     defenseDateValue.Enabled = false;
                     plagarismScoreValue.ReadOnly = true;
+                    gradeValue.ReadOnly = false;
                 }
                 else // if staff
                 {
                     gradeValue.ReadOnly = true;
+                    plagarismScoreValue.ReadOnly = false;
                 }
             }
         }
@@ -71,7 +73,7 @@ namespace PresentationLayer
         // Add faculty member to capstone
         private void facultyRequestConfirm_Click(object sender, EventArgs e)
         {
-            if(facultyRequest.Text != "") // if something is entered
+            if(facultyRequest.Text != "" && facultyRequest.Text != "Add Faculty Here") // if something is entered
             {
                 facultyValue.Items.Add(facultyRequest.Text);
                 facultyRequest.Text = "";
