@@ -37,6 +37,20 @@ namespace ISTE.DAL.Database.Interfaces
         // Service(s).
 
         /// <summary>
+        /// Return a formatted entry.
+        /// </summary>
+        /// <param name="entry">Entry to generate formatted string from.</param>
+        /// <returns>Returns formatted string.</returns>
+        string FormatEntry(IEntry entry);
+
+        /// <summary>
+        /// Return a formatted header, using the field's in a particular row.
+        /// </summary>
+        /// <param name="entries">Collection to generate header from.</param>
+        /// <returns>Returns formatted string.</returns>
+        string FormatHeader(List<IEntry> entries);
+
+        /// <summary>
         /// Return a formatted header, using the field's in a particular row.
         /// </summary>
         /// <param name="header">Row to generate header from.</param>
@@ -715,6 +729,14 @@ namespace ISTE.DAL.Database.Interfaces
         /// <param name="entry">Entry to set.</param>
         /// <returns>Returns reference to self.</returns>
         IRow SetEntry(string fieldname, IEntry entry);
+
+        /// <summary>
+        /// Set entry with matching fieldname to the input entry clone. Will overwrite fieldname on cloned entry.
+        /// </summary>
+        /// <param name="fieldname">Field to access.</param>
+        /// <param name="value">Entry value to set.</param>
+        /// <returns>Returns reference to self.</returns>
+        IRow SetEntry(string fieldname, string value);
 
         /// <summary>
         /// Set entry with matching fieldname to the input entry reference. Will only add if the entry's field exists in the row.

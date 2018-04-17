@@ -59,16 +59,16 @@ namespace TestDataAccessLayer
             console.Debug("Printer initialized.");
 
             // TESTING MySqlConfiguration.
-            // TestConfiguration();
+            TestConfiguration();
 
             // TESTING MySqlDatabase: Connect
-            // TestConnect();
+            TestConnect();
 
             // TESTING MySqlEntry object.
-            // TestMySqlEntry();
+            TestMySqlEntry();
 
             // TESTING MySqlRow object.
-            // TestMySqlRow();
+            TestMySqlRow();
 
             // Wait for user input.
             console.Pause("Press any key to exit the program...");
@@ -125,7 +125,7 @@ namespace TestDataAccessLayer
                 console.Write("Testing empty constructor.\n");
                 test = new MySqlEntry("Test");
                 console.Write($"MySqlEntry Test:\n{test}\n---------");                
-                if (!test.IsNull()) { throw new Exception("Test failed. (IsNull())"); } else { console.Write("Test passed. (IsNull())."); }
+                if (!test.IsNull) { throw new Exception("Test failed. (IsNull())"); } else { console.Write("Test passed. (IsNull())."); }
                 if (test.GetField() != "TEST") { throw new Exception("Test failed. (GetField())"); } else { console.Write("Test passed. (GetField())."); }
                 if (!test.HasField("Test")) { throw new Exception("Test failed. (HasField(\"Test\"))"); } else { console.Write("Test passed. (HasField(\"Test\"))."); }
                 if (test.GetValue() != MySqlEntry.NULL_VALUE) { throw new Exception("Test failed. (GetValue())"); } else { console.Write("Test passed. (GetValue())."); }
@@ -137,7 +137,7 @@ namespace TestDataAccessLayer
                 console.Write("Testing string, string constructor.");
                 test = new MySqlEntry("Test2", "TestValue");
                 console.Write($"MySqlEntry Test:\n{test}\n---------");
-                if (test.IsNull()) { throw new Exception("Test failed. (IsNull())"); } else { console.Write("Test passed. (IsNull())."); }
+                if (test.IsNull) { throw new Exception("Test failed. (IsNull())"); } else { console.Write("Test passed. (IsNull())."); }
                 if (test.GetField() != "TEST2") { throw new Exception("Test failed. (GetField())"); } else { console.Write("Test passed. (GetField())."); }
                 if (!test.HasField("Test2")) { throw new Exception("Test failed. (HasField(\"Test2\"))"); } else { console.Write("Test passed. (HasField(\"Test2\"))."); }
                 if (test.GetValue() != "TestValue") { throw new Exception("Test failed. (GetValue())"); } else { console.Write("Test passed. (GetValue())."); }
@@ -150,7 +150,7 @@ namespace TestDataAccessLayer
                 console.Write($"MySqlEntry Source:\n{entry}\n---------");
                 test = entry.Clone() as MySqlEntry;
                 console.Write($"MySqlEntry Test:\n{test}\n---------");
-                if (test.IsNull()) { throw new Exception("Test failed. (IsNull())"); } else { console.Write("Test passed. (IsNull())."); }
+                if (test.IsNull) { throw new Exception("Test failed. (IsNull())"); } else { console.Write("Test passed. (IsNull())."); }
                 if (test.GetField() != "TEST3") { throw new Exception("Test failed. (GetField())"); } else { console.Write("Test passed. (GetField())."); }
                 if (!test.HasField("Test3")) { throw new Exception("Test failed. (HasField(\"Test3\"))"); } else { console.Write("Test passed. (HasField(\"Test3\"))."); }
                 if (test.GetValue() != "Clone Value") { throw new Exception("Test failed. (GetValue())"); } else { console.Write("Test passed. (GetValue())."); }
@@ -178,7 +178,7 @@ namespace TestDataAccessLayer
 
                 console.Write("Testing empty constructor.");
                 console.Write($"{row}");
-                if (!row.IsEmpty()) { throw new Exception("Should be empty."); } else { console.Write("Test passed. Empty row."); }
+                if (!row.IsEmpty) { throw new Exception("Should be empty."); } else { console.Write("Test passed. Empty row."); }
 
                 row = new MySqlRow(new List<string>() {
                     "FirstName",
@@ -189,13 +189,13 @@ namespace TestDataAccessLayer
                 row.AddEntry("UserID", "1");
                 console.Write("Testing field constructor.");
                 console.Write($"{row}");
-                if (row.IsEmpty()) { throw new Exception("Should not be empty."); } else { console.Write("Test passed. Row with fields."); }
+                if (row.IsEmpty) { throw new Exception("Should not be empty."); } else { console.Write("Test passed. Row with fields."); }
                 if (row[0].Length == 0) { throw new Exception("Empty string in place of field."); } else { console.Write($"Test passed. Field \"{row[0]}\" found."); }
-                if (!row["LastName"].IsNull()) { throw new Exception("New entry should be null when only field is instantiated."); } else { console.Write($"Test passed. Entry \"{row["LastName"]}\" found."); }
-                if (row["Birthday"].IsNull()) { throw new Exception("New entry should have value."); } else { console.Write($"Test passed. Entry \"{row["Birthday"]}\" found."); }
+                if (!row["LastName"].IsNull) { throw new Exception("New entry should be null when only field is instantiated."); } else { console.Write($"Test passed. Entry \"{row["LastName"]}\" found."); }
+                if (row["Birthday"].IsNull) { throw new Exception("New entry should have value."); } else { console.Write($"Test passed. Entry \"{row["Birthday"]}\" found."); }
                 console.Write("Overwriting entry value.");
                 row.SetEntry("Birthday", "TEST-REWRITE");
-                if (row["Birthday"].IsNull()) { throw new Exception("New entry should have value."); } else { console.Write($"Test passed. Entry \"{row["Birthday"]}\" overwritten."); }
+                if (row["Birthday"].IsNull) { throw new Exception("New entry should have value."); } else { console.Write($"Test passed. Entry \"{row["Birthday"]}\" overwritten."); }
                 console.Write("Removing field UserID.");
                 row.RemoveField("UserID");
                 console.Write($"{row}");
@@ -207,6 +207,39 @@ namespace TestDataAccessLayer
                 row.Clear();
                 console.Write($"{copy}");
                 console.Write($"{row}");
+
+                MySqlResultPrinter formatter = new MySqlResultPrinter(15, 3);
+                console.Write(formatter.GenerateDivisor(10));
+                console.Write(formatter.GenerateDivisor(new List<int> { 7, 10 }));
+                console.Write(formatter.GenerateDivisor(new List<int> { 10, 5, 5, 7, 10 }));
+
+                console.Write("Testing format with value: \"Ape\" at total length of 10. Expected: \"| Ape      |\"");
+                console.Write(formatter.FormatTextSegment("Ape", 10));
+                console.Write("Testing format with value: \"ApeIsLongerThan10\" at total length of 10. Expected: \"| ApIs...  |\"");
+                console.Write(formatter.FormatTextSegment("ApeIsLongerThan10", 10));
+                console.Write("Testing format with value: \"JoelMikcheklson\" at total length of 10. Expected: \"| Joel...  |\"");
+                console.Write(formatter.FormatTextSegment("JoelMikcheklson", 10));
+
+                console.Write("Testing entries: {Tom, Bobby, Bill, JoelMikcheklson}, { 5, 5, 10, 10 } ");
+                console.Write(
+                    formatter.FormatText(
+                        new List<string>() {
+                            "Tom",
+                            "Bobby",
+                            "Bill",
+                            "JoelMikcheklson"
+                        },
+                        new List<int>() {
+                            5, 5, 10, 10
+                        }
+                    ));
+
+                MySqlEntry entry = new MySqlEntry("Format Example", "This is how we print entries.");
+                console.Write(formatter.FormatEntry(entry));
+
+                MySqlEntry entry2 = new MySqlEntry("Field Print Example", "This is an example entry.");
+                console.Write(formatter.FormatHeader(entry, entry2));
+
             }
             catch (Exception e)
             {

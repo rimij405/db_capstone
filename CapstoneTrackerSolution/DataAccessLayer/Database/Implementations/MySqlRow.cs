@@ -616,8 +616,8 @@ namespace ISTE.DAL.Database
         public int GetIndex(IEntry item)
         {
             // Validate input.
-            if (item == null || !this.Contains(item)) { return -1; }
-            return this.Entries.IndexOf(item);
+            if (item == null || !this.Contains(item.GetField())) { return -1; }
+            return this.Fields.IndexOf(item.GetField());
         }
 
         /// <summary>
@@ -1089,7 +1089,18 @@ namespace ISTE.DAL.Database
         /// <returns>Returns reference to self.</returns>
         public IRow SetEntry(string fieldname, IEntry entry)
         {
-            return this.SetEntry(this.GetIndex(fieldname), new MySqlEntry(fieldname, entry.GetValue()));
+            return this.SetEntry(fieldname, entry.GetValue());
+        }
+
+        /// <summary>
+        /// Set entry with matching fieldname to the input entry clone. Will overwrite fieldname on cloned entry.
+        /// </summary>
+        /// <param name="fieldname">Field to access.</param>
+        /// <param name="value">Entry value to set.</param>
+        /// <returns>Returns reference to self.</returns>
+        public IRow SetEntry(string fieldname, string value)
+        {
+            return this.SetEntry(this.GetIndex(fieldname), new MySqlEntry(fieldname, value));
         }
 
         /// <summary>
