@@ -36,9 +36,14 @@
             this.abstractValue = new System.Windows.Forms.TextBox();
             this.defenseDateValue = new System.Windows.Forms.TextBox();
             this.facultyValue = new System.Windows.Forms.ListBox();
-            this.statusLabel = new System.Windows.Forms.TextBox();
-            this.statusValue = new System.Windows.Forms.TextBox();
             this.edit = new System.Windows.Forms.Button();
+            this.textBox4 = new System.Windows.Forms.TextBox();
+            this.textBox5 = new System.Windows.Forms.TextBox();
+            this.textBox2 = new System.Windows.Forms.TextBox();
+            this.textBox3 = new System.Windows.Forms.TextBox();
+            this.statusValue = new System.Windows.Forms.TextBox();
+            this.statusLabel = new System.Windows.Forms.TextBox();
+            this.userPageReturn = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // titleLabel
@@ -122,36 +127,10 @@
             this.facultyValue.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.facultyValue.FormattingEnabled = true;
             this.facultyValue.ItemHeight = 18;
-            this.facultyValue.Items.AddRange(new object[] {
-            "Faculty List"});
             this.facultyValue.Location = new System.Drawing.Point(154, 351);
             this.facultyValue.Name = "facultyValue";
-            this.facultyValue.SelectionMode = System.Windows.Forms.SelectionMode.None;
             this.facultyValue.Size = new System.Drawing.Size(289, 130);
             this.facultyValue.TabIndex = 7;
-            // 
-            // statusLabel
-            // 
-            this.statusLabel.BorderStyle = System.Windows.Forms.BorderStyle.None;
-            this.statusLabel.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.statusLabel.Location = new System.Drawing.Point(478, 54);
-            this.statusLabel.Multiline = true;
-            this.statusLabel.Name = "statusLabel";
-            this.statusLabel.ReadOnly = true;
-            this.statusLabel.Size = new System.Drawing.Size(134, 41);
-            this.statusLabel.TabIndex = 8;
-            this.statusLabel.Text = "Project\r\nStatus:";
-            this.statusLabel.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
-            // 
-            // statusValue
-            // 
-            this.statusValue.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.statusValue.Location = new System.Drawing.Point(478, 101);
-            this.statusValue.Multiline = true;
-            this.statusValue.Name = "statusValue";
-            this.statusValue.ReadOnly = true;
-            this.statusValue.Size = new System.Drawing.Size(134, 380);
-            this.statusValue.TabIndex = 9;
             // 
             // edit
             // 
@@ -162,15 +141,99 @@
             this.edit.TabIndex = 10;
             this.edit.Text = "Edit";
             this.edit.UseVisualStyleBackColor = true;
+            this.edit.Click += new System.EventHandler(this.edit_Click);
+            // 
+            // textBox4
+            // 
+            this.textBox4.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.textBox4.Location = new System.Drawing.Point(479, 456);
+            this.textBox4.Name = "textBox4";
+            this.textBox4.ReadOnly = true;
+            this.textBox4.Size = new System.Drawing.Size(134, 24);
+            this.textBox4.TabIndex = 37;
+            // 
+            // textBox5
+            // 
+            this.textBox5.BorderStyle = System.Windows.Forms.BorderStyle.None;
+            this.textBox5.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.textBox5.Location = new System.Drawing.Point(480, 412);
+            this.textBox5.Multiline = true;
+            this.textBox5.Name = "textBox5";
+            this.textBox5.ReadOnly = true;
+            this.textBox5.Size = new System.Drawing.Size(134, 38);
+            this.textBox5.TabIndex = 36;
+            this.textBox5.Text = "Plagarism \r\nScore:";
+            this.textBox5.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
+            // 
+            // textBox2
+            // 
+            this.textBox2.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.textBox2.Location = new System.Drawing.Point(478, 382);
+            this.textBox2.Name = "textBox2";
+            this.textBox2.ReadOnly = true;
+            this.textBox2.Size = new System.Drawing.Size(134, 24);
+            this.textBox2.TabIndex = 35;
+            // 
+            // textBox3
+            // 
+            this.textBox3.BorderStyle = System.Windows.Forms.BorderStyle.None;
+            this.textBox3.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.textBox3.Location = new System.Drawing.Point(479, 356);
+            this.textBox3.Multiline = true;
+            this.textBox3.Name = "textBox3";
+            this.textBox3.ReadOnly = true;
+            this.textBox3.Size = new System.Drawing.Size(134, 20);
+            this.textBox3.TabIndex = 34;
+            this.textBox3.Text = "Grade:";
+            this.textBox3.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
+            // 
+            // statusValue
+            // 
+            this.statusValue.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.statusValue.Location = new System.Drawing.Point(478, 100);
+            this.statusValue.Multiline = true;
+            this.statusValue.Name = "statusValue";
+            this.statusValue.ReadOnly = true;
+            this.statusValue.Size = new System.Drawing.Size(134, 250);
+            this.statusValue.TabIndex = 33;
+            // 
+            // statusLabel
+            // 
+            this.statusLabel.BorderStyle = System.Windows.Forms.BorderStyle.None;
+            this.statusLabel.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.statusLabel.Location = new System.Drawing.Point(478, 53);
+            this.statusLabel.Multiline = true;
+            this.statusLabel.Name = "statusLabel";
+            this.statusLabel.ReadOnly = true;
+            this.statusLabel.Size = new System.Drawing.Size(134, 41);
+            this.statusLabel.TabIndex = 32;
+            this.statusLabel.Text = "Project\r\nStatus:";
+            this.statusLabel.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
+            // 
+            // userPageReturn
+            // 
+            this.userPageReturn.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.userPageReturn.Location = new System.Drawing.Point(480, 13);
+            this.userPageReturn.Name = "userPageReturn";
+            this.userPageReturn.Size = new System.Drawing.Size(132, 34);
+            this.userPageReturn.TabIndex = 38;
+            this.userPageReturn.Text = "Return to User Page";
+            this.userPageReturn.UseVisualStyleBackColor = true;
+            this.userPageReturn.Click += new System.EventHandler(this.userPageReturn_Click);
             // 
             // CapstonePageView
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(624, 601);
-            this.Controls.Add(this.edit);
+            this.Controls.Add(this.userPageReturn);
+            this.Controls.Add(this.textBox4);
+            this.Controls.Add(this.textBox5);
+            this.Controls.Add(this.textBox2);
+            this.Controls.Add(this.textBox3);
             this.Controls.Add(this.statusValue);
             this.Controls.Add(this.statusLabel);
+            this.Controls.Add(this.edit);
             this.Controls.Add(this.facultyValue);
             this.Controls.Add(this.defenseDateValue);
             this.Controls.Add(this.abstractValue);
@@ -196,8 +259,13 @@
         private System.Windows.Forms.TextBox abstractValue;
         private System.Windows.Forms.TextBox defenseDateValue;
         private System.Windows.Forms.ListBox facultyValue;
-        private System.Windows.Forms.TextBox statusLabel;
-        private System.Windows.Forms.TextBox statusValue;
         private System.Windows.Forms.Button edit;
+        private System.Windows.Forms.TextBox textBox4;
+        private System.Windows.Forms.TextBox textBox5;
+        private System.Windows.Forms.TextBox textBox2;
+        private System.Windows.Forms.TextBox textBox3;
+        private System.Windows.Forms.TextBox statusValue;
+        private System.Windows.Forms.TextBox statusLabel;
+        private System.Windows.Forms.Button userPageReturn;
     }
 }

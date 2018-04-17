@@ -28,46 +28,16 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.pendingCapstones = new System.Windows.Forms.DataGridView();
-            this.currentCapstones = new System.Windows.Forms.DataGridView();
             this.pendingLabel = new System.Windows.Forms.TextBox();
             this.currentLabel = new System.Windows.Forms.TextBox();
-            this.Title = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.View = new System.Windows.Forms.DataGridViewButtonColumn();
-            this.Accept = new System.Windows.Forms.DataGridViewButtonColumn();
-            this.Reject = new System.Windows.Forms.DataGridViewButtonColumn();
-            this.Title2 = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.View2 = new System.Windows.Forms.DataGridViewButtonColumn();
-            this.Chair = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            ((System.ComponentModel.ISupportInitialize)(this.pendingCapstones)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.currentCapstones)).BeginInit();
+            this.capstonePendingList = new System.Windows.Forms.ListBox();
+            this.capstoneCurrentList = new System.Windows.Forms.ListBox();
+            this.acceptCapstone = new System.Windows.Forms.Button();
+            this.rejectCapstone = new System.Windows.Forms.Button();
+            this.capstoneGradeList = new System.Windows.Forms.ListBox();
+            this.userPageReturn = new System.Windows.Forms.Button();
+            this.error = new System.Windows.Forms.TextBox();
             this.SuspendLayout();
-            // 
-            // pendingCapstones
-            // 
-            this.pendingCapstones.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.pendingCapstones.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
-            this.Title,
-            this.View,
-            this.Accept,
-            this.Reject});
-            this.pendingCapstones.Location = new System.Drawing.Point(13, 54);
-            this.pendingCapstones.Name = "pendingCapstones";
-            this.pendingCapstones.Size = new System.Drawing.Size(600, 240);
-            this.pendingCapstones.TabIndex = 0;
-            this.pendingCapstones.CellContentClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.pendingCapstones_CellContentClick);
-            // 
-            // currentCapstones
-            // 
-            this.currentCapstones.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.currentCapstones.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
-            this.Title2,
-            this.View2,
-            this.Chair});
-            this.currentCapstones.Location = new System.Drawing.Point(14, 349);
-            this.currentCapstones.Name = "currentCapstones";
-            this.currentCapstones.Size = new System.Drawing.Size(599, 240);
-            this.currentCapstones.TabIndex = 1;
             // 
             // pendingLabel
             // 
@@ -84,88 +54,114 @@
             // 
             this.currentLabel.BorderStyle = System.Windows.Forms.BorderStyle.None;
             this.currentLabel.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.currentLabel.Location = new System.Drawing.Point(13, 321);
+            this.currentLabel.Location = new System.Drawing.Point(13, 274);
             this.currentLabel.Name = "currentLabel";
             this.currentLabel.ReadOnly = true;
             this.currentLabel.Size = new System.Drawing.Size(600, 22);
             this.currentLabel.TabIndex = 3;
             this.currentLabel.Text = "Current Capstones:";
             // 
-            // Title
+            // capstonePendingList
             // 
-            this.Title.HeaderText = "Title";
-            this.Title.Name = "Title";
-            this.Title.ReadOnly = true;
-            this.Title.Width = 255;
+            this.capstonePendingList.FormattingEnabled = true;
+            this.capstonePendingList.Location = new System.Drawing.Point(13, 55);
+            this.capstonePendingList.Name = "capstonePendingList";
+            this.capstonePendingList.Size = new System.Drawing.Size(433, 199);
+            this.capstonePendingList.TabIndex = 4;
             // 
-            // View
+            // capstoneCurrentList
             // 
-            this.View.HeaderText = "View";
-            this.View.Name = "View";
-            this.View.Text = "View";
+            this.capstoneCurrentList.FormattingEnabled = true;
+            this.capstoneCurrentList.Location = new System.Drawing.Point(13, 302);
+            this.capstoneCurrentList.Name = "capstoneCurrentList";
+            this.capstoneCurrentList.Size = new System.Drawing.Size(433, 251);
+            this.capstoneCurrentList.TabIndex = 5;
             // 
-            // Accept
+            // acceptCapstone
             // 
-            this.Accept.HeaderText = "Accept";
-            this.Accept.Name = "Accept";
-            this.Accept.Text = "Accept";
+            this.acceptCapstone.BackColor = System.Drawing.Color.DarkSeaGreen;
+            this.acceptCapstone.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.acceptCapstone.Location = new System.Drawing.Point(468, 126);
+            this.acceptCapstone.Name = "acceptCapstone";
+            this.acceptCapstone.Size = new System.Drawing.Size(144, 61);
+            this.acceptCapstone.TabIndex = 6;
+            this.acceptCapstone.Text = "Accept Capstone \r\nInvitation";
+            this.acceptCapstone.UseVisualStyleBackColor = false;
             // 
-            // Reject
+            // rejectCapstone
             // 
-            this.Reject.HeaderText = "Reject";
-            this.Reject.Name = "Reject";
-            this.Reject.Text = "Reject";
+            this.rejectCapstone.BackColor = System.Drawing.Color.DarkSalmon;
+            this.rejectCapstone.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.rejectCapstone.Location = new System.Drawing.Point(468, 193);
+            this.rejectCapstone.Name = "rejectCapstone";
+            this.rejectCapstone.Size = new System.Drawing.Size(144, 61);
+            this.rejectCapstone.TabIndex = 7;
+            this.rejectCapstone.Text = "Decline Capstone\r\nInvitation\r\n";
+            this.rejectCapstone.UseVisualStyleBackColor = false;
             // 
-            // Title2
+            // capstoneGradeList
             // 
-            this.Title2.HeaderText = "Title";
-            this.Title2.Name = "Title2";
-            this.Title2.ReadOnly = true;
-            this.Title2.Width = 255;
+            this.capstoneGradeList.FormattingEnabled = true;
+            this.capstoneGradeList.Location = new System.Drawing.Point(442, 302);
+            this.capstoneGradeList.Name = "capstoneGradeList";
+            this.capstoneGradeList.Size = new System.Drawing.Size(171, 251);
+            this.capstoneGradeList.TabIndex = 8;
             // 
-            // View2
+            // userPageReturn
             // 
-            this.View2.HeaderText = "View";
-            this.View2.Name = "View2";
-            this.View2.Text = "View";
+            this.userPageReturn.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.userPageReturn.Location = new System.Drawing.Point(469, 13);
+            this.userPageReturn.Name = "userPageReturn";
+            this.userPageReturn.Size = new System.Drawing.Size(143, 44);
+            this.userPageReturn.TabIndex = 9;
+            this.userPageReturn.Text = "Return to User Page";
+            this.userPageReturn.UseVisualStyleBackColor = true;
+            this.userPageReturn.Click += new System.EventHandler(this.userPageReturn_Click);
             // 
-            // Chair
+            // error
             // 
-            this.Chair.HeaderText = "Chair";
-            this.Chair.Name = "Chair";
-            this.Chair.ReadOnly = true;
-            this.Chair.Width = 200;
+            this.error.BackColor = System.Drawing.Color.DarkSalmon;
+            this.error.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.error.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.error.Location = new System.Drawing.Point(12, 565);
+            this.error.Name = "error";
+            this.error.ReadOnly = true;
+            this.error.Size = new System.Drawing.Size(600, 24);
+            this.error.TabIndex = 15;
+            this.error.Text = "Error Goes Here";
+            this.error.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
+            this.error.Visible = false;
             // 
             // CapstoneListFaculty
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(624, 601);
+            this.Controls.Add(this.error);
+            this.Controls.Add(this.userPageReturn);
+            this.Controls.Add(this.capstoneGradeList);
+            this.Controls.Add(this.rejectCapstone);
+            this.Controls.Add(this.acceptCapstone);
+            this.Controls.Add(this.capstoneCurrentList);
+            this.Controls.Add(this.capstonePendingList);
             this.Controls.Add(this.currentLabel);
             this.Controls.Add(this.pendingLabel);
-            this.Controls.Add(this.currentCapstones);
-            this.Controls.Add(this.pendingCapstones);
             this.Name = "CapstoneListFaculty";
             this.Text = "CapstoneListFaculty";
-            ((System.ComponentModel.ISupportInitialize)(this.pendingCapstones)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.currentCapstones)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
         }
 
         #endregion
-
-        private System.Windows.Forms.DataGridView pendingCapstones;
-        private System.Windows.Forms.DataGridView currentCapstones;
         private System.Windows.Forms.TextBox pendingLabel;
         private System.Windows.Forms.TextBox currentLabel;
-        private System.Windows.Forms.DataGridViewTextBoxColumn Title;
-        private System.Windows.Forms.DataGridViewButtonColumn View;
-        private System.Windows.Forms.DataGridViewButtonColumn Accept;
-        private System.Windows.Forms.DataGridViewButtonColumn Reject;
-        private System.Windows.Forms.DataGridViewTextBoxColumn Title2;
-        private System.Windows.Forms.DataGridViewButtonColumn View2;
-        private System.Windows.Forms.DataGridViewTextBoxColumn Chair;
+        private System.Windows.Forms.ListBox capstonePendingList;
+        private System.Windows.Forms.ListBox capstoneCurrentList;
+        private System.Windows.Forms.Button acceptCapstone;
+        private System.Windows.Forms.Button rejectCapstone;
+        private System.Windows.Forms.ListBox capstoneGradeList;
+        private System.Windows.Forms.Button userPageReturn;
+        private System.Windows.Forms.TextBox error;
     }
 }

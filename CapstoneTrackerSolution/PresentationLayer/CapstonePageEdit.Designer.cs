@@ -43,7 +43,12 @@
             this.feedbackText = new System.Windows.Forms.TextBox();
             this.save = new System.Windows.Forms.Button();
             this.cancel = new System.Windows.Forms.Button();
-            this.textBox1 = new System.Windows.Forms.TextBox();
+            this.dragFileLabel = new System.Windows.Forms.TextBox();
+            this.deleteFaculty = new System.Windows.Forms.Button();
+            this.gradeValue = new System.Windows.Forms.TextBox();
+            this.gradeLabel = new System.Windows.Forms.TextBox();
+            this.plagarismScoreValue = new System.Windows.Forms.TextBox();
+            this.plagarismScoreLabel = new System.Windows.Forms.TextBox();
             this.SuspendLayout();
             // 
             // statusValue
@@ -52,7 +57,8 @@
             this.statusValue.Location = new System.Drawing.Point(477, 100);
             this.statusValue.Multiline = true;
             this.statusValue.Name = "statusValue";
-            this.statusValue.Size = new System.Drawing.Size(134, 380);
+            this.statusValue.ReadOnly = true;
+            this.statusValue.Size = new System.Drawing.Size(134, 250);
             this.statusValue.TabIndex = 19;
             // 
             // statusLabel
@@ -73,11 +79,8 @@
             this.facultyValue.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.facultyValue.FormattingEnabled = true;
             this.facultyValue.ItemHeight = 18;
-            this.facultyValue.Items.AddRange(new object[] {
-            "Faculty List"});
             this.facultyValue.Location = new System.Drawing.Point(153, 350);
             this.facultyValue.Name = "facultyValue";
-            this.facultyValue.SelectionMode = System.Windows.Forms.SelectionMode.None;
             this.facultyValue.Size = new System.Drawing.Size(289, 130);
             this.facultyValue.TabIndex = 17;
             // 
@@ -164,6 +167,7 @@
             this.facultyRequestConfirm.TabIndex = 21;
             this.facultyRequestConfirm.Text = "Request\r\nFaculty\r\n";
             this.facultyRequestConfirm.UseVisualStyleBackColor = true;
+            this.facultyRequestConfirm.Click += new System.EventHandler(this.facultyRequestConfirm_Click);
             // 
             // defenseDateValue
             // 
@@ -195,6 +199,7 @@
             this.save.TabIndex = 24;
             this.save.Text = "Save changes";
             this.save.UseVisualStyleBackColor = false;
+            this.save.Click += new System.EventHandler(this.save_Click);
             // 
             // cancel
             // 
@@ -206,26 +211,86 @@
             this.cancel.TabIndex = 25;
             this.cancel.Text = "Cancel";
             this.cancel.UseVisualStyleBackColor = false;
+            this.cancel.Click += new System.EventHandler(this.cancel_Click);
             // 
-            // textBox1
+            // dragFileLabel
             // 
-            this.textBox1.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.textBox1.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.textBox1.Location = new System.Drawing.Point(461, 499);
-            this.textBox1.Multiline = true;
-            this.textBox1.Name = "textBox1";
-            this.textBox1.ReadOnly = true;
-            this.textBox1.Size = new System.Drawing.Size(156, 48);
-            this.textBox1.TabIndex = 26;
-            this.textBox1.Text = "Drag files into window \r\nto upload";
-            this.textBox1.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
+            this.dragFileLabel.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.dragFileLabel.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.dragFileLabel.Location = new System.Drawing.Point(461, 499);
+            this.dragFileLabel.Multiline = true;
+            this.dragFileLabel.Name = "dragFileLabel";
+            this.dragFileLabel.ReadOnly = true;
+            this.dragFileLabel.Size = new System.Drawing.Size(156, 48);
+            this.dragFileLabel.TabIndex = 26;
+            this.dragFileLabel.Text = "Drag files into window \r\nto upload";
+            this.dragFileLabel.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
+            // 
+            // deleteFaculty
+            // 
+            this.deleteFaculty.Location = new System.Drawing.Point(72, 432);
+            this.deleteFaculty.Name = "deleteFaculty";
+            this.deleteFaculty.Size = new System.Drawing.Size(75, 48);
+            this.deleteFaculty.TabIndex = 27;
+            this.deleteFaculty.Text = "Delete Selected Faculty";
+            this.deleteFaculty.UseVisualStyleBackColor = true;
+            this.deleteFaculty.Click += new System.EventHandler(this.deleteFaculty_Click);
+            // 
+            // gradeValue
+            // 
+            this.gradeValue.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.gradeValue.Location = new System.Drawing.Point(477, 382);
+            this.gradeValue.Name = "gradeValue";
+            this.gradeValue.Size = new System.Drawing.Size(134, 24);
+            this.gradeValue.TabIndex = 29;
+            // 
+            // gradeLabel
+            // 
+            this.gradeLabel.BorderStyle = System.Windows.Forms.BorderStyle.None;
+            this.gradeLabel.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.gradeLabel.Location = new System.Drawing.Point(478, 356);
+            this.gradeLabel.Multiline = true;
+            this.gradeLabel.Name = "gradeLabel";
+            this.gradeLabel.ReadOnly = true;
+            this.gradeLabel.Size = new System.Drawing.Size(134, 20);
+            this.gradeLabel.TabIndex = 28;
+            this.gradeLabel.Text = "Grade:";
+            this.gradeLabel.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
+            // 
+            // plagarismScoreValue
+            // 
+            this.plagarismScoreValue.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.plagarismScoreValue.Location = new System.Drawing.Point(478, 456);
+            this.plagarismScoreValue.Name = "plagarismScoreValue";
+            this.plagarismScoreValue.Size = new System.Drawing.Size(134, 24);
+            this.plagarismScoreValue.TabIndex = 31;
+            // 
+            // plagarismScoreLabel
+            // 
+            this.plagarismScoreLabel.BorderStyle = System.Windows.Forms.BorderStyle.None;
+            this.plagarismScoreLabel.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.plagarismScoreLabel.Location = new System.Drawing.Point(479, 412);
+            this.plagarismScoreLabel.Multiline = true;
+            this.plagarismScoreLabel.Name = "plagarismScoreLabel";
+            this.plagarismScoreLabel.ReadOnly = true;
+            this.plagarismScoreLabel.Size = new System.Drawing.Size(134, 38);
+            this.plagarismScoreLabel.TabIndex = 30;
+            this.plagarismScoreLabel.Text = "Plagarism \r\nScore:";
+            this.plagarismScoreLabel.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
             // 
             // CapstonePageEdit
             // 
+            this.AcceptButton = this.facultyRequestConfirm;
+            this.AllowDrop = true;
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(624, 601);
-            this.Controls.Add(this.textBox1);
+            this.Controls.Add(this.plagarismScoreValue);
+            this.Controls.Add(this.plagarismScoreLabel);
+            this.Controls.Add(this.gradeValue);
+            this.Controls.Add(this.gradeLabel);
+            this.Controls.Add(this.deleteFaculty);
+            this.Controls.Add(this.dragFileLabel);
             this.Controls.Add(this.cancel);
             this.Controls.Add(this.save);
             this.Controls.Add(this.feedbackText);
@@ -265,6 +330,11 @@
         private System.Windows.Forms.TextBox feedbackText;
         private System.Windows.Forms.Button save;
         private System.Windows.Forms.Button cancel;
-        private System.Windows.Forms.TextBox textBox1;
+        private System.Windows.Forms.TextBox dragFileLabel;
+        private System.Windows.Forms.Button deleteFaculty;
+        private System.Windows.Forms.TextBox gradeValue;
+        private System.Windows.Forms.TextBox gradeLabel;
+        private System.Windows.Forms.TextBox plagarismScoreValue;
+        private System.Windows.Forms.TextBox plagarismScoreLabel;
     }
 }

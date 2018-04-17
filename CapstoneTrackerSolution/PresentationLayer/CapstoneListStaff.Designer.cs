@@ -28,62 +28,20 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.capstoneGrid = new System.Windows.Forms.DataGridView();
-            this.Title = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.View = new System.Windows.Forms.DataGridViewButtonColumn();
-            this.Status = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.orderLabel = new System.Windows.Forms.TextBox();
             this.orderValues = new System.Windows.Forms.ComboBox();
             this.selectValues = new System.Windows.Forms.ComboBox();
             this.selectLabel = new System.Windows.Forms.TextBox();
-            ((System.ComponentModel.ISupportInitialize)(this.capstoneGrid)).BeginInit();
+            this.capstoneList = new System.Windows.Forms.ListBox();
+            this.statusList = new System.Windows.Forms.ListBox();
+            this.userPageReturn = new System.Windows.Forms.Button();
             this.SuspendLayout();
-            // 
-            // capstoneGrid
-            // 
-            this.capstoneGrid.AllowUserToAddRows = false;
-            this.capstoneGrid.AllowUserToDeleteRows = false;
-            this.capstoneGrid.AllowUserToResizeColumns = false;
-            this.capstoneGrid.AllowUserToResizeRows = false;
-            this.capstoneGrid.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.capstoneGrid.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
-            this.Title,
-            this.View,
-            this.Status});
-            this.capstoneGrid.EditMode = System.Windows.Forms.DataGridViewEditMode.EditProgrammatically;
-            this.capstoneGrid.Location = new System.Drawing.Point(12, 12);
-            this.capstoneGrid.Name = "capstoneGrid";
-            this.capstoneGrid.Size = new System.Drawing.Size(452, 577);
-            this.capstoneGrid.TabIndex = 0;
-            // 
-            // Title
-            // 
-            this.Title.HeaderText = "Title";
-            this.Title.MaxInputLength = 100;
-            this.Title.Name = "Title";
-            this.Title.ReadOnly = true;
-            this.Title.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.Programmatic;
-            this.Title.Width = 200;
-            // 
-            // View
-            // 
-            this.View.HeaderText = "View";
-            this.View.Name = "View";
-            this.View.Text = "View";
-            this.View.UseColumnTextForButtonValue = true;
-            // 
-            // Status
-            // 
-            this.Status.HeaderText = "Status";
-            this.Status.MaxInputLength = 45;
-            this.Status.Name = "Status";
-            this.Status.ReadOnly = true;
             // 
             // orderLabel
             // 
             this.orderLabel.BorderStyle = System.Windows.Forms.BorderStyle.None;
             this.orderLabel.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.orderLabel.Location = new System.Drawing.Point(470, 13);
+            this.orderLabel.Location = new System.Drawing.Point(471, 107);
             this.orderLabel.Name = "orderLabel";
             this.orderLabel.ReadOnly = true;
             this.orderLabel.Size = new System.Drawing.Size(142, 22);
@@ -93,26 +51,28 @@
             // 
             // orderValues
             // 
+            this.orderValues.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.orderValues.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.orderValues.FormattingEnabled = true;
             this.orderValues.Items.AddRange(new object[] {
             "Name",
             "Date",
             "Status"});
-            this.orderValues.Location = new System.Drawing.Point(470, 41);
+            this.orderValues.Location = new System.Drawing.Point(471, 135);
             this.orderValues.Name = "orderValues";
             this.orderValues.Size = new System.Drawing.Size(142, 26);
             this.orderValues.TabIndex = 2;
             // 
             // selectValues
             // 
+            this.selectValues.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.selectValues.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.selectValues.FormattingEnabled = true;
             this.selectValues.Items.AddRange(new object[] {
             "Pending",
             "Ongoing",
             "Completed"});
-            this.selectValues.Location = new System.Drawing.Point(470, 305);
+            this.selectValues.Location = new System.Drawing.Point(471, 399);
             this.selectValues.Name = "selectValues";
             this.selectValues.Size = new System.Drawing.Size(142, 26);
             this.selectValues.TabIndex = 4;
@@ -121,7 +81,7 @@
             // 
             this.selectLabel.BorderStyle = System.Windows.Forms.BorderStyle.None;
             this.selectLabel.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.selectLabel.Location = new System.Drawing.Point(470, 277);
+            this.selectLabel.Location = new System.Drawing.Point(471, 371);
             this.selectLabel.Name = "selectLabel";
             this.selectLabel.ReadOnly = true;
             this.selectLabel.Size = new System.Drawing.Size(142, 22);
@@ -129,33 +89,60 @@
             this.selectLabel.Text = "Select:";
             this.selectLabel.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
             // 
+            // capstoneList
+            // 
+            this.capstoneList.FormattingEnabled = true;
+            this.capstoneList.Location = new System.Drawing.Point(13, 41);
+            this.capstoneList.Name = "capstoneList";
+            this.capstoneList.Size = new System.Drawing.Size(293, 550);
+            this.capstoneList.TabIndex = 5;
+            // 
+            // statusList
+            // 
+            this.statusList.FormattingEnabled = true;
+            this.statusList.Location = new System.Drawing.Point(301, 41);
+            this.statusList.Name = "statusList";
+            this.statusList.SelectionMode = System.Windows.Forms.SelectionMode.None;
+            this.statusList.Size = new System.Drawing.Size(163, 550);
+            this.statusList.TabIndex = 6;
+            // 
+            // userPageReturn
+            // 
+            this.userPageReturn.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.userPageReturn.Location = new System.Drawing.Point(470, 12);
+            this.userPageReturn.Name = "userPageReturn";
+            this.userPageReturn.Size = new System.Drawing.Size(143, 44);
+            this.userPageReturn.TabIndex = 10;
+            this.userPageReturn.Text = "Return to User Page";
+            this.userPageReturn.UseVisualStyleBackColor = true;
+            this.userPageReturn.Click += new System.EventHandler(this.userPageReturn_Click);
+            // 
             // CapstoneListStaff
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(624, 601);
+            this.Controls.Add(this.userPageReturn);
+            this.Controls.Add(this.statusList);
+            this.Controls.Add(this.capstoneList);
             this.Controls.Add(this.selectValues);
             this.Controls.Add(this.selectLabel);
             this.Controls.Add(this.orderValues);
             this.Controls.Add(this.orderLabel);
-            this.Controls.Add(this.capstoneGrid);
             this.Name = "CapstoneListStaff";
             this.Text = "CapstoneListStaff";
-            ((System.ComponentModel.ISupportInitialize)(this.capstoneGrid)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
         }
 
         #endregion
-
-        private System.Windows.Forms.DataGridView capstoneGrid;
         private System.Windows.Forms.TextBox orderLabel;
         private System.Windows.Forms.ComboBox orderValues;
         private System.Windows.Forms.ComboBox selectValues;
         private System.Windows.Forms.TextBox selectLabel;
-        private System.Windows.Forms.DataGridViewTextBoxColumn Title;
-        private System.Windows.Forms.DataGridViewButtonColumn View;
-        private System.Windows.Forms.DataGridViewTextBoxColumn Status;
+        private System.Windows.Forms.ListBox capstoneList;
+        private System.Windows.Forms.ListBox statusList;
+        private System.Windows.Forms.Button userPageReturn;
     }
 }

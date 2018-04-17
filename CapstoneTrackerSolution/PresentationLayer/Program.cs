@@ -17,8 +17,11 @@ namespace PresentationLayer
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
             FormHandler fh = FormHandler.Instance;
-            fh.CreateLogin();
-            Application.Run(fh.GetLogin());
+            //fh.CreateLogin();
+            //fh.GetLogin().Show();
+            fh.CreateCapstoneListStaff();
+            fh.GetCapstoneListStaff().Show();
+            Application.Run();
         }
     }
 }

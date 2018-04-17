@@ -13,15 +13,32 @@ namespace PresentationLayer
     public partial class UserPage : Form
     {
         FormHandler fh = FormHandler.Instance;
+        bool isStaff, isFaculty = false; // to determine user type
 
         public UserPage()
         {
             InitializeComponent();
+            this.FormClosed += new FormClosedEventHandler(this.UserPage_FormClosed);
+
+            LoadValues();
+        }
+
+        private void LoadValues()
+        {
+            if(isStaff || isFaculty)
+            {
+                viewUsers.Visible = true;
+            }
+        }
+
+        private void UserPage_FormClosed(object sender, FormClosedEventArgs e)
+        {
+            Application.Exit();
         }
 
         private void viewCapstones_Click(object sender, EventArgs e)
         {
-            if (isStaff.Checked)
+            if (isStaff)
             {
                 if (fh.GetCapstoneListStaff() == null) // in case page has already been created
                 {
@@ -30,7 +47,7 @@ namespace PresentationLayer
                 fh.GetCapstoneListStaff().Show();
                 fh.GetUserPage().Hide();
             }
-            else if (isFaculty.Checked)
+            else if (isFaculty)
             {
                 if (fh.GetCapstoneListFaculty() == null) // in case page has already been created
                 {
@@ -50,6 +67,16 @@ namespace PresentationLayer
             }
         }
 
+        private void viewUsers_Click(object sender, EventArgs e)
+        {
+            if(fh.GetUserList() == null) // in case page has already been created
+            {
+                fh.CreateUserList();
+            }
+            fh.GetUserList().Show();
+            fh.GetUserPage().Hide();
+        }
+
         private void editProfile_Click(object sender, EventArgs e)
         {
             if(fh.GetUserPageEdit() == null) // in case page has already been created
@@ -58,32 +85,6 @@ namespace PresentationLayer
             }
             fh.GetUserPageEdit().Show();
             fh.GetUserPage().Hide();
-        }
-
-        private void isStaff_CheckedChanged(object sender, EventArgs e)
-        {
-            if (isStaff.Checked)
-            {
-                viewUsers.Visible = true;
-                viewCapstones.Text = "View Capstones";
-            }
-            else
-            {
-                viewUsers.Visible = false;
-                viewCapstones.Text = "View Capstone";
-            }
-        }
-
-        private void isFaculty_CheckedChanged(object sender, EventArgs e)
-        {
-            if (isFaculty.Checked)
-            {
-                viewCapstones.Text = "View Capstones";
-            }
-            else
-            {
-                viewCapstones.Text = "View Capstone";
-            }
         }
     }
 }

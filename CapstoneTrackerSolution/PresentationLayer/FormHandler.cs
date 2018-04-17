@@ -32,16 +32,16 @@ namespace PresentationLayer
         CapstonePageEdit capstonePageEdit = null;
         CapstoneListStaff capstoneListStaff = null;
         CapstoneListFaculty capstoneListFaculty = null;
+        UserList userList = null;
 
         public void CreateLogin()  { login = new Login(); }
-        public void CreateUserPage() {
-            userPage = new UserPage();
-        }
+        public void CreateUserPage() { userPage = new UserPage(); }
         public void CreateUserPageEdit() { userPageEdit = new UserPageEdit(); }
         public void CreateCapstonePageView() { capstonePageView = new CapstonePageView(); }
         public void CreateCapstonePageEdit() { capstonePageEdit = new CapstonePageEdit(); }
         public void CreateCapstoneListStaff() { capstoneListStaff = new CapstoneListStaff(); }
         public void CreateCapstoneListFaculty() { capstoneListFaculty = new CapstoneListFaculty(); }
+        public void CreateUserList() { userList = new UserList(); }
 
         public Login GetLogin() { return login; }
         public UserPage GetUserPage() { return userPage; }
@@ -50,5 +50,6 @@ namespace PresentationLayer
         public CapstonePageView GetCapstonePageView() { return capstonePageView; }
         public CapstoneListStaff GetCapstoneListStaff() { return capstoneListStaff; }
         public CapstoneListFaculty GetCapstoneListFaculty() { return capstoneListFaculty; }
+        public UserList GetUserList() { return userList; }
     }
 }
