@@ -41,14 +41,38 @@ namespace TestDataAccessLayer
     public struct TestResults
     {
         //////////////////////
+        // Static Method(s).
+        //////////////////////
+
+        /// <summary>
+        /// Returns a status based on the appropriate code.
+        /// </summary>
+        /// <param name="code"></param>
+        /// <returns></returns>
+        public static TestStatus CreateTestStatus(int code)
+        {
+            throw new NotImplementedException();
+        }
+
+        //////////////////////
         // Field(s).
         //////////////////////
 
-        private TestStatus 
+        /// <summary>
+        /// Result of the test.
+        /// </summary>
+        private TestStatus status;
+
+
 
         //////////////////////
         // Properties.
         //////////////////////
+
+        public string Message
+        {
+            get { return ""; }
+        }
 
         //////////////////////
         // Constructor(s).
@@ -78,9 +102,14 @@ namespace TestDataAccessLayer
     public class TestFailedException : CustomException
     {
         public TestFailedException(TestResults testResults)
+            : base(testResults.Message)
+        {
+        }
 
-
-
+        public override string GetExceptionName()
+        {
+            throw new NotImplementedException();
+        }
     }
 
 }
