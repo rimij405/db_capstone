@@ -43,6 +43,7 @@ namespace ISTE.DAL.Database.Interfaces
         /// <returns>Returns formatted string.</returns>
         string FormatEntry(IEntry entry);
 
+
         /// <summary>
         /// Return a formatted header, using the field's in a particular row.
         /// </summary>
@@ -53,9 +54,30 @@ namespace ISTE.DAL.Database.Interfaces
         /// <summary>
         /// Return a formatted header, using the field's in a particular row.
         /// </summary>
-        /// <param name="header">Row to generate header from.</param>
+        /// <param name="entries">Collection to generate header from.</param>
         /// <returns>Returns formatted string.</returns>
-        string FormatHeader(IRow header);
+        string FormatHeader(params IEntry[] entries);
+
+        /// <summary>
+        /// Return a formatted header, using the field's in a particular row.
+        /// </summary>
+        /// <param name="row">Row to generate header from.</param>
+        /// <returns>Returns formatted string.</returns>
+        string FormatHeader(IRow row);
+        
+        /// <summary>
+        /// Return a formatted row.
+        /// </summary>
+        /// <param name="entries">Entries to generate row formatted string from.</param>
+        /// <returns>Returns formatted string.</returns>
+        string FormatRow(List<IEntry> entries);
+
+        /// <summary>
+        /// Return a formatted row.
+        /// </summary>
+        /// <param name="entries">Entries to generate row formatted string from.</param>
+        /// <returns>Returns formatted string.</returns>
+        string FormatRow(params IEntry[] entries);
 
         /// <summary>
         /// Return a formatted row.
@@ -70,6 +92,16 @@ namespace ISTE.DAL.Database.Interfaces
         /// <param name="results">Records to generate formatted string from.</param>
         /// <returns>Returns formatted string.</returns>
         string FormatResultSet(IResultSet results);
+        
+        /// <summary>
+        /// Return a formatted string containing an entire table.
+        /// </summary>
+        /// <param name="results">Records to generate formatted string from.</param>
+        /// <param name="offset">Amount of records to offset pagination of. (Zero-based).</param>
+        /// <param name="amount">Amount of records to display.</param>
+        /// <returns>Returns formatted string.</returns>
+        string FormatResultSet(IResultSet results, int offset, int amount = 10);
+
     }
 
     /// <summary>
@@ -297,6 +329,41 @@ namespace ISTE.DAL.Database.Interfaces
         /// SQL query associated with a result set.
         /// </summary>
         string Query { get; }
+        
+        /// <summary>
+        /// Gets a count of all fields in a result set, in the order in which they appear.
+        /// </summary>
+        List<string> Fields { get; }
+
+        /// <summary>
+        /// Indexer access to rows.
+        /// </summary>
+        /// <param name="index">Row index to access.</param>
+        /// <returns>Returns row if it exists. Returns null if there is no row.</returns>
+        IRow this[int index] { get; }
+
+        /// <summary>
+        /// Indexer access to entry, by row and field index.
+        /// </summary>
+        /// <param name="rowIndex">Row index to access.</param>
+        /// <param name="colIndex">Column index to access.</param>
+        /// <returns>Returns entry if it exists. Returns null if there is no entry or no row.</returns>
+        IEntry this[int rowIndex, int colIndex] { get; }
+
+        /// <summary>
+        /// Indexer access to entry, by row and fieldname.
+        /// </summary>
+        /// <param name="rowIndex">Row index to access.</param>
+        /// <param name="key">Field to access.</param>
+        /// <returns>Returns entry if it exists. Returns null if there is no entry or no row.</returns>
+        IEntry this[int rowIndex, string key] { get; }
+
+        /// <summary>
+        /// Indexer access all entries for a particular field by field key.
+        /// </summary>
+        /// <param name="key">Field to access.</param>
+        /// <returns>Returns collection of entries. Returns null if there is no field.</returns>
+        List<IEntry> this[string key] { get; }
 
         //////////////////////
         // Method(s).
@@ -567,6 +634,20 @@ namespace ISTE.DAL.Database.Interfaces
         /// Return the entry count.
         /// </summary>
         int EntryCount { get; }
+
+        /// <summary>
+        /// Return the field at the input index.
+        /// </summary>
+        /// <param name="index">Field index to access.</param>
+        /// <returns>Returns field name at index. Returns null if index doesn't exist.</returns>
+        string this[int index] { get; }
+
+        /// <summary>
+        /// Return the entry associated with the input field name.
+        /// </summary>
+        /// <param name="key">Field name to find entry with.</param>
+        /// <returns>Returns entry associated with field name. Returns null if field doesn't exist.</returns>
+        IEntry this[string key] { get; }
 
         //////////////////////
         // Method(s).

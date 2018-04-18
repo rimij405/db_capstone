@@ -78,7 +78,31 @@ namespace ISTE.DAL.Database
             get { return this.query; }
             private set { this.query = value.Trim().Replace('\n', ' '); }
         }
-        
+
+        /// <summary>
+        /// Gets a count of all fields in a result set, in the order in which they appear.
+        /// </summary>
+        public List<string> Fields
+        {
+            get
+            {
+                List<string> fields = new List<string>();
+                if (!this.IsEmpty)
+                {
+                    foreach (IRow row in this)
+                    {
+                        if (fields.Count != row.Fields.Count) {
+                            foreach (string field in row.Fields)
+                            {
+                                if (!fields.Contains(field)) { fields.Add(field); }
+                            }
+                        }
+                    }
+                }
+                return fields;
+            }
+        }
+
         //////
         // ICollection
 
@@ -153,10 +177,57 @@ namespace ISTE.DAL.Database
             }
         }
 
+        /// <summary>
+        /// Indexer access to entry, by row and fieldname.
+        /// </summary>
+        /// <param name="rowIndex">Row index to access.</param>
+        /// <param name="key">Field to access.</param>
+        /// <returns>Returns entry if it exists. Returns null if there is no entry or no row.</returns>
+        public IEntry this[int rowIndex, string key]
+        {
+            get
+            {
+                if (this.HasIndex(rowIndex))
+                {
+                    IRow row = this[rowIndex];
+                    if (row != null && row.HasField(key))
+                    {
+                        return row.GetEntry(key);
+                    }
+                }
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Indexer access all entries for a particular field by field key.
+        /// </summary>
+        /// <param name="key">Field to access.</param>
+        /// <returns>Returns collection of entries. Returns null if there is no field.</returns>
+        public List<IEntry> this[string key]
+        {
+            get
+            {
+                List<IEntry> entries = new List<IEntry>();
+                if (!this.IsEmpty)
+                {
+                    foreach (IRow row in this)
+                    {
+                        if (row.HasField(key))
+                        {
+                            IEntry entry = row.GetEntry(key);
+                            if(entry != null) { entries.Add(entry); }
+                        }
+                    }
+                }
+                return null;
+            }
+        }
+
         //////////////////////
         // Constructor(s).
         //////////////////////
-        
+
         /// <summary>
         /// Construct an empty <see cref="MySqlResultSet"/> <see cref="IResultSet"/>.
         /// </summary>
@@ -187,6 +258,7 @@ namespace ISTE.DAL.Database
         /// <param name="rowsAffected">Rows affected by execution of query. (Can be zero).</param>
         /// <param name="rows">Rows to add to the result set.</param>
         public MySqlResultSet(string query, int rowsAffected, List<IRow> rows)
+            : this(query, rowsAffected)
         {
             // Calls other constructor.
             // Makes a shallow copy. This means the reference is the same and the collection is NOT duplicated.
@@ -214,7 +286,7 @@ namespace ISTE.DAL.Database
         {
             // Calls other constructor for copy of immutable references.
             // Deep copies rows:
-            foreach (IRow row in other.Rows)
+            foreach (IRow row in other)
             {
                 // Clones the row that requires deeper copying.
                 this.Rows.Add(row.Clone() as IRow);
@@ -272,7 +344,7 @@ namespace ISTE.DAL.Database
         public override int GetHashCode()
         {
             int hash = base.GetHashCode();
-            foreach (IRow row in this.Rows)
+            foreach (IRow row in this)
             {
                 hash = hash ^ row.GetHashCode();
             }
@@ -520,7 +592,7 @@ namespace ISTE.DAL.Database
 
             if (start > 0 && start < this.Count)
             {
-                foreach (IRow row in this.Rows)
+                foreach (IRow row in this)
                 {
                     if (length == -1 || subset.Count < length)
                     {
@@ -595,7 +667,7 @@ namespace ISTE.DAL.Database
         public List<IEntry> GetEntries(int fieldIndex)
         {
             List<IEntry> entries = new List<IEntry>();
-            foreach (IRow row in this.Rows)
+            foreach (IRow row in this)
             {
                 IEntry entry = row.GetEntry(fieldIndex);
                 if (entry != null) { entries.Add(entry); }
@@ -613,7 +685,7 @@ namespace ISTE.DAL.Database
             List<IEntry> entries = null;
             if (!this.IsEmpty)
             {
-                int index = this.Rows[0].GetIndex(fieldname);
+                int index = this[0].GetIndex(fieldname);
                 if (index != -1) { entries = this.GetEntries(index); }
             }
             return entries ?? new List<IEntry>();
@@ -628,7 +700,7 @@ namespace ISTE.DAL.Database
         {
             List<KeyValuePair<string, string>> data = new List<KeyValuePair<string, string>>();
 
-            foreach (IRow row in this.Rows)
+            foreach (IRow row in this)
             {
                 IEntry entry = row.GetEntry(fieldIndex);
                 if(entry != null) { data.Add(entry.GetData()); }
@@ -647,7 +719,7 @@ namespace ISTE.DAL.Database
             List<KeyValuePair<string, string>> data = null;
             if (!this.IsEmpty)
             {
-                int index = this.Rows[0].GetIndex(fieldname);
+                int index = this[0].GetIndex(fieldname);
                 if (index != -1) { data = this.GetEntryData(index); }
             }
             return data ?? new List<KeyValuePair<string, string>>();

@@ -727,7 +727,7 @@ namespace ISTE.DAL.Database
             List<List<int>> rowCollections = new List<List<int>>();
 
             // Loop through the set.
-            foreach (IRow row in set.Rows)
+            foreach (IRow row in set)
             {
                 rowCollections.Add(this.GetMaximumLengths(row));
             }
@@ -788,8 +788,11 @@ namespace ISTE.DAL.Database
         /// Return a row of formatted fields.
         /// </summary>
         /// <param name="fields">The header fields.</param>
+        /// <param name="topBorder">Print the specified border.</param>
+        /// <param name="bottomBorder">Print the specified border.</param>
+        /// <param name="extraBorder">Print the specified border.</param>
         /// <returns>Returns formatted fields in a tabular row.</returns>
-        public string FormatHeader(List<string> fields)
+        public string FormatFields(List<string> fields, bool topBorder = true, bool bottomBorder = true, bool extraBorder = false)
         {
             if(fields == null || fields.Count == 0) { return "No fields to print."; }
 
@@ -803,12 +806,38 @@ namespace ISTE.DAL.Database
             int length = formattedFields.Length;
             
             string format = "";
-            format += $"{divisor}" + this.Newline;
-            format += $"{formattedFields}" + this.Newline;
-            format += $"{divisor}" + this.Newline;
+            if (topBorder) { format += $"{divisor}" + this.Newline; }
+            format += $"{formattedFields}";
+            if (bottomBorder) { format += this.Newline + $"{divisor}"; }
+            if (extraBorder) { format += this.Newline + $"{divisor}"; }
             return format;
+        }
 
+        /// <summary>
+        /// Return a row of formatted entries.
+        /// </summary>
+        /// <param name="entries">Entries to generate row formatted string from.</param>
+        /// <param name="topBorder">Print the specified border.</param>
+        /// <param name="bottomBorder">Print the specified border.</param>
+        /// <returns>Returns formatted fields in a tabular row.</returns>
+        public string FormatValues(List<string> entries, bool topBorder = true, bool bottomBorder = true)
+        {
+            if(entries == null || entries.Count == 0) { return "No entries to print."; }
 
+            string formattedEntries = $"{this.FormatTextSegment(entries[0], entries[0].Length)}";
+            string divisor = $"{this.GenerateDivisorSegment(entries[0].Length)}";
+            for (int index = 1; index < entries.Count; index++)
+            {
+                formattedEntries += $"{this.FormatTextRight(entries[index], entries[index].Length)}";
+                divisor += $"{this.GenerateRightCorner(entries[index].Length)}";
+            }
+            int length = formattedEntries.Length;
+
+            string format = "";
+            if (topBorder) { format += $"{divisor}" + this.Newline; }
+            format += $"{formattedEntries}" + this.Newline;
+            if (bottomBorder) { format += $"{divisor}" + this.Newline; }
+            return format;
         }
 
         /// <summary>
@@ -818,13 +847,26 @@ namespace ISTE.DAL.Database
         /// <returns>Returns formatted fields in a tabular row.</returns>
         public string FormatHeader(List<IEntry> entries)
         {
+            return this.FormatHeader(entries, true);
+        }
+
+        /// <summary>
+        /// Return a row of formatted fields.
+        /// </summary>
+        /// <param name="entries">Entry to get headers from.</param>
+        /// <param name="topBorder">Print the specified border.</param>
+        /// <param name="bottomBorder">Print the specified border.</param>
+        /// <param name="extraBorder">Print the specified border.</param>
+        /// <returns>Returns formatted fields in a tabular row.</returns>
+        public string FormatHeader(List<IEntry> entries, bool topBorder = true, bool bottomBorder = true, bool extraBorder = false)
+        {
             if (entries == null || entries.Count == 0) { return "No entries to print."; }
             List<string> fields = new List<string>();
             foreach (IEntry entry in entries)
             {
                 fields.Add(entry.GetField());
             }
-            return this.FormatHeader(fields);
+            return this.FormatFields(fields, topBorder, bottomBorder, extraBorder);
         }
 
         /// <summary>
@@ -836,22 +878,174 @@ namespace ISTE.DAL.Database
         {
             return this.FormatHeader(entries.ToList<IEntry>());
         }
-        
-        public string FormatHeader(IRow header)
+
+        /// <summary>
+        /// Return a row of formatted fields.
+        /// </summary>
+        /// <param name="row">Row to get headers from.</param>
+        /// <returns>Returns formatted fields in a tabular row.</returns>
+        public string FormatHeader(IRow row)
         {
-            throw new NotImplementedException();
+            if (row == null || row.IsEmpty) { return "This row is empty. No fields to print."; }
+            return this.FormatFields(row.Fields);
         }
 
+        /// <summary>
+        /// Return a row of formatted fields.
+        /// </summary>
+        /// <param name="row">Row to get headers from.</param>
+        /// <param name="topBorder">Print the specified border.</param>
+        /// <param name="bottomBorder">Print the specified border.</param>
+        /// <param name="extraBorder">Print the specified border.</param>
+        /// <returns>Returns formatted fields in a tabular row.</returns>
+        public string FormatHeader(IRow row, bool topBorder = true, bool bottomBorder = true, bool extraBorder = false)
+        {
+            if(row == null || row.IsEmpty) { return "This row is empty. No fields to print."; }
+            return this.FormatFields(row.Fields, topBorder, bottomBorder, extraBorder);
+        }
+
+        /// <summary>
+        /// Return a formatted row.
+        /// </summary>
+        /// <param name="entries">Entries to generate row formatted string from.</param>
+        /// <returns>Returns formatted string.</returns>
+        public string FormatRow(List<IEntry> entries)
+        {
+            return this.FormatRow(entries, true);
+        }
+
+        /// <summary>
+        /// Return a formatted row.
+        /// </summary>
+        /// <param name="entries">Entries to generate row formatted string from.</param>
+        /// <param name="topBorder">Print the specified border.</param>
+        /// <param name="bottomBorder">Print the specified border.</param>
+        /// <returns>Returns formatted string.</returns>
+        public string FormatRow(List<IEntry> entries, bool topBorder = true, bool bottomBorder = true)
+        {
+            if (entries == null || entries.Count == 0) { return "No entries to print."; }
+            List<string> values = new List<string>();
+            foreach (IEntry entry in entries)
+            {
+                values.Add(entry.GetValue());
+            }
+            return this.FormatValues(values, topBorder, bottomBorder);
+        }
+
+        /// <summary>
+        /// Return a formatted row.
+        /// </summary>
+        /// <param name="entries">Entries to generate row formatted string from.</param>
+        /// <returns>Returns formatted string.</returns>
+        public string FormatRow(params IEntry[] entries)
+        {
+            return this.FormatRow(entries.ToList<IEntry>());
+        }
+
+        /// <summary>
+        /// Return a formatted row.
+        /// </summary>
+        /// <param name="row">Row to generate formatted string from.</param>
+        /// <returns>Returns formatted string.</returns>
         public string FormatRow(IRow row)
         {
-            throw new NotImplementedException();
+            return this.FormatRow(row, true);
         }
 
+        /// <summary>
+        /// Return a formatted row.
+        /// </summary>
+        /// <param name="row">Row to generate formatted string from.</param>
+        /// <param name="topBorder">Print the specified border.</param>
+        /// <param name="bottomBorder">Print the specified border.</param>
+        /// <returns>Returns formatted string.</returns>
+        public string FormatRow(IRow row, bool topBorder = true, bool bottomBorder = true)
+        {
+            if (row == null || row.IsEmpty) { return "This row is empty. No entries to print."; }
+            return this.FormatRow(row.Entries, topBorder, bottomBorder);
+        }
+
+        /// <summary>
+        /// Return a formatted string containing an entire table.
+        /// </summary>
+        /// <param name="results">Records to generate formatted string from.</param>
+        /// <returns>Returns formatted string.</returns>
         public string FormatResultSet(IResultSet results)
         {
-            throw new NotImplementedException();
+            if (results == null || results.IsEmpty) { return "This result set is empty. No rows to print."; }
+            return this.FormatResultSet(results, 0, -1);
         }
-                
+
+        /// <summary>
+        /// Return a formatted string containing an entire table.
+        /// </summary>
+        /// <param name="results">Records to generate formatted string from.</param>
+        /// <param name="offset">Amount of records to offset pagination of. (Zero-based).</param>
+        /// <param name="amount">Amount of records to display. (-1 means no limit).</param>
+        /// <returns>Returns formatted string.</returns>
+        public string FormatResultSet(IResultSet results, int offset, int amount = 10)
+        {
+            // Validate inputs.
+            string metadata = $"{this.Newline}";
+            if (results.RowsAffected != -1) { metadata += (results.RowsAffected == 0) ? "No rows affected." : ""; }
+            metadata += " " + ((results.Query.Length == 0) ? "" : $"[\"{results.Query}\"]");
+
+            if (results == null || results.IsEmpty) { return $"This result set is empty. No rows to print.{metadata}"; }
+            if (amount == 0) { return $"Amount of requested rows to print has been set to zero. ({results.Count} total rows in set).{metadata}"; }
+
+            // Determine starting index.
+            int startIndex = Math.Min(offset, 10000); // cap the index offset at 10000.
+            if(startIndex >= results.Count) { return $"Offset is set after end of result set. ({results.Count} total rows in set).{metadata}"; }
+            while(startIndex < 0)
+            {
+                startIndex = results.Count - startIndex;
+            }
+
+            // Determine length of loop.
+            int resultCount = (amount == -1) ? results.Count : Math.Min(amount, 10000); // cap at 10000.
+
+            // Get the maximum length.
+            List<int> maximumLengths = this.GetMaximumLengths(results);
+
+            // Get the header.
+            string divisor = $"{this.GenerateDivisorSegment(maximumLengths[0])}";
+            string fields = $"{this.FormatTextSegment(results[0][0], maximumLengths[0])}";
+
+            // For every field in the header.
+            for(int i = 1; i < maximumLengths.Count; i++)
+            {
+                fields += $"{this.FormatTextRight(results[0][i], maximumLengths[i])}";
+                divisor += $"{this.GenerateRightCorner(maximumLengths[i])}";
+            }
+            
+            string header = $"{divisor}" + this.Newline;
+            header += $"{fields}" + this.Newline;
+            header += $"{divisor}" + this.Newline;
+            header += $"{divisor}" + this.Newline;
+
+            // Get the row values.
+            string values = "";
+
+            // For every row in the table.
+            for (int row = startIndex; row < resultCount; row++)
+            {
+                values += $"{this.FormatTextSegment(results[row, 0].GetValue(), maximumLengths[0])}";
+                for (int col = 1; col < maximumLengths.Count; col++)
+                {
+                    values += $"{this.FormatTextRight(results[row, col].GetValue(), maximumLengths[col])}";
+                }
+                values += this.Newline + $"{divisor}" + this.Newline;
+            }
+
+            // Put everything together.
+            string format = $"{((amount >= 10000) ? $"Returned results capped at 10000 rows. {this.Newline}" : "")}";
+            format += $"{header}";
+            format += $"{values}";
+            format += $"{metadata}";
+            
+            return format;
+        }
+
         //////////////////////
         // Accessor(s).
 

@@ -70,6 +70,9 @@ namespace TestDataAccessLayer
             // TESTING MySqlRow object.
             TestMySqlRow();
 
+            // TESTING MySqlResultSet object.
+            TestMySqlResultSet();
+
             // Wait for user input.
             console.Pause("Press any key to exit the program...");
         }
@@ -103,6 +106,7 @@ namespace TestDataAccessLayer
                 database = new MySqlDatabase(configuration as MySqlConfiguration);
                 database.Connect();
                 console.Debug("Created the database successfully:\n" + database.ToString());
+                console.Pause();
             }
             catch (Exception e)
             {
@@ -166,6 +170,13 @@ namespace TestDataAccessLayer
             }
         }
 
+        #region MySqlEntry Tests.
+
+
+
+        #endregion
+
+
         /// <summary>
         /// Test row methods.
         /// </summary>
@@ -208,16 +219,16 @@ namespace TestDataAccessLayer
                 console.Write($"{copy}");
                 console.Write($"{row}");
 
-                MySqlResultPrinter formatter = new MySqlResultPrinter(15, 3);
+                MySqlResultPrinter formatter = new MySqlResultPrinter(150, 1);
                 console.Write(formatter.GenerateDivisor(10));
                 console.Write(formatter.GenerateDivisor(new List<int> { 7, 10 }));
                 console.Write(formatter.GenerateDivisor(new List<int> { 10, 5, 5, 7, 10 }));
 
                 console.Write("Testing format with value: \"Ape\" at total length of 10. Expected: \"| Ape      |\"");
                 console.Write(formatter.FormatTextSegment("Ape", 10));
-                console.Write("Testing format with value: \"ApeIsLongerThan10\" at total length of 10. Expected: \"| ApIs...  |\"");
+                console.Write("Testing format with value: \"ApeIsLongerThan10\" at total length of 10. Expected: \"| ApIsLo...  |\"");
                 console.Write(formatter.FormatTextSegment("ApeIsLongerThan10", 10));
-                console.Write("Testing format with value: \"JoelMikcheklson\" at total length of 10. Expected: \"| Joel...  |\"");
+                console.Write("Testing format with value: \"JoelMikcheklson\" at total length of 10. Expected: \"| JoelMik...  |\"");
                 console.Write(formatter.FormatTextSegment("JoelMikcheklson", 10));
 
                 console.Write("Testing entries: {Tom, Bobby, Bill, JoelMikcheklson}, { 5, 5, 10, 10 } ");
@@ -240,6 +251,15 @@ namespace TestDataAccessLayer
                 MySqlEntry entry2 = new MySqlEntry("Field Print Example", "This is an example entry.");
                 console.Write(formatter.FormatHeader(entry, entry2));
 
+                MySqlEntry entry3 = new MySqlEntry("Second Example", "This is an different example entry.");
+                MySqlRow row2 = new MySqlRow(entry2, entry3);
+                console.Write(formatter.FormatHeader(row2));
+                console.Write(formatter.FormatRow(row2));
+
+                MySqlRow row3 = new MySqlRow(entry2, entry3);
+                MySqlResultSet set = new MySqlResultSet("[Test query.]", 0, row2, row3);
+                console.Write(formatter.FormatResultSet(set));
+
             }
             catch (Exception e)
             {
@@ -248,6 +268,14 @@ namespace TestDataAccessLayer
                 // throw new DataAccessLayerException("Failed to create the MySqlRow object.", e);
             }
         }
-        
+
+        /// <summary>
+        /// Test result set methods.
+        /// </summary>
+        public static void TestMySqlResultSet()
+        {
+
+        }
+
     }
 }
