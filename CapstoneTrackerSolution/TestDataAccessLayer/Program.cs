@@ -72,6 +72,11 @@ namespace TestDataAccessLayer
             TestMethods += Test_MySqlEntry_FieldValue;
             TestMethods += Test_MySqlEntry_KeyValuePair;
             TestMethods += Test_MySqlEntry_Clone;
+            TestMethods += Test_MySqlEntry_Equality;
+
+            TestMethods += Test_MySqlRow_Empty;
+            TestMethods += Test_MySqlRow_Fields;
+            TestMethods += Test_MySqlRow_Mutators;
 
             // TESTING MySqlDatabase: Connect
             // TESTING MySqlEntry object.
@@ -80,7 +85,7 @@ namespace TestDataAccessLayer
             
             try
             {
-                r.Log("------------------------", $"Starting {r.Title}");
+                r.Log("", "------------------------", $"Trace of {r.Title}");
 
                 // If null, throw a new error.
                 if (TestMethods == null)
@@ -293,12 +298,50 @@ namespace TestDataAccessLayer
         /// </summary>
         private enum AssertKey
         {
+            /// <summary>
+            /// Use to store the "total" pass/fail evaluation of an operation.
+            /// </summary>
             Total,
+
+            /// <summary>
+            /// Assertion reference for when something is a null reference.
+            /// </summary>
             IsNullReference,
+
+            /// <summary>
+            /// Assertion reference for when something is null.
+            /// </summary>
             HasNullValue,
+
+            /// <summary>
+            /// Store the result of the HasField(string) method.
+            /// </summary>
             HasField,
+
+            /// <summary>
+            /// Store the result of the HasValue(string) method.
+            /// </summary>
             HasValue,
-            IsEmpty
+
+            /// <summary>
+            /// Determine if the row still contains an entry object.
+            /// </summary>
+            HasEntry,
+            
+            /// <summary>
+            /// Assertion reference for when something is empty.
+            /// </summary>
+            IsEmpty,
+
+            /// <summary>
+            /// Equality check.
+            /// </summary>
+            AreSame,
+
+            /// <summary>
+            /// Inequality check.
+            /// </summary>
+            AreDifferent
         }
 
         #region MySqlEntry
@@ -603,10 +646,89 @@ namespace TestDataAccessLayer
             return results;
         }
 
+        /// <summary>
+        /// Tests the clone constructor of MySqlEntry.
+        /// </summary>
+        private static TestResults Test_MySqlEntry_Equality()
+        {
+            // Set values and dependencies here.
+            string subject = "MySqlEntry (Equality)";
+            MySqlEntry entry = null;
+            MySqlEntry entryA = null;
+            MySqlEntry entryB = null;
+            MySqlEntry entryC = null;
+
+            // Create the results object for this test.
+            TestResults results = TestResults.Create($"Testing {subject}");
+
+            // Create the assertion map.
+            Dictionary<AssertKey, bool> assertions = new Dictionary<AssertKey, bool>();
+
+            try
+            {
+                // Make divisor and log the title for the test.
+                results.Log($"-- -- -- {results.Title}");
+            }
+            catch (Exception e)
+            {
+                // Wraps exception for the results.
+                throw results.Throw($"{e.Message}", e);
+            }
+
+            // << REPEAT FOR EVERY OPERATION >>
+            try
+            {
+                // Perform the correct operations.
+                results.Log("Creating the MySqlEntry object using the specified constructor.");
+                entry = new MySqlEntry(new KeyValuePair<string, string>("Field", "Value")).Clone() as MySqlEntry;
+                entryA = entry.Clone() as MySqlEntry;
+                entryB = new MySqlEntry("Field", "Different Value");
+                entryC = new MySqlEntry("Different", "Value");
+
+                results.Log($"Base: {entry}", $"A: {entryA}", $"B: {entryB}", $"C: {entryC}");
+
+                // If entry is null, fail the test.
+                results.Log("Checking assertions...");
+                
+                assertions[AssertKey.AreSame] = (entry.Equals(entryA));
+                results.Log($"-- Does the Base entry match A (true)? {assertions[AssertKey.AreSame]}");
+
+                assertions[AssertKey.AreDifferent] = !(entry.Equals(entryB));
+                results.Log($"-- Does the Base entry match B (false)? {!assertions[AssertKey.AreDifferent]}");
+
+                assertions[AssertKey.AreDifferent] = assertions[AssertKey.AreDifferent] && !(entryA.Equals(entryC));
+                results.Log($"-- Does the A entry match C (false)? {entryA.Equals(entryC)}");
+                
+                // Evaluate assertions.
+                assertions[AssertKey.Total] =
+                    assertions[AssertKey.AreSame] &&
+                    assertions[AssertKey.AreDifferent];
+                results.Log($"All assertions passed? {assertions[AssertKey.Total]}");
+
+                if (assertions[AssertKey.Total])
+                {
+                    results.Pass("Clone operation passed.");
+                }
+                else
+                {
+                    results.Fail("Clone operation failed.");
+                }
+            }
+            catch (Exception e)
+            {
+                // Wraps exception for the results.
+                throw results.Throw($"Exception occurred during cloning of MySqlEntry. {e.Message}", e);
+            }
+
+            // Return the test results.
+            return results;
+        }
+
+
         #endregion
 
         #region MySqlRow
-        
+
         /// <summary>
         /// Tests empty constructor for MySqlRow.
         /// </summary>
@@ -659,12 +781,16 @@ namespace TestDataAccessLayer
                 assertions[AssertKey.HasField] = row.HasField("Field");
                 results.Log($"-- Does any entry inside this row match 'Field'? {assertions[AssertKey.HasField]}");
 
+                int fieldIndex = row.GetIndex("Field");
+                results.Log($"-- Index of the \"Field\" entry? {fieldIndex}"); // Should be -1!
+
                 // Evaluate assertions.
                 assertions[AssertKey.Total] =
                     !assertions[AssertKey.IsNullReference] &&
                     assertions[AssertKey.HasNullValue] &&
                     assertions[AssertKey.IsEmpty] &&
-                    !assertions[AssertKey.HasField];
+                    !assertions[AssertKey.HasField] &&
+                    fieldIndex == -1;
                 results.Log($"All assertions passed? {assertions[AssertKey.Total]}");
 
                 if (assertions[AssertKey.Total])
@@ -687,7 +813,7 @@ namespace TestDataAccessLayer
         }
 
         /// <summary>
-        /// Tests empty constructor for MySqlRow.
+        /// Tests field collection constructor for MySqlRow.
         /// </summary>
         private static TestResults Test_MySqlRow_Fields()
         {
@@ -740,17 +866,26 @@ namespace TestDataAccessLayer
                 results.Log($"-- row.EntryCount? {row.EntryCount}");
 
                 assertions[AssertKey.HasField] = row.HasField("Field");
-                results.Log($"-- Does any entry inside this row match 'Field'? {assertions[AssertKey.HasField]}");
-                // results.Log($"-- What is the first field of the row")
+                results.Log($"-- Does any field inside this row match 'Field'? {assertions[AssertKey.HasField]}");
+                
+                int fieldIndex = row.GetIndex("Field");
+                results.Log($"-- Index of the \"Field\" entry? {fieldIndex}"); // Should not be -1.
 
-                // assertions[AssertKey.HasEntry] = 
+                MySqlEntry secondIndexEntry = row.GetEntry(1) as MySqlEntry; // zero-based so second index is 1.
+                results.Log($"-- Entry at second index? {secondIndexEntry}");
 
+                MySqlEntry field3Entry = row.GetEntry("Field 3") as MySqlEntry;
+                results.Log($"-- Entry with field \"Field 3\"? {field3Entry}");
+                                
                 // Evaluate assertions.
                 assertions[AssertKey.Total] =
-                    !assertions[AssertKey.IsNullReference] &&
-                    assertions[AssertKey.HasNullValue] &&
-                    assertions[AssertKey.IsEmpty] &&
-                    !assertions[AssertKey.HasField];
+                    !assertions[AssertKey.IsNullReference] && // not null reference
+                    !assertions[AssertKey.HasNullValue] && // not null entries
+                    !assertions[AssertKey.IsEmpty] && // not empty
+                    assertions[AssertKey.HasField] && // HasField("Field")
+                    fieldIndex >= 0 && // Retrieve field index is not == -1
+                    secondIndexEntry != null && // Second index entry is not null. (Index 1)
+                    field3Entry != null; // "Field 3" entry is not null.
                 results.Log($"All assertions passed? {assertions[AssertKey.Total]}");
 
                 if (assertions[AssertKey.Total])
@@ -771,9 +906,224 @@ namespace TestDataAccessLayer
             // Return the test results.
             return results;
         }
+        
+        /// <summary>
+        /// Tests accessor/mutator methods in MySqlRow.
+        /// </summary>
+        private static TestResults Test_MySqlRow_Mutators()
+        {
+            // Set values and dependencies here.
+            string subject = "MySqlRow (Mutators)";
+            MySqlRow row = null;
 
+            // Create the results object for this test.
+            TestResults results = TestResults.Create($"Testing {subject}");
+
+            // Create the assertion map.
+            Dictionary<AssertKey, bool> assertions = new Dictionary<AssertKey, bool>();
+
+            try
+            {
+                // Make divisor and log the title for the test.
+                results.Log($"-- -- -- {results.Title}");
+            }
+            catch (Exception e)
+            {
+                // Wraps exception for the results.
+                throw results.Throw($"{e.Message}", e);
+            }
+
+            // << CREATE >>
+            try
+            {
+                // Perform the correct operations.
+                results.Log("", "-- Operation #1", "Creating the MySqlEntry object using the single field constructor.");
+                row = new MySqlRow(
+                    new MySqlEntry("Field", "Column 1 Value"),
+                    new MySqlEntry("Field 2", "Column 2 Value"),
+                    new MySqlEntry("Field 3", "Column 3 Value")
+                    );
+                results.Log($"{row}");
+
+                // If entry is null, fail the test.
+                results.Log("Checking assertions...");
+
+                assertions[AssertKey.IsNullReference] = (row == null);
+                results.Log($"-- Is the object reference null? {assertions[AssertKey.IsNullReference]}");
+
+                assertions[AssertKey.HasNullValue] = row.IsNull;
+                results.Log($"-- Are all entries within this row null? {assertions[AssertKey.HasNullValue]}");
+
+                assertions[AssertKey.IsEmpty] = row.IsEmpty;
+                results.Log($"-- Is this row empty? { assertions[AssertKey.IsEmpty] }");
+                results.Log($"-- row.Count? {row.Count}");
+                results.Log($"-- row.FieldCount? {row.FieldCount}");
+                results.Log($"-- row.EntryCount? {row.EntryCount}");
+
+                assertions[AssertKey.HasField] = row.HasField("Field");
+                results.Log($"-- Does any field inside this row match 'Field'? {assertions[AssertKey.HasField]}");
+
+                int fieldIndex = row.GetIndex("Field");
+                results.Log($"-- Index of the \"Field\" entry? {fieldIndex}"); // Should not be -1.
+
+                MySqlEntry secondIndexEntry = row.GetEntry(1) as MySqlEntry; // zero-based so second index is 1.
+                results.Log($"-- Entry at second index? {secondIndexEntry}");
+
+                MySqlEntry field3Entry = row.GetEntry("Field 3") as MySqlEntry;
+                results.Log($"-- Entry with field \"Field 3\"? {field3Entry}");
+
+                // Evaluate assertions.
+                assertions[AssertKey.Total] =
+                    !assertions[AssertKey.IsNullReference] && // not null reference
+                    !assertions[AssertKey.HasNullValue] && // not null entries
+                    !assertions[AssertKey.IsEmpty] && // not empty
+                    assertions[AssertKey.HasField] && // HasField("Field")
+                    fieldIndex >= 0 && // Retrieve field index is not == -1
+                    secondIndexEntry != null && // Second index entry is not null. (Index 1)
+                    field3Entry != null; // "Field 3" entry is not null.
+                results.Log($"All assertions passed? {assertions[AssertKey.Total]}");
+
+                if (!assertions[AssertKey.Total])
+                {
+                    results.Fail($"{subject} operation failed.");
+                    return results;
+                }
+            }
+            catch (Exception e)
+            {
+                // Wraps exception for the results.
+                throw results.Throw($"Exception occurred during construction of {subject}. {e.Message}", e);
+            }
+            
+            // << REMOVE ENTRY >>
+            try
+            {
+                // Perform the correct operations.
+                results.Log("", "-- Operation #2", "Removing entry at the second index (index 1).");
+                MySqlEntry removedEntry = row.RemoveEntry(1) as MySqlEntry;
+                results.Log($"{row}", $"{removedEntry}");
+
+                // If entry is null, fail the test.
+                results.Log("Checking assertions...");
+
+                assertions[AssertKey.HasEntry] = (row.Contains(removedEntry));
+                results.Log($"-- Does the row still contain the removed entry? {assertions[AssertKey.HasEntry]}");
+                
+                assertions[AssertKey.IsNullReference] = (removedEntry == null);
+                results.Log($"-- Is the removed entry object reference null? {assertions[AssertKey.IsNullReference]}");
+
+                assertions[AssertKey.HasNullValue] = row[removedEntry.GetField()].IsNull;
+                results.Log($"-- Is the entry in the old position in the row where an entry was removed from, null? {assertions[AssertKey.HasNullValue]}");
+
+                assertions[AssertKey.IsEmpty] = row.IsEmpty;
+                results.Log($"-- Is this row empty? { assertions[AssertKey.IsEmpty] }");
+                results.Log($"-- row.Count? {row.Count}");
+                results.Log($"-- row.FieldCount? {row.FieldCount}");
+                results.Log($"-- row.EntryCount? {row.EntryCount}");
+
+                assertions[AssertKey.HasField] = row.HasField(removedEntry.GetField());
+                results.Log($"-- Does any field inside this row match the removed entry's? {assertions[AssertKey.HasField]}");
+
+                int fieldIndex = row.GetIndex(removedEntry.GetField());
+                results.Log($"-- Index of the field belonging to the removed entry (Expect 1)? {fieldIndex}"); // Should not be -1.
+
+                MySqlEntry secondIndexEntry = row.GetEntry(1) as MySqlEntry; // zero-based so second index is 1.
+                results.Log($"-- Entry at second index? {secondIndexEntry}");
+
+                // Evaluate assertions.
+                assertions[AssertKey.Total] =
+                    !assertions[AssertKey.IsNullReference] && // not null reference
+                    !assertions[AssertKey.HasEntry] && // should not have entry.
+                    assertions[AssertKey.HasNullValue] && // has null value at the index.
+                    !assertions[AssertKey.IsEmpty] && // not empty
+                    assertions[AssertKey.HasField] && // HasField("Field") (true)
+                    fieldIndex >= 0 && // Retrieve field index is not == -1                   
+                    secondIndexEntry != null &&
+                    secondIndexEntry.IsNull; // Second index entry is not null. (Index 1)
+                results.Log($"All assertions passed? {assertions[AssertKey.Total]}");
+
+                if (!assertions[AssertKey.Total])
+                {
+                    results.Fail($"{subject} operation failed.");
+                    return results;
+                }
+            }
+            catch (Exception e)
+            {
+                // Wraps exception for the results.
+                throw results.Throw($"Exception occurred during construction of {subject}. {e.Message}", e);
+            }
+            
+            // << REMOVE FIELD >>
+            try
+            {
+                // Perform the correct operations.
+                results.Log("", "-- Operation #3", "Removing field at the second index (index 1).");
+                MySqlEntry removedEntry = row.RemoveField(1) as MySqlEntry;
+                results.Log($"{row}", $"{removedEntry}");
+
+                // If entry is null, fail the test.
+                results.Log("Checking assertions...");
+
+                assertions[AssertKey.HasEntry] = (row.Contains(removedEntry));
+                results.Log($"-- Does the row still contain the removed entry? {assertions[AssertKey.HasEntry]}");
+
+                assertions[AssertKey.IsNullReference] = (removedEntry == null);
+                results.Log($"-- Is the removed entry object reference null? {assertions[AssertKey.IsNullReference]}");
+
+                assertions[AssertKey.HasNullValue] = row[removedEntry.GetField()] == null;
+                results.Log($"-- Does GetEntry() on the non-existent field return null? {assertions[AssertKey.HasNullValue]}");
+
+                assertions[AssertKey.IsEmpty] = row.IsEmpty;
+                results.Log($"-- Is this row empty? { assertions[AssertKey.IsEmpty] }");
+                results.Log($"-- row.Count? {row.Count}");
+                results.Log($"-- row.FieldCount? {row.FieldCount}");
+                results.Log($"-- row.EntryCount? {row.EntryCount}");
+
+                assertions[AssertKey.HasField] = row.HasField(removedEntry.GetField());
+                results.Log($"-- Does the removed field still show? {assertions[AssertKey.HasField]}");
+
+                int fieldIndex = row.GetIndex(removedEntry.GetField());
+                results.Log($"-- Index of the field belonging to the removed entry (Expect -1)? {fieldIndex}");
+
+                MySqlEntry secondIndexEntry = row.GetEntry(1) as MySqlEntry; // zero-based so second index is 1.
+                results.Log($"-- Entry at second index? {secondIndexEntry}");
+
+                // Evaluate assertions.
+                assertions[AssertKey.Total] =
+                    !assertions[AssertKey.IsNullReference] && // not null reference
+                    !assertions[AssertKey.HasEntry] && // should not have entry.
+                    assertions[AssertKey.HasNullValue] && // has null value at the index.
+                    !assertions[AssertKey.IsEmpty] && // not empty
+                    !assertions[AssertKey.HasField] && // HasField("Field") (true)
+                    fieldIndex < 0 && // Retrieve field index is not == -1                   
+                    secondIndexEntry != null;
+                results.Log($"All assertions passed? {assertions[AssertKey.Total]}");
+
+                if (!assertions[AssertKey.Total])
+                {
+                    results.Fail($"{subject} operation failed.");
+                    return results;
+                }
+                else
+                {
+                    results.Pass($"{subject} operation passed.");
+                }
+            }
+            catch (Exception e)
+            {
+                // Wraps exception for the results.
+                throw results.Throw($"Exception occurred during construction of {subject}. {e.Message}", e);
+            }
+
+
+            // Return the test results.
+            return results;
+        }
 
         #endregion
+
+
 
 
         /// <summary>

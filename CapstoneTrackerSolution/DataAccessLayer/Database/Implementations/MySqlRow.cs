@@ -1400,8 +1400,14 @@ namespace ISTE.DAL.Database
             // Validate input.
             if (!this.HasIndex(index)) { return null; }
 
-            // Set the entry to null.
-            return (IEntry)(this.Entries[index].MakeNull());
+            // Get entry clone to return.
+            IEntry entry = this.Entries[index].Clone() as IEntry;
+
+            // Make existing reference null.
+            this.Entries[index].MakeNull();
+
+            // Return clone.
+            return entry;
         }
 
         /// <summary>
