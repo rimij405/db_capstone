@@ -42,12 +42,7 @@ namespace TestDataAccessLayer
         /// Database implementation.
         /// </summary>
         private static IDatabase database;
-
-        /// <summary>
-        /// Entry implementation.
-        /// </summary>
-        private static IEntry entry;
-
+        
         /// <summary>
         /// Entry point for the <see cref="TestDataAccessLayer"/> <see cref="Program"/>.
         /// </summary>
@@ -58,120 +53,724 @@ namespace TestDataAccessLayer
             console = new Printer("Test Data Access Layer Library", true);
             console.Debug("Printer initialized.");
 
-            // TESTING MySqlConfiguration.
-            TestConfiguration();
+            // Set up values for testing.
+            int currentTest = 0;
+            int successfulTests = 0;
+            int errors = 0;
+            int totalTests = 0;
+            bool verbose = true;
+
+            // Create the TestMethods invocation list delegate.
+            TestResults r = TestResults.Create("Test Method");
+            Func<TestResults> TestMethods = null;
+
+            // << ADD TESTING METHODS HERE | THEY EXECUTE IN THE ORDER THEY ARE ADDED >>
+            TestMethods += Test_MySqlConfiguration;
+            TestMethods += Test_MySqlDatabaseConnect;
+
+            TestMethods += Test_MySqlEntry_SingleField;
+            TestMethods += Test_MySqlEntry_FieldValue;
+            TestMethods += Test_MySqlEntry_KeyValuePair;
+            TestMethods += Test_MySqlEntry_Clone;
 
             // TESTING MySqlDatabase: Connect
-            TestConnect();
-
             // TESTING MySqlEntry object.
-            TestMySqlEntry();
-
             // TESTING MySqlRow object.
-            TestMySqlRow();
-
             // TESTING MySqlResultSet object.
-            TestMySqlResultSet();
+            
+            try
+            {
+                r.Log("------------------------", $"Starting {r.Title}");
 
-            // Wait for user input.
-            console.Pause("Press any key to exit the program...");
-        }
+                // If null, throw a new error.
+                if (TestMethods == null)
+                {
+                    r.Fail("No test methods to invoke.");
+                    throw new TestException(r);
+                }
+
+                // If not null, we can run the tests.
+                Delegate[] methods = TestMethods.GetInvocationList();
+                totalTests = methods.Length;
+
+                foreach (Delegate test in methods)
+                {
+                    // Print a newline.
+                    console.Write("");
+                    currentTest++;
+
+                    r.Log("------------------------", $"-- Invoking test {currentTest} out of {totalTests} test(s).");
+
+                    // Get the result from test.
+                    Func<TestResults> t = (Func<TestResults>)test;
+                    TestResults output = t.Invoke();
+                    
+                    if (output == null)
+                    {
+                        errors++;
+                        r.Log(TestResults.CreateError($"Test #{currentTest}", "No result object returned.")[TestResults.ErrorState]);
+                        console.Pause($"Error thrown during test {currentTest} out of {totalTests} test(s). Press any key to continue...");
+                        continue;
+                    }
+
+                    // If it isn't null, we can cast it.
+                    TestResults result = ((TestResults)output);
+
+                    r.Log($"Test #{currentTest}: \"{result.Title}\"");
+                    if (verbose) { console.Write(result.StackTrace); }
+
+                    // If it failed, log and continue to next test.
+                    if (result.IsFailure)
+                    {
+                        r.Log(result[TestStatus.FAILURE], result.StackTrace);
+                        console.Pause($"Failed test {currentTest} out of {totalTests} test(s). Press any key to continue...");
+                        continue;
+                    }
+
+                    // Increment counter.
+                    if (result.IsSuccessful)
+                    {
+                        r.Log(result[TestStatus.SUCCESS]);
+                        successfulTests++;
+                        console.Pause($"Completed test {currentTest} out of {totalTests} test(s). Press any key to continue...");
+                    }
+                }
                 
-        /// <summary>
-        /// Test database configuration object.
-        /// </summary>
-        public static void TestConfiguration() {
-            try
-            {
-                console.Debug("Testing: Creating MySqlConfiguration.");
-                configuration = new MySqlConfiguration();
-                console.Debug("Created the configuration successfully:\n" + configuration.ToString());
-                console.Pause();
+                r.Pass($"Successfully executed {totalTests} test(s).");
             }
-            catch (Exception e)
+            catch (TestException te)
             {
-                console.Debug("Failed to create the configuration.\nError: " + e.Message);
-                console.Pause();
-                // throw new DataAccessLayerException("Failed to create the configuration.", e);
+                r.Fail($"Exception \"{te.GetExceptionName()}\" has been thrown.");
+                r.Log(te.Results.StackTrace, $"-- {te.Results.GetCurrentMessage()}");
+            }
+            finally
+            {
+                // Print log.
+                r.Log("------------------------", $"{r.Title} Results");
+                int failedTests = totalTests - successfulTests;
+                r.Log(
+                    $"\t{successfulTests} test(s) completed successfully.",
+                    $"\t{failedTests} test(s) completed with failure.",
+                    $"\t{errors} test(s) interrupted by errors."
+                    );
+
+                // Log the current state message as well.
+                r.Log($"-- {r.GetCurrentMessage()}", "------------------------");
+
+                // Print results from all tests.
+                if (verbose) { console.Write(r.StackTrace); }
+
+                // Wait for user input.
+                console.Pause("Press any key to exit the program...");
             }
         }
 
-        /// <summary>
-        /// Test database connection object.
-        /// </summary>
-        public static void TestConnect() {
-            try
-            {
-                console.Debug("Testing: Creating the MySqlDatabase.");
-                database = new MySqlDatabase(configuration as MySqlConfiguration);
-                database.Connect();
-                console.Debug("Created the database successfully:\n" + database.ToString());
-                console.Pause();
-            }
-            catch (Exception e)
-            {
-                console.Debug("Failed to create the database.\n" + e.Message);
-                console.Pause();
-                // throw new DataAccessLayerException("Failed to create the database.", e);
-            }
-        }
+        #region Test Method Template.
 
-        /// <summary>
-        /// Tests methods of Entry.
-        /// </summary>
-        public static void TestMySqlEntry()
+        /*
+         * Template method for creating new tests.
+         * 
+        private static TestResults Test__()
         {
+            // Set values and dependencies here.
+            string subject = "<<Functionality being tested>>";
+            
+            // Create the results object for this test.
+            TestResults results = TestResults.Create($"Testing {subject}");
+
             try
             {
-                console.Write("Testing: MySqlEntry object.");
-                MySqlEntry test;
-
-                console.Write("Testing empty constructor.\n");
-                test = new MySqlEntry("Test");
-                console.Write($"MySqlEntry Test:\n{test}\n---------");                
-                if (!test.IsNull) { throw new Exception("Test failed. (IsNull())"); } else { console.Write("Test passed. (IsNull())."); }
-                if (test.GetField() != "TEST") { throw new Exception("Test failed. (GetField())"); } else { console.Write("Test passed. (GetField())."); }
-                if (!test.HasField("Test")) { throw new Exception("Test failed. (HasField(\"Test\"))"); } else { console.Write("Test passed. (HasField(\"Test\"))."); }
-                if (test.GetValue() != MySqlEntry.NULL_VALUE) { throw new Exception("Test failed. (GetValue())"); } else { console.Write("Test passed. (GetValue())."); }
-                if (!test.HasValue("NULL")) { throw new Exception("Test failed. (HasValue(\"NULL\"))"); } else { console.Write("Test passed. (HasValue(\"NULL\"))."); }
-                if (test.GetData().Key != "TEST") { throw new Exception("Test failed. (GetData().Key)"); } else { console.Write("Test passed. (GetData().Key)."); }
-                if (test.GetData().Value != MySqlEntry.NULL_VALUE) { throw new Exception("Test failed. (GetData().Value)"); } else { console.Write("Test passed. (GetData().Value)."); }
-                console.Write("\n---------");
-
-                console.Write("Testing string, string constructor.");
-                test = new MySqlEntry("Test2", "TestValue");
-                console.Write($"MySqlEntry Test:\n{test}\n---------");
-                if (test.IsNull) { throw new Exception("Test failed. (IsNull())"); } else { console.Write("Test passed. (IsNull())."); }
-                if (test.GetField() != "TEST2") { throw new Exception("Test failed. (GetField())"); } else { console.Write("Test passed. (GetField())."); }
-                if (!test.HasField("Test2")) { throw new Exception("Test failed. (HasField(\"Test2\"))"); } else { console.Write("Test passed. (HasField(\"Test2\"))."); }
-                if (test.GetValue() != "TestValue") { throw new Exception("Test failed. (GetValue())"); } else { console.Write("Test passed. (GetValue())."); }
-                if (!test.HasValue("TestValue")) { throw new Exception("Test failed. (HasValue(\"TestValue\"))"); } else { console.Write("Test passed. (HasValue(\"TestValue\"))."); }
-                if (test.GetData().Key != "TEST2") { throw new Exception("Test failed. (GetData().Key)"); } else { console.Write("Test passed. (GetData().Key)."); }
-                if (test.GetData().Value != "TestValue") { throw new Exception("Test failed. (GetData().Value)"); } else { console.Write("Test passed. (GetData().Value)."); }
-
-                console.Write("Testing clone method.");
-                entry = new MySqlEntry("Test3", "Clone Value");
-                console.Write($"MySqlEntry Source:\n{entry}\n---------");
-                test = entry.Clone() as MySqlEntry;
-                console.Write($"MySqlEntry Test:\n{test}\n---------");
-                if (test.IsNull) { throw new Exception("Test failed. (IsNull())"); } else { console.Write("Test passed. (IsNull())."); }
-                if (test.GetField() != "TEST3") { throw new Exception("Test failed. (GetField())"); } else { console.Write("Test passed. (GetField())."); }
-                if (!test.HasField("Test3")) { throw new Exception("Test failed. (HasField(\"Test3\"))"); } else { console.Write("Test passed. (HasField(\"Test3\"))."); }
-                if (test.GetValue() != "Clone Value") { throw new Exception("Test failed. (GetValue())"); } else { console.Write("Test passed. (GetValue())."); }
-                if (!test.HasValue("Clone Value")) { throw new Exception("Test failed. (HasValue(\"TestValue\"))"); } else { console.Write("Test passed. (HasValue(\"TestValue\"))."); }
-                if (test.GetData().Key != "TEST3") { throw new Exception("Test failed. (GetData().Key)"); } else { console.Write("Test passed. (GetData().Key)."); }
-                if (test.GetData().Value != "Clone Value") { throw new Exception("Test failed. (GetData().Value)"); } else { console.Write("Test passed. (GetData().Value)."); }
+                // Make divisor and log the title for the test.
+                results.Log($"-- -- -- {results.Title}");                
             }
             catch (Exception e)
             {
-                console.Debug("Failed to create the MySqlEntry.\n" + e.Message);
-                console.Pause();
-                // throw new DataAccessLayerException("Failed to create the MySqlEntry object.", e);
+                // Wraps exception for the results.
+                throw results.Throw($"{e.Message}", e);
             }
+            
+            // << REPEAT FOR EVERY OPERATION >>
+            try
+            {
+                // Perform the correct operations.
+                results.Log("Operation description.");
+                // << Replace line with the operation to be completed >>
+                               
+                // << IF ON FAIL, USE FAIL() METHOD >>
+                // results.Fail("Overwrite fail message if necessary.");
+                
+                // << IF ON PASS, USE PASS() METHOD >>
+                // results.Pass("Overwrite success message if necessary.");
+
+                // << IF A USE-CASE ERROR OCCURS, USE ERROR() METHOD >>
+                // results.Error("Overwrite error message, without exception.");
+                // -- OR -- USE THROW THROW() METHOD TO TRIGGER AN EXCEPTION:
+                // throw results.Throw("Overwrite error message, without exception.");
+            }
+            catch (Exception e)
+            {
+                // Wraps exception for the results.
+                throw results.Throw($"{exceptionMessage} {e.Message}", e);
+            }
+
+            // Return the test results.
+            return results;
+        }
+        */
+
+        #endregion
+
+        #region Database Configuration and Connection
+
+        /// <summary>
+        /// Test database configuration object constructor.
+        /// </summary>
+        private static TestResults Test_MySqlConfiguration() {
+
+            // Create the results object for this test.
+            TestResults results = TestResults.Create("Testing MySqlConfiguration");
+
+            try
+            {
+                // Make divisor and log the title for the test.
+                results.Log($"-- -- -- {results.Title}");
+
+                // Create the configuration object.
+                results.Log("Create the configuration object: ");
+                configuration = new MySqlConfiguration();
+
+                // If passed, test has passed successfully.
+                results.Log($"{configuration}").Pass("Created the configuration object successfully.");
+            }
+            catch (Exception e)
+            {
+                // Wraps exception for the results.
+                throw results.Throw("Failed to create the configuration. " + e.Message, e);
+            }
+
+            // Return the test results.
+            return results;
         }
 
-        #region MySqlEntry Tests.
+        /// <summary>
+        /// Test database and its connection method.
+        /// </summary>
+        private static TestResults Test_MySqlDatabaseConnect() {
 
+            // Create the results object for this test.
+            TestResults results = TestResults.Create("Testing MySqlDatabase");
+
+            try
+            {
+                // Make divisor and log the title for the test.
+                results.Log($"-- -- -- {results.Title}");
+
+                // Create the database object.
+                results.Log("Creating the MySqlDatabase object.");
+                database = new MySqlDatabase(configuration as MySqlConfiguration);
+
+                // Connecting to the database object.
+                results.Log("Connecting to the database object.");
+                database.Connect();
+
+                // If passed, test has passed successfully.
+                results.Log($"{database}").Pass("Created and connected to the database object successfully.");
+            }
+            catch (Exception e)
+            {
+                // Wraps exception for the results.
+                throw results.Throw("Failed to create the database. " + e.Message, e);
+            }
+
+            // Return the test results.
+            return results;
+        }
+
+        #endregion
+
+        /// <summary>
+        /// Assertion keys are linked to assertion maps, allowing for checking of particular values with a reference.
+        /// </summary>
+        private enum AssertKey
+        {
+            Total,
+            IsNullReference,
+            HasNullValue,
+            HasField,
+            HasValue,
+            IsEmpty
+        }
+
+        #region MySqlEntry
+        
+        /// <summary>
+        /// Tests the single field constructor of MySqlEntry.
+        /// </summary>
+        private static TestResults Test_MySqlEntry_SingleField()
+        {
+            // Set values and dependencies here.
+            string subject = "MySqlEntry (Single Field)";
+            MySqlEntry entry = null;
+            
+            // Create the results object for this test.
+            TestResults results = TestResults.Create($"Testing {subject}");
+
+            // Create the assertion map.
+            Dictionary<AssertKey, bool> assertions = new Dictionary<AssertKey, bool>();
+
+            try
+            {
+                // Make divisor and log the title for the test.
+                results.Log($"-- -- -- {results.Title}");                
+            }
+            catch (Exception e)
+            {
+                // Wraps exception for the results.
+                throw results.Throw($"{e.Message}", e);
+            }
+            
+            // << REPEAT FOR EVERY OPERATION >>
+            try
+            {
+                // Perform the correct operations.
+                results.Log("Creating the MySqlEntry object using the single field constructor.");
+                entry = new MySqlEntry("Single Field");
+                results.Log($"{entry}");
+
+                // If entry is null, fail the test.
+                results.Log("Checking assertions...");
+
+                assertions[AssertKey.IsNullReference] = (entry == null);
+                results.Log($"-- Is the object reference null? {assertions[AssertKey.IsNullReference]}");
+
+                assertions[AssertKey.HasNullValue] = entry.IsNull;
+                results.Log($"-- Does this entry have the NULL_VALUE? {assertions[AssertKey.HasNullValue]}");
+
+                assertions[AssertKey.HasField] = entry.HasField("Single Field");
+                results.Log($"-- Does the entry field match 'Single Field'? {assertions[AssertKey.HasField]}");
+
+                // Evaluate assertions.
+                assertions[AssertKey.Total] =
+                    !assertions[AssertKey.IsNullReference] &&
+                    assertions[AssertKey.HasNullValue] &&
+                    assertions[AssertKey.HasField];
+                results.Log($"All assertions passed? {assertions[AssertKey.Total]}");
+
+                if (assertions[AssertKey.Total])
+                {
+                    results.Pass("Single field constructor operation passed.");
+                }                                              
+                else
+                {
+                    results.Fail("Single field constructor operation failed.");
+                }
+            }
+            catch (Exception e)
+            {
+                // Wraps exception for the results.
+                throw results.Throw($"Exception occurred during construction of MySqlEntry. {e.Message}", e);
+            }
+
+            // Return the test results.
+            return results;
+        }
+
+        /// <summary>
+        /// Tests the field and value constructor of MySqlEntry.
+        /// </summary>
+        private static TestResults Test_MySqlEntry_FieldValue()
+        {
+            // Set values and dependencies here.
+            string subject = "MySqlEntry (Field, Value)";
+            MySqlEntry entry = null;
+
+            // Create the results object for this test.
+            TestResults results = TestResults.Create($"Testing {subject}");
+
+            // Create the assertion map.
+            Dictionary<AssertKey, bool> assertions = new Dictionary<AssertKey, bool>();
+
+            try
+            {
+                // Make divisor and log the title for the test.
+                results.Log($"-- -- -- {results.Title}");
+            }
+            catch (Exception e)
+            {
+                // Wraps exception for the results.
+                throw results.Throw($"{e.Message}", e);
+            }
+
+            // << REPEAT FOR EVERY OPERATION >>
+            try
+            {
+                // Perform the correct operations.
+                results.Log("Creating the MySqlEntry object using the field/value constructor.");
+                entry = new MySqlEntry("Field", "Value");
+                results.Log($"{entry}");
+
+                // If entry is null, fail the test.
+                results.Log("Checking assertions...");
+
+                assertions[AssertKey.IsNullReference] = (entry == null);
+                results.Log($"-- Is the object reference null? {assertions[AssertKey.IsNullReference]}");
+
+                assertions[AssertKey.HasNullValue] = entry.IsNull;
+                results.Log($"-- Does this entry have the NULL_VALUE? {assertions[AssertKey.HasNullValue]}");
+                results.Log($"-- entry.GetValue()? {entry.GetValue()}");
+
+                assertions[AssertKey.HasField] = entry.HasField("Field");
+                results.Log($"-- Does the entry field match 'Field'? {assertions[AssertKey.HasField]}");
+
+                assertions[AssertKey.HasValue] = entry.HasValue("Value");
+                results.Log($"-- Does the entry value match 'Value'? {assertions[AssertKey.HasValue]}");
+
+                // Evaluate assertions.
+                assertions[AssertKey.Total] =
+                    !assertions[AssertKey.IsNullReference] &&
+                    !assertions[AssertKey.HasNullValue] &&
+                    assertions[AssertKey.HasField];
+                results.Log($"All assertions passed? {assertions[AssertKey.Total]}");
+
+                if (assertions[AssertKey.Total])
+                {
+                    results.Pass("Field, value constructor operation passed.");
+                }
+                else
+                {
+                    results.Fail("Field, value constructor operation failed.");
+                }
+            }
+            catch (Exception e)
+            {
+                // Wraps exception for the results.
+                throw results.Throw($"Exception occurred during construction of MySqlEntry. {e.Message}", e);
+            }
+
+            // Return the test results.
+            return results;
+        }
+        
+        /// <summary>
+        /// Tests the key/value pair constructor of MySqlEntry.
+        /// </summary>
+        private static TestResults Test_MySqlEntry_KeyValuePair()
+        {
+            // Set values and dependencies here.
+            string subject = "MySqlEntry (KeyValuePair<string, string>)";
+            MySqlEntry entry = null;
+
+            // Create the results object for this test.
+            TestResults results = TestResults.Create($"Testing {subject}");
+
+            // Create the assertion map.
+            Dictionary<AssertKey, bool> assertions = new Dictionary<AssertKey, bool>();
+
+            try
+            {
+                // Make divisor and log the title for the test.
+                results.Log($"-- -- -- {results.Title}");
+            }
+            catch (Exception e)
+            {
+                // Wraps exception for the results.
+                throw results.Throw($"{e.Message}", e);
+            }
+
+            // << REPEAT FOR EVERY OPERATION >>
+            try
+            {
+                // Perform the correct operations.
+                results.Log("Creating the MySqlEntry object using the specified constructor.");
+                entry = new MySqlEntry(new KeyValuePair<string, string>("Field", "Value"));
+                results.Log($"{entry}");
+
+                // If entry is null, fail the test.
+                results.Log("Checking assertions...");
+
+                assertions[AssertKey.IsNullReference] = (entry == null);
+                results.Log($"-- Is the object reference null? {assertions[AssertKey.IsNullReference]}");
+
+                assertions[AssertKey.HasNullValue] = entry.IsNull;
+                results.Log($"-- Does this entry have the NULL_VALUE? {assertions[AssertKey.HasNullValue]}");
+                results.Log($"-- entry.GetValue()? {entry.GetValue()}");
+
+                assertions[AssertKey.HasField] = entry.HasField("Field");
+                results.Log($"-- Does the entry field match 'Field'? {assertions[AssertKey.HasField]}");
+
+                assertions[AssertKey.HasValue] = entry.HasValue("Value");
+                results.Log($"-- Does the entry value match 'Value'? {assertions[AssertKey.HasValue]}");
+
+                // Evaluate assertions.
+                assertions[AssertKey.Total] =
+                    !assertions[AssertKey.IsNullReference] &&
+                    !assertions[AssertKey.HasNullValue] &&
+                    assertions[AssertKey.HasField];
+                results.Log($"All assertions passed? {assertions[AssertKey.Total]}");
+
+                if (assertions[AssertKey.Total])
+                {
+                    results.Pass("Constructor operation passed.");
+                }
+                else
+                {
+                    results.Fail("Constructor operation failed.");
+                }
+            }
+            catch (Exception e)
+            {
+                // Wraps exception for the results.
+                throw results.Throw($"Exception occurred during construction of MySqlEntry. {e.Message}", e);
+            }
+
+            // Return the test results.
+            return results;
+        }
+
+        /// <summary>
+        /// Tests the clone constructor of MySqlEntry.
+        /// </summary>
+        private static TestResults Test_MySqlEntry_Clone()
+        {
+            // Set values and dependencies here.
+            string subject = "MySqlEntry (Clone())";
+            MySqlEntry entry = null;
+
+            // Create the results object for this test.
+            TestResults results = TestResults.Create($"Testing {subject}");
+
+            // Create the assertion map.
+            Dictionary<AssertKey, bool> assertions = new Dictionary<AssertKey, bool>();
+
+            try
+            {
+                // Make divisor and log the title for the test.
+                results.Log($"-- -- -- {results.Title}");
+            }
+            catch (Exception e)
+            {
+                // Wraps exception for the results.
+                throw results.Throw($"{e.Message}", e);
+            }
+
+            // << REPEAT FOR EVERY OPERATION >>
+            try
+            {
+                // Perform the correct operations.
+                results.Log("Creating the MySqlEntry object using the specified constructor.");
+                entry = new MySqlEntry(new KeyValuePair<string, string>("Field", "Value")).Clone() as MySqlEntry;
+                results.Log($"{entry}");
+
+                // If entry is null, fail the test.
+                results.Log("Checking assertions...");
+
+                assertions[AssertKey.IsNullReference] = (entry == null);
+                results.Log($"-- Is the object reference null? {assertions[AssertKey.IsNullReference]}");
+
+                assertions[AssertKey.HasNullValue] = entry.IsNull;
+                results.Log($"-- Does this entry have the NULL_VALUE? {assertions[AssertKey.HasNullValue]}");
+                results.Log($"-- entry.GetValue()? {entry.GetValue()}");
+
+                assertions[AssertKey.HasField] = entry.HasField("Field");
+                results.Log($"-- Does the entry field match 'Field'? {assertions[AssertKey.HasField]}");
+
+                assertions[AssertKey.HasValue] = entry.HasValue("Value");
+                results.Log($"-- Does the entry value match 'Value'? {assertions[AssertKey.HasValue]}");
+
+                // Evaluate assertions.
+                assertions[AssertKey.Total] =
+                    !assertions[AssertKey.IsNullReference] &&
+                    !assertions[AssertKey.HasNullValue] &&
+                    assertions[AssertKey.HasField];
+                results.Log($"All assertions passed? {assertions[AssertKey.Total]}");
+
+                if (assertions[AssertKey.Total])
+                {
+                    results.Pass("Clone operation passed.");
+                }
+                else
+                {
+                    results.Fail("Clone operation failed.");
+                }
+            }
+            catch (Exception e)
+            {
+                // Wraps exception for the results.
+                throw results.Throw($"Exception occurred during cloning of MySqlEntry. {e.Message}", e);
+            }
+
+            // Return the test results.
+            return results;
+        }
+
+        #endregion
+
+        #region MySqlRow
+        
+        /// <summary>
+        /// Tests empty constructor for MySqlRow.
+        /// </summary>
+        private static TestResults Test_MySqlRow_Empty()
+        {
+            // Set values and dependencies here.
+            string subject = "MySqlRow ()";
+            MySqlRow row = null;
+
+            // Create the results object for this test.
+            TestResults results = TestResults.Create($"Testing {subject}");
+
+            // Create the assertion map.
+            Dictionary<AssertKey, bool> assertions = new Dictionary<AssertKey, bool>();
+
+            try
+            {
+                // Make divisor and log the title for the test.
+                results.Log($"-- -- -- {results.Title}");
+            }
+            catch (Exception e)
+            {
+                // Wraps exception for the results.
+                throw results.Throw($"{e.Message}", e);
+            }
+
+            // << REPEAT FOR EVERY OPERATION >>
+            try
+            {
+                // Perform the correct operations.
+                results.Log("Creating the MySqlEntry object using the single field constructor.");
+                row = new MySqlRow();
+                results.Log($"{row}");
+
+                // If entry is null, fail the test.
+                results.Log("Checking assertions...");
+
+                assertions[AssertKey.IsNullReference] = (row == null);
+                results.Log($"-- Is the object reference null? {assertions[AssertKey.IsNullReference]}");
+                
+                assertions[AssertKey.HasNullValue] = row.IsNull;
+                results.Log($"-- Are all entries within this row null? {assertions[AssertKey.HasNullValue]}");
+
+                assertions[AssertKey.IsEmpty] = row.IsEmpty;
+                results.Log($"-- Is this row empty? { assertions[AssertKey.IsEmpty] }");
+                results.Log($"-- row.Count? {row.Count}");
+                results.Log($"-- row.FieldCount? {row.FieldCount}");
+                results.Log($"-- row.EntryCount? {row.EntryCount}");
+
+                assertions[AssertKey.HasField] = row.HasField("Field");
+                results.Log($"-- Does any entry inside this row match 'Field'? {assertions[AssertKey.HasField]}");
+
+                // Evaluate assertions.
+                assertions[AssertKey.Total] =
+                    !assertions[AssertKey.IsNullReference] &&
+                    assertions[AssertKey.HasNullValue] &&
+                    assertions[AssertKey.IsEmpty] &&
+                    !assertions[AssertKey.HasField];
+                results.Log($"All assertions passed? {assertions[AssertKey.Total]}");
+
+                if (assertions[AssertKey.Total])
+                {
+                    results.Pass($"{subject} operation passed.");
+                }
+                else
+                {
+                    results.Fail($"{subject} operation failed.");
+                }
+            }
+            catch (Exception e)
+            {
+                // Wraps exception for the results.
+                throw results.Throw($"Exception occurred during construction of {subject}. {e.Message}", e);
+            }
+
+            // Return the test results.
+            return results;
+        }
+
+        /// <summary>
+        /// Tests empty constructor for MySqlRow.
+        /// </summary>
+        private static TestResults Test_MySqlRow_Fields()
+        {
+            // Set values and dependencies here.
+            string subject = "MySqlRow (params string[])";
+            MySqlRow row = null;
+
+            // Create the results object for this test.
+            TestResults results = TestResults.Create($"Testing {subject}");
+
+            // Create the assertion map.
+            Dictionary<AssertKey, bool> assertions = new Dictionary<AssertKey, bool>();
+
+            try
+            {
+                // Make divisor and log the title for the test.
+                results.Log($"-- -- -- {results.Title}");
+            }
+            catch (Exception e)
+            {
+                // Wraps exception for the results.
+                throw results.Throw($"{e.Message}", e);
+            }
+
+            // << REPEAT FOR EVERY OPERATION >>
+            try
+            {
+                // Perform the correct operations.
+                results.Log("Creating the MySqlEntry object using the single field constructor.");
+                row = new MySqlRow(
+                    new MySqlEntry("Field", "Column 1 Value"),
+                    new MySqlEntry("Field 2", "Column 2 Value"),
+                    new MySqlEntry("Field 3", "Column 3 Value")
+                    );
+                results.Log($"{row}");
+
+                // If entry is null, fail the test.
+                results.Log("Checking assertions...");
+
+                assertions[AssertKey.IsNullReference] = (row == null);
+                results.Log($"-- Is the object reference null? {assertions[AssertKey.IsNullReference]}");
+
+                assertions[AssertKey.HasNullValue] = row.IsNull;
+                results.Log($"-- Are all entries within this row null? {assertions[AssertKey.HasNullValue]}");
+
+                assertions[AssertKey.IsEmpty] = row.IsEmpty;
+                results.Log($"-- Is this row empty? { assertions[AssertKey.IsEmpty] }");
+                results.Log($"-- row.Count? {row.Count}");
+                results.Log($"-- row.FieldCount? {row.FieldCount}");
+                results.Log($"-- row.EntryCount? {row.EntryCount}");
+
+                assertions[AssertKey.HasField] = row.HasField("Field");
+                results.Log($"-- Does any entry inside this row match 'Field'? {assertions[AssertKey.HasField]}");
+                // results.Log($"-- What is the first field of the row")
+
+                // assertions[AssertKey.HasEntry] = 
+
+                // Evaluate assertions.
+                assertions[AssertKey.Total] =
+                    !assertions[AssertKey.IsNullReference] &&
+                    assertions[AssertKey.HasNullValue] &&
+                    assertions[AssertKey.IsEmpty] &&
+                    !assertions[AssertKey.HasField];
+                results.Log($"All assertions passed? {assertions[AssertKey.Total]}");
+
+                if (assertions[AssertKey.Total])
+                {
+                    results.Pass($"{subject} operation passed.");
+                }
+                else
+                {
+                    results.Fail($"{subject} operation failed.");
+                }
+            }
+            catch (Exception e)
+            {
+                // Wraps exception for the results.
+                throw results.Throw($"Exception occurred during construction of {subject}. {e.Message}", e);
+            }
+
+            // Return the test results.
+            return results;
+        }
 
 
         #endregion
@@ -180,7 +779,7 @@ namespace TestDataAccessLayer
         /// <summary>
         /// Test row methods.
         /// </summary>
-        public static void TestMySqlRow() {
+        private static void TestMySqlRow() {
             try
             {
 
