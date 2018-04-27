@@ -96,19 +96,36 @@ namespace Services
         }
 
         /// <summary>
+        /// Clear the text file associated with this logger of all text.
+        /// </summary>
+        /// <returns>Returns reference to self.</returns>
+        public Logger Clear()
+        {
+            if (File.Exists(this.Filepath))
+            {
+                File.WriteAllText(this.Filepath, String.Empty);
+            }
+            return this;
+        }
+
+        /// <summary>
         /// Write a line in the text file.
         /// </summary>
         /// <param name="message">Message to print.</param>
         /// <returns>Returns reference to this logger.</returns>
         public Logger Write(string message)
         {
-            string text = message.Trim();
+            string content = message;
+            string[] lines = content.Split('\n');
 
-            if (text.Length > 0)
+            using (StreamWriter write = File.AppendText(this.Filepath))
             {
-                using (StreamWriter write = File.AppendText(this.Filepath))
+                foreach (string text in lines)
                 {
-                    write.WriteLine(text);
+                    if (text.Length > 0)
+                    {
+                        write.WriteLine(text);
+                    }
                 }
             }
 

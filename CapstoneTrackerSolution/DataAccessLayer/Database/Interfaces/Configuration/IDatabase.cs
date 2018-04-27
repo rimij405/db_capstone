@@ -14,13 +14,18 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ISTE.DAL.Database
+namespace ISTE.DAL.Database.Interfaces
 {
     /// <summary>
     /// Interface declaring connection functionality to a database.
     /// </summary>
     public interface IDatabase
-    {
+    {        
+        /// <summary>
+        /// Returns value determining if the program is currently connected to the database.
+        /// </summary>
+        bool IsConnected { get; }
+
         /// <summary>
         /// Attempt to connect to a database, using the implementation's connection object.
         /// </summary>
@@ -32,11 +37,5 @@ namespace ISTE.DAL.Database
         /// </summary>
         /// <returns>Returns true on success. False, if otherwise.</returns>
         bool Close();
-
-        /// <summary>
-        /// Returns value determining if the program is currently connected to the database.
-        /// </summary>
-        /// <returns>Returns boolean.</returns>
-        bool IsConnected();
     }
 }

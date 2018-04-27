@@ -14,7 +14,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ISTE.DAL.Database
+namespace ISTE.DAL.Database.Interfaces;
 {
     /// <summary>
     /// Database connection configuration methods.

@@ -15,7 +15,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Services;
 
-namespace ISTE.DAL.Database
+namespace Services
 {
 
     /// <summary>

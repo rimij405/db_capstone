@@ -85,6 +85,11 @@ namespace TestDataAccessLayer
 
             TestMethods += Test_MySqlResultSet_Empty;
             TestMethods += Test_MySqlResultSet_Mutators;
+
+            TestMethods += Test_Logger_Empty;
+
+            Logger testLogger = new Logger("", "test", "log");
+            testLogger.Clear();
                         
             try
             {
@@ -105,6 +110,7 @@ namespace TestDataAccessLayer
                 {
                     // Print a newline.
                     console.Write("");
+                    testLogger.Write("\n\n");
                     currentTest++;
 
                     r.Log("------------------------", $"-- Invoking test {currentTest} out of {totalTests} test(s).");
@@ -117,6 +123,7 @@ namespace TestDataAccessLayer
                     {
                         errors++;
                         r.Log(TestResults.CreateError($"Test #{currentTest}", "No result object returned.")[TestResults.ErrorState]);
+                        testLogger.Write($"\nError thrown during test {currentTest} out of {totalTests} test(s).\n");
                         console.Pause($"Error thrown during test {currentTest} out of {totalTests} test(s). Press any key to continue...");
                         continue;
                     }
@@ -125,12 +132,16 @@ namespace TestDataAccessLayer
                     TestResults result = ((TestResults)output);
 
                     r.Log($"Test #{currentTest}: \"{result.Title}\"");
-                    if (verbose) { console.Write(result.StackTrace); }
+                    if (verbose) {
+                        console.Write(result.StackTrace);
+                        testLogger.Write("\n" + result.StackTrace);
+                    }
 
                     // If it failed, log and continue to next test.
                     if (result.IsFailure)
                     {
                         r.Log(result[TestStatus.FAILURE], result.StackTrace);
+                        testLogger.Write($"\nFailed test {currentTest} out of {totalTests} test(s).\n");
                         console.Pause($"Failed test {currentTest} out of {totalTests} test(s). Press any key to continue...");
                         continue;
                     }
@@ -140,6 +151,7 @@ namespace TestDataAccessLayer
                     {
                         r.Log(result[TestStatus.SUCCESS]);
                         successfulTests++;
+                        testLogger.Write($"\nCompleted test {currentTest} out of {totalTests} test(s).\n");
                         console.Pause($"Completed test {currentTest} out of {totalTests} test(s). Press any key to continue...");
                     }
                 }
@@ -150,6 +162,7 @@ namespace TestDataAccessLayer
             {
                 r.Fail($"Exception \"{te.GetExceptionName()}\" has been thrown.");
                 r.Log(te.Results.StackTrace, $"-- {te.Results.GetCurrentMessage()}");
+                testLogger.Write("\n" + te.Results.StackTrace);   
             }
             finally
             {
@@ -166,7 +179,10 @@ namespace TestDataAccessLayer
                 r.Log($"-- {r.GetCurrentMessage()}", "------------------------");
 
                 // Print results from all tests.
-                if (verbose) { console.Write(r.StackTrace); }
+                if (verbose) {
+                    console.Write(r.StackTrace);
+                    testLogger.Write("\n" + r.StackTrace);
+                }
 
                 // Wait for user input.
                 console.Pause("Press any key to exit the program...");
@@ -1148,7 +1164,6 @@ namespace TestDataAccessLayer
         /// </summary>
         /// <returns>Return results from test.</returns>
         private static TestResults Test_MySqlResultSet_Empty()
-
         {
             // Set values and dependencies here.
             string subject = "MySqlResultSet ()";
@@ -1369,6 +1384,96 @@ namespace TestDataAccessLayer
 
         #endregion
 
+        #region Exception Tests.
+
+        /// <summary>
+        /// Test the logger by writing something to a file.
+        /// </summary>
+        /// <returns>Returns result from a test.</returns>
+        private static TestResults Test_Logger_Empty()
+        {
+            // Set values and dependencies here.
+            string subject = "Logger ()";
+            Logger logger = null;
+
+            // Create the results object for this test.
+            TestResults results = TestResults.Create($"Testing {subject}");
+
+            // Create the assertion map.
+            Dictionary<AssertKey, bool> assertions = new Dictionary<AssertKey, bool>();
+
+            try
+            {
+                // Make divisor and log the title for the test.
+                results.Log($"-- -- -- {results.Title}");
+            }
+            catch (Exception e)
+            {
+                // Wraps exception for the results.
+                throw results.Throw($"{e.Message}", e);
+            }
+
+            try
+            {
+                results.Log("Creating the logger object.");
+                logger = new Logger("", "log-test");
+                logger.Clear();
+                results.Log($"{logger}");
+                
+                if (logger == null)
+                {
+                    results.Fail("Logger not constructed properly.");
+                    return results;
+                }
+
+                results.Log("Writing to a file.");
+                logger.Write("Writing this to a file, test.");
+
+                results.Log("Appending to file.");
+                logger.Write("Appending text to same file.");
+
+                try
+                {
+                    results.Log("Testing data access layer exception logging.");
+                    throw new DataAccessLayerException("Testing data access layer exception logging.");
+                }
+                catch (DataAccessLayerException dale)
+                {
+                    dale.Write(logger);
+                }
+
+                try
+                {
+                    results.Log("Testing database connection exception logging.");
+                    throw new DatabaseConnectionException("Testing DBConnection exception logging.");
+                }
+                catch (DatabaseConnectionException dbce)
+                {
+                    dbce.Write(logger);
+                }
+
+                try
+                {
+                    results.Log("Testing database close exception logging.");
+                    throw new DatabaseCloseException("Testing DBClose exception logging.");
+                }
+                catch (DatabaseCloseException dce)
+                {
+                    dce.Write(logger);
+                }
+
+                results.Pass("Logger constructed properly.");
+            }
+            catch (Exception e)
+            {
+                // Wraps exception for the results.
+                throw results.Throw($"Exception occurred during construction of {subject}. {e.Message}", e);
+            }
+
+            return results;
+        }
+
+        #endregion
 
     }
 }

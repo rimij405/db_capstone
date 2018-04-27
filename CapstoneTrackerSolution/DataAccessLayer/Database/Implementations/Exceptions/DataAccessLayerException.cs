@@ -20,7 +20,7 @@ namespace ISTE.DAL.Database
     /// <summary>
     /// Custom exception class that can be logged.
     /// </summary>
-    public class DataAccessLayerException : Services.CustomException, ILoggable
+    public class DataAccessLayerException : Services.CustomException, Services.ILoggable
     {
         // Field(s).
 
