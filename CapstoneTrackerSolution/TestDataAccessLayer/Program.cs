@@ -83,11 +83,9 @@ namespace TestDataAccessLayer
             TestMethods += Test_MySqlRow_Fields;
             TestMethods += Test_MySqlRow_Mutators;
 
-            // TESTING MySqlDatabase: Connect
-            // TESTING MySqlEntry object.
-            // TESTING MySqlRow object.
-            // TESTING MySqlResultSet object.
-            
+            TestMethods += Test_MySqlResultSet_Empty;
+            TestMethods += Test_MySqlResultSet_Mutators;
+                        
             try
             {
                 r.Log("", "------------------------", $"Trace of {r.Title}");
@@ -350,10 +348,11 @@ namespace TestDataAccessLayer
         }
 
         #region MySqlEntry
-        
+
         /// <summary>
         /// Tests the single field constructor of MySqlEntry.
         /// </summary>
+        /// <returns>Return results from test.</returns>
         private static TestResults Test_MySqlEntry_SingleField()
         {
             // Set values and dependencies here.
@@ -426,6 +425,7 @@ namespace TestDataAccessLayer
         /// <summary>
         /// Tests the field and value constructor of MySqlEntry.
         /// </summary>
+        /// <returns>Return results from test.</returns>
         private static TestResults Test_MySqlEntry_FieldValue()
         {
             // Set values and dependencies here.
@@ -498,10 +498,11 @@ namespace TestDataAccessLayer
             // Return the test results.
             return results;
         }
-        
+
         /// <summary>
         /// Tests the key/value pair constructor of MySqlEntry.
         /// </summary>
+        /// <returns>Return results from test.</returns>
         private static TestResults Test_MySqlEntry_KeyValuePair()
         {
             // Set values and dependencies here.
@@ -578,6 +579,7 @@ namespace TestDataAccessLayer
         /// <summary>
         /// Tests the clone constructor of MySqlEntry.
         /// </summary>
+        /// <returns>Return results from test.</returns>
         private static TestResults Test_MySqlEntry_Clone()
         {
             // Set values and dependencies here.
@@ -654,6 +656,7 @@ namespace TestDataAccessLayer
         /// <summary>
         /// Tests the clone constructor of MySqlEntry.
         /// </summary>
+        /// <returns>Return results from test.</returns>
         private static TestResults Test_MySqlEntry_Equality()
         {
             // Set values and dependencies here.
@@ -731,7 +734,7 @@ namespace TestDataAccessLayer
             // Return the test results.
             return results;
         }
-        
+
         #endregion
 
         #region MySqlRow
@@ -739,6 +742,7 @@ namespace TestDataAccessLayer
         /// <summary>
         /// Tests empty constructor for MySqlRow.
         /// </summary>
+        /// <returns>Return results from test.</returns>
         private static TestResults Test_MySqlRow_Empty()
         {
             // Set values and dependencies here.
@@ -822,6 +826,7 @@ namespace TestDataAccessLayer
         /// <summary>
         /// Tests field collection constructor for MySqlRow.
         /// </summary>
+        /// <returns>Return results from test.</returns>
         private static TestResults Test_MySqlRow_Fields()
         {
             // Set values and dependencies here.
@@ -914,10 +919,11 @@ namespace TestDataAccessLayer
             // Return the test results.
             return results;
         }
-        
+
         /// <summary>
         /// Tests accessor/mutator methods in MySqlRow.
         /// </summary>
+        /// <returns>Return results from test.</returns>
         private static TestResults Test_MySqlRow_Mutators()
         {
             // Set values and dependencies here.
@@ -1128,7 +1134,234 @@ namespace TestDataAccessLayer
                 // Wraps exception for the results.
                 throw results.Throw($"Exception occurred during construction of {subject}. {e.Message}", e);
             }
+            
+            // Return the test results.
+            return results;
+        }
 
+        #endregion
+
+        #region MySqlResultSet
+
+        /// <summary>
+        /// Test empty constructor for a result set.
+        /// </summary>
+        /// <returns>Return results from test.</returns>
+        private static TestResults Test_MySqlResultSet_Empty()
+
+        {
+            // Set values and dependencies here.
+            string subject = "MySqlResultSet ()";
+            MySqlResultSet set = null;
+            
+            // Create the results object for this test.
+            TestResults results = TestResults.Create($"Testing {subject}");
+
+            // Create the assertion map.
+            Dictionary<AssertKey, bool> assertions = new Dictionary<AssertKey, bool>();
+
+            try
+            {
+                // Make divisor and log the title for the test.
+                results.Log($"-- -- -- {results.Title}");
+            }
+            catch (Exception e)
+            {
+                // Wraps exception for the results.
+                throw results.Throw($"{e.Message}", e);
+            }
+
+            // << REPEAT FOR EVERY OPERATION >>
+            try
+            {
+                // Perform the correct operations.
+                results.Log("Creating the MySqlResultSet object using the single field constructor.");
+                set = new MySqlResultSet();
+                results.Log($"{printer.FormatResultSet(set)}");
+                
+                // If entry is null, fail the test.
+                results.Log("Checking assertions...");
+
+                assertions[AssertKey.IsNullReference] = (set == null);
+                results.Log($"-- Is the object reference null? {assertions[AssertKey.IsNullReference]}");
+                
+                assertions[AssertKey.IsEmpty] = set.IsEmpty;
+                results.Log($"-- Is this result set empty? { assertions[AssertKey.IsEmpty] }");
+                results.Log($"-- Rows in set (set.Count)? {set.Count}");
+
+                // Evaluate assertions.
+                assertions[AssertKey.Total] =
+                    !assertions[AssertKey.IsNullReference] &&
+                    assertions[AssertKey.IsEmpty];
+
+                results.Log($"All assertions passed? {assertions[AssertKey.Total]}");
+
+                if (assertions[AssertKey.Total])
+                {
+                    results.Pass($"{subject} operation passed.");
+                }
+                else
+                {
+                    results.Fail($"{subject} operation failed.");
+                }
+            }
+            catch (Exception e)
+            {
+                // Wraps exception for the results.
+                throw results.Throw($"Exception occurred during construction of {subject}. {e.Message}", e);
+            }
+
+            // Return the test results.
+            return results;
+        }
+
+        /// <summary>
+        /// Test mutators for ResultSets.
+        /// </summary>
+        /// <returns>Return results from test.</returns>
+        private static TestResults Test_MySqlResultSet_Mutators()
+        {
+            // Set values and dependencies here.
+            string subject = "MySqlResultSet ()";
+            MySqlResultSet set = null;
+
+            // Create the results object for this test.
+            TestResults results = TestResults.Create($"Testing {subject}");
+
+            // Create the assertion map.
+            Dictionary<AssertKey, bool> assertions = new Dictionary<AssertKey, bool>();
+
+            try
+            {
+                // Make divisor and log the title for the test.
+                results.Log($"-- -- -- {results.Title}");
+            }
+            catch (Exception e)
+            {
+                // Wraps exception for the results.
+                throw results.Throw($"{e.Message}", e);
+            }
+
+            // << ADD 10 ROWS >>
+            try
+            {
+                // Perform the correct operations.
+                results.Log("Creating the MySqlResultSet object using the single field constructor.");
+                set = new MySqlResultSet();
+
+                // Add the rows to the result set.
+                results.Log("Add example row to the result set.");
+
+                // Add 10 rows to the collection.
+                for (int i = 0; i < 10; i++)
+                {
+                    set.Add(new MySqlRow(
+                            new List<IEntry> {
+                            new MySqlEntry("First Name", "Ian"),
+                            new MySqlEntry("Last Name", "Effendi"),
+                            new MySqlEntry("Email", $"example{i}@google.com")
+                            }
+                        ));
+                }
+
+                // Print the result set.
+                results.Log($"{printer.FormatResultSet(set)}");
+
+                // If entry is null, fail the test.
+                results.Log("Checking assertions...");
+
+                assertions[AssertKey.IsNullReference] = (set == null);
+                results.Log($"-- Is the object reference null? {assertions[AssertKey.IsNullReference]}");
+
+                assertions[AssertKey.IsEmpty] = set.IsEmpty;
+                results.Log($"-- Is this result set empty? { assertions[AssertKey.IsEmpty] }");
+                results.Log($"-- Rows in set (set.Count)? {set.Count}");
+
+                results.Log($"-- Grab first row entry with field, 'Email'.");
+                IEntry example = set[0]["Email"];
+                assertions[AssertKey.HasValue] = example != null;
+                results.Log($"-- Is there an entry with the 'Email' field in the set? { assertions[AssertKey.HasValue] }");
+
+                // Print the example entry.
+                results.Log($"{printer.FormatEntry(example)}");
+
+                // Evaluate assertions.
+                assertions[AssertKey.Total] =
+                    !assertions[AssertKey.IsNullReference] &&
+                    !assertions[AssertKey.IsEmpty] &&
+                    assertions[AssertKey.HasValue];
+
+                results.Log($"All assertions passed? {assertions[AssertKey.Total]}");
+
+                if (assertions[AssertKey.Total])
+                {
+                    results.Pass($"{subject} operation passed.");
+                }
+                else
+                {
+                    results.Fail($"{subject} operation failed.");
+                }
+            }
+            catch (Exception e)
+            {
+                // Wraps exception for the results.
+                throw results.Throw($"Exception occurred during construction of {subject}. {e.Message}", e);
+            }
+            
+            // << REMOVE ROW >>
+            try
+            {
+                // Perform the correct operations.
+                results.Log("Get row from index 5.");
+                IRow row = set[5];
+                // Print the row.
+                results.Log($"{printer.FormatRow(row)}");
+
+                // Remove the item.
+                results.Log("Remove retrieved row from set.");                
+                set.Remove(row);
+                // Print the result set.
+                results.Log($"{printer.FormatResultSet(set)}");
+                
+                // If entry is null, fail the test.
+                results.Log("Checking assertions...");
+
+                assertions[AssertKey.IsNullReference] = (row == null);
+                results.Log($"-- Is the object reference null? {assertions[AssertKey.IsNullReference]}");
+
+                assertions[AssertKey.IsEmpty] = set.IsEmpty;
+                results.Log($"-- Is this result set empty? { assertions[AssertKey.IsEmpty] }");
+                results.Log($"-- Rows in set (set.Count)? {set.Count}");
+
+                results.Log($"-- Grab new row that exists at index 5.");
+                row = set[5];
+                assertions[AssertKey.HasValue] = row != null && !row.IsNull;
+                results.Log($"-- Retrieved row exists? { assertions[AssertKey.HasValue] }");
+                // Print the retrieved row.
+                results.Log($"{printer.FormatRow(row)}");
+
+                // Evaluate assertions.
+                assertions[AssertKey.Total] =
+                    !assertions[AssertKey.IsNullReference] &&
+                    !assertions[AssertKey.IsEmpty] &&
+                    assertions[AssertKey.HasValue];
+
+                results.Log($"All assertions passed? {assertions[AssertKey.Total]}");
+
+                if (assertions[AssertKey.Total])
+                {
+                    results.Pass($"{subject} operation passed.");
+                }
+                else
+                {
+                    results.Fail($"{subject} operation failed.");
+                }
+            }
+            catch (Exception e)
+            {
+                // Wraps exception for the results.
+                throw results.Throw($"Exception occurred during construction of {subject}. {e.Message}", e);
+            }
 
             // Return the test results.
             return results;
@@ -1136,108 +1369,6 @@ namespace TestDataAccessLayer
 
         #endregion
 
-
-
-
-        /// <summary>
-        /// Test row methods.
-        /// </summary>
-        private static void TestMySqlRow() {
-            try
-            {
-
-                console.Write("Testing MySqlRow");
-                MySqlRow row = new MySqlRow();
-
-                console.Write("Testing empty constructor.");
-                console.Write($"{row}");
-                if (!row.IsEmpty) { throw new Exception("Should be empty."); } else { console.Write("Test passed. Empty row."); }
-
-                row = new MySqlRow(new List<string>() {
-                    "FirstName",
-                    "LastName",
-                    "Age"                    
-                });
-                row.AddEntry("Birthday", "1997-12-09 00:00:00");
-                row.AddEntry("UserID", "1");
-                console.Write("Testing field constructor.");
-                console.Write($"{row}");
-                if (row.IsEmpty) { throw new Exception("Should not be empty."); } else { console.Write("Test passed. Row with fields."); }
-                if (row[0].Length == 0) { throw new Exception("Empty string in place of field."); } else { console.Write($"Test passed. Field \"{row[0]}\" found."); }
-                if (!row["LastName"].IsNull) { throw new Exception("New entry should be null when only field is instantiated."); } else { console.Write($"Test passed. Entry \"{row["LastName"]}\" found."); }
-                if (row["Birthday"].IsNull) { throw new Exception("New entry should have value."); } else { console.Write($"Test passed. Entry \"{row["Birthday"]}\" found."); }
-                console.Write("Overwriting entry value.");
-                row.SetEntry("Birthday", "TEST-REWRITE");
-                if (row["Birthday"].IsNull) { throw new Exception("New entry should have value."); } else { console.Write($"Test passed. Entry \"{row["Birthday"]}\" overwritten."); }
-                console.Write("Removing field UserID.");
-                row.RemoveField("UserID");
-                console.Write($"{row}");
-                MySqlRow copy = new MySqlRow(row);
-                console.Write("Testing copy constructor.");
-                console.Write($"{copy}");
-                console.Write($"{row}");
-                console.Write("Clearing row.");
-                row.Clear();
-                console.Write($"{copy}");
-                console.Write($"{row}");
-
-                MySqlResultPrinter formatter = new MySqlResultPrinter(150, 1);
-                console.Write(formatter.GenerateDivisor(10));
-                console.Write(formatter.GenerateDivisor(new List<int> { 7, 10 }));
-                console.Write(formatter.GenerateDivisor(new List<int> { 10, 5, 5, 7, 10 }));
-
-                console.Write("Testing format with value: \"Ape\" at total length of 10. Expected: \"| Ape      |\"");
-                console.Write(formatter.FormatTextSegment("Ape", 10));
-                console.Write("Testing format with value: \"ApeIsLongerThan10\" at total length of 10. Expected: \"| ApIsLo...  |\"");
-                console.Write(formatter.FormatTextSegment("ApeIsLongerThan10", 10));
-                console.Write("Testing format with value: \"JoelMikcheklson\" at total length of 10. Expected: \"| JoelMik...  |\"");
-                console.Write(formatter.FormatTextSegment("JoelMikcheklson", 10));
-
-                console.Write("Testing entries: {Tom, Bobby, Bill, JoelMikcheklson}, { 5, 5, 10, 10 } ");
-                console.Write(
-                    formatter.FormatText(
-                        new List<string>() {
-                            "Tom",
-                            "Bobby",
-                            "Bill",
-                            "JoelMikcheklson"
-                        },
-                        new List<int>() {
-                            5, 5, 10, 10
-                        }
-                    ));
-
-                MySqlEntry entry = new MySqlEntry("Format Example", "This is how we print entries.");
-                console.Write(formatter.FormatEntry(entry));
-
-                MySqlEntry entry2 = new MySqlEntry("Field Print Example", "This is an example entry.");
-                console.Write(formatter.FormatHeader(entry, entry2));
-
-                MySqlEntry entry3 = new MySqlEntry("Second Example", "This is an different example entry.");
-                MySqlRow row2 = new MySqlRow(entry2, entry3);
-                console.Write(formatter.FormatHeader(row2));
-                console.Write(formatter.FormatRow(row2));
-
-                MySqlRow row3 = new MySqlRow(entry2, entry3);
-                MySqlResultSet set = new MySqlResultSet("[Test query.]", 0, row2, row3);
-                console.Write(formatter.FormatResultSet(set));
-
-            }
-            catch (Exception e)
-            {
-                console.Debug("Failed to create the MySqlRow.\n" + e.Message);
-                console.Pause();
-                // throw new DataAccessLayerException("Failed to create the MySqlRow object.", e);
-            }
-        }
-
-        /// <summary>
-        /// Test result set methods.
-        /// </summary>
-        public static void TestMySqlResultSet()
-        {
-
-        }
 
     }
 }
