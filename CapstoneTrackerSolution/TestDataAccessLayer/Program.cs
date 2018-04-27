@@ -34,6 +34,11 @@ namespace TestDataAccessLayer
         private static Printer console;
 
         /// <summary>
+        /// Result printer.
+        /// </summary>
+        private static MySqlResultPrinter printer = new MySqlResultPrinter(150, 1);
+
+        /// <summary>
         /// Configuration implementation.
         /// </summary>
         private static IConfiguration configuration;
@@ -378,7 +383,7 @@ namespace TestDataAccessLayer
                 // Perform the correct operations.
                 results.Log("Creating the MySqlEntry object using the single field constructor.");
                 entry = new MySqlEntry("Single Field");
-                results.Log($"{entry}");
+                results.Log($"{printer.FormatEntry(entry)}");
 
                 // If entry is null, fail the test.
                 results.Log("Checking assertions...");
@@ -450,7 +455,7 @@ namespace TestDataAccessLayer
                 // Perform the correct operations.
                 results.Log("Creating the MySqlEntry object using the field/value constructor.");
                 entry = new MySqlEntry("Field", "Value");
-                results.Log($"{entry}");
+                results.Log($"{printer.FormatEntry(entry)}");
 
                 // If entry is null, fail the test.
                 results.Log("Checking assertions...");
@@ -526,7 +531,7 @@ namespace TestDataAccessLayer
                 // Perform the correct operations.
                 results.Log("Creating the MySqlEntry object using the specified constructor.");
                 entry = new MySqlEntry(new KeyValuePair<string, string>("Field", "Value"));
-                results.Log($"{entry}");
+                results.Log($"{printer.FormatEntry(entry)}");
 
                 // If entry is null, fail the test.
                 results.Log("Checking assertions...");
@@ -602,7 +607,7 @@ namespace TestDataAccessLayer
                 // Perform the correct operations.
                 results.Log("Creating the MySqlEntry object using the specified constructor.");
                 entry = new MySqlEntry(new KeyValuePair<string, string>("Field", "Value")).Clone() as MySqlEntry;
-                results.Log($"{entry}");
+                results.Log($"{printer.FormatEntry(entry)}");
 
                 // If entry is null, fail the test.
                 results.Log("Checking assertions...");
@@ -685,7 +690,10 @@ namespace TestDataAccessLayer
                 entryB = new MySqlEntry("Field", "Different Value");
                 entryC = new MySqlEntry("Different", "Value");
 
-                results.Log($"Base: {entry}", $"A: {entryA}", $"B: {entryB}", $"C: {entryC}");
+                results.Log("Base:", $"{printer.FormatEntry(entry)}", 
+                    "A:", $"{printer.FormatEntry(entryA)}", 
+                    "B:", $"{printer.FormatEntry(entryB)}", 
+                    "C:", $"{printer.FormatEntry(entryC)}");
 
                 // If entry is null, fail the test.
                 results.Log("Checking assertions...");
@@ -723,8 +731,7 @@ namespace TestDataAccessLayer
             // Return the test results.
             return results;
         }
-
-
+        
         #endregion
 
         #region MySqlRow
@@ -761,7 +768,7 @@ namespace TestDataAccessLayer
                 // Perform the correct operations.
                 results.Log("Creating the MySqlEntry object using the single field constructor.");
                 row = new MySqlRow();
-                results.Log($"{row}");
+                results.Log($"{printer.FormatRow(row)}");
 
                 // If entry is null, fail the test.
                 results.Log("Checking assertions...");
@@ -848,7 +855,8 @@ namespace TestDataAccessLayer
                     new MySqlEntry("Field 2", "Column 2 Value"),
                     new MySqlEntry("Field 3", "Column 3 Value")
                     );
-                results.Log($"{row}");
+                results.Log($"{printer.FormatHeader(row)}",
+                    $"{printer.FormatRow(row)}");
 
                 // If entry is null, fail the test.
                 results.Log("Checking assertions...");
@@ -943,7 +951,8 @@ namespace TestDataAccessLayer
                     new MySqlEntry("Field 2", "Column 2 Value"),
                     new MySqlEntry("Field 3", "Column 3 Value")
                     );
-                results.Log($"{row}");
+                results.Log($"{printer.FormatHeader(row)}",
+                    $"{printer.FormatRow(row)}");
 
                 // If entry is null, fail the test.
                 results.Log("Checking assertions...");
@@ -1001,7 +1010,9 @@ namespace TestDataAccessLayer
                 // Perform the correct operations.
                 results.Log("", "-- Operation #2", "Removing entry at the second index (index 1).");
                 MySqlEntry removedEntry = row.RemoveEntry(1) as MySqlEntry;
-                results.Log($"{row}", $"{removedEntry}");
+                results.Log($"{printer.FormatHeader(row)}",
+                    $"{printer.FormatRow(row)}",                     
+                    "Removed Entry:", $"{printer.FormatEntry(removedEntry)}");
 
                 // If entry is null, fail the test.
                 results.Log("Checking assertions...");
@@ -1060,7 +1071,9 @@ namespace TestDataAccessLayer
                 // Perform the correct operations.
                 results.Log("", "-- Operation #3", "Removing field at the second index (index 1).");
                 MySqlEntry removedEntry = row.RemoveField(1) as MySqlEntry;
-                results.Log($"{row}", $"{removedEntry}");
+                results.Log($"{printer.FormatHeader(row)}", 
+                    $"{printer.FormatRow(row)}",
+                    "Removed Entry:", $"{printer.FormatEntry(removedEntry)}");
 
                 // If entry is null, fail the test.
                 results.Log("Checking assertions...");
