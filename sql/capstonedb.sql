@@ -379,7 +379,7 @@ DROP TABLE IF EXISTS `users`;
 CREATE TABLE `users` (
   `userID` int(10) unsigned NOT NULL AUTO_INCREMENT,
   `username` varchar(7) NOT NULL,
-  `password` varchar(45) NOT NULL,
+  `password` varchar(256) NOT NULL,
   `firstName` varchar(45) NOT NULL,
   `lastName` varchar(45) NOT NULL,
   PRIMARY KEY (`userID`)
@@ -393,7 +393,7 @@ CREATE TABLE `users` (
 
 LOCK TABLES `users` WRITE;
 /*!40000 ALTER TABLE `users` DISABLE KEYS */;
-INSERT INTO `users` (`userID`, `username`, `password`, `firstName`, `lastName`) VALUES (1,'jxd1234','ABC1234PASSWORD','John','Doe'),(2,'jxd1235','ABC1234PASSWORD','Jane','Doe'),(3,'jxd1236','ABC1234PASSWORD','Jim','Doe'),(4,'jmd1234','ABC1234PASSWORD','Jimmy','Dog'),(5,'jos1234','ABC1234PASSWORD','John','Smith'),(6,'jas1234','ABC1234PASSWORD','Jane','Smith'),(7,'jis1234','ABC1234PASSWORD','Jim','Smith'),(8,'chb1234','ABC1234PASSWORD','Cherry','Blossom');
+INSERT INTO `users` (`userID`, `username`, `password`, `firstName`, `lastName`) VALUES (1,'jxd1234', SHA2('PASSWORD', 0),'John','Doe'),(2,'jxd1235',SHA2('PASSWORD', 0),'Jane','Doe'),(3,'jxd1236',SHA2('PASSWORD', 0),'Jim','Doe'),(4,'jmd1234',SHA2('PASSWORD', 0),'Jimmy','Dog'),(5,'jos1234',SHA2('PASSWORD', 0),'John','Smith'),(6,'jas1234',SHA2('PASSWORD', 0),'Jane','Smith'),(7,'jis1234',SHA2('PASSWORD', 0),'Jim','Smith'),(8,'chb1234',SHA2('PASSWORD', 0),'Cherry','Blossom');
 /*!40000 ALTER TABLE `users` ENABLE KEYS */;
 UNLOCK TABLES;
 

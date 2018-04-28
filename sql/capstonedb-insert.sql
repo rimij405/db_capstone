@@ -1,26 +1,26 @@
 INSERT INTO `capstonedb`.`users` (`userID`, `username`, `password`, `firstName`, `lastName`)
-VALUES (1, 'jxd1234', 'ABC1234PASSWORD', 'John', 'Doe');
+VALUES (1, 'jxd1234', SHA2('PASSWORD', 0), 'John', 'Doe');
 
 INSERT INTO `capstonedb`.`users` (`username`, `password`, `firstName`, `lastName`)
-VALUES ('jxd1235', 'ABC1234PASSWORD', 'Jane', 'Doe');
+VALUES ('jxd1235', SHA2('PASSWORD', 0), 'Jane', 'Doe');
 
 INSERT INTO `capstonedb`.`users` (`username`, `password`, `firstName`, `lastName`)
-VALUES ('jxd1236', 'ABC1234PASSWORD', 'Jim', 'Doe');
+VALUES ('jxd1236', SHA2('PASSWORD', 0), 'Jim', 'Doe');
 
 INSERT INTO `capstonedb`.`users` (`username`, `password`, `firstName`, `lastName`)
-VALUES ('jmd1234', 'ABC1234PASSWORD', 'Jimmy', 'Dog');
+VALUES ('jmd1234', SHA2('PASSWORD', 0), 'Jimmy', 'Dog');
 
 INSERT INTO `capstonedb`.`users` (`username`, `password`, `firstName`, `lastName`)
-VALUES ('jos1234', 'ABC1234PASSWORD', 'John', 'Smith');
+VALUES ('jos1234', SHA2('PASSWORD', 0), 'John', 'Smith');
 
 INSERT INTO `capstonedb`.`users` (`username`, `password`, `firstName`, `lastName`)
-VALUES ('jas1234', 'ABC1234PASSWORD', 'Jane', 'Smith');
+VALUES ('jas1234', SHA2('PASSWORD', 0), 'Jane', 'Smith');
 
 INSERT INTO `capstonedb`.`users` (`username`, `password`, `firstName`, `lastName`)
-VALUES ('jis1234', 'ABC1234PASSWORD', 'Jim', 'Smith');
+VALUES ('jis1234', SHA2('PASSWORD', 0), 'Jim', 'Smith');
 
 INSERT INTO `capstonedb`.`users` (`username`, `password`, `firstName`, `lastName`)
-VALUES ('chb1234', 'ABC1234PASSWORD', 'Cherry', 'Blossom');
+VALUES ('chb1234', SHA2('PASSWORD', 0), 'Cherry', 'Blossom');
 
 SELECT `users`.`userID`, `users`.`username`, `users`.`password`, `users`.`firstName`, `users`.`lastName`
 FROM `users`

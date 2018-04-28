@@ -43,6 +43,7 @@
   <ItemGroup>
     <Compile Include="ErrorHandling\CustomException.cs" />
     <Compile Include="Interfaces\ILoggable.cs" />
+    <Compile Include="Interfaces\IOperationStatus.cs" />
     <Compile Include="IO\Logger.cs" />
     <Compile Include="IO\Printer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

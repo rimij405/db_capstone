@@ -10,36 +10,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Services;
+using Services.Interfaces;
 
 namespace TestDataAccessLayer
 {
-
-    /// <summary>
-    /// Test status.
-    /// </summary>
-    public enum TestStatus
-    {
-        /// <summary>
-        /// Null test status.
-        /// </summary>
-        NULL = -2,
-
-        /// <summary>
-        /// An error was thrown while testing.
-        /// </summary>
-        ERROR = -1,
-
-        /// <summary>
-        /// The test resolved as fail state.
-        /// </summary>
-        FAILURE = 0,
-
-        /// <summary>
-        /// The test resolved as success state.
-        /// </summary>
-        SUCCESS = 1,
-    }
-
+    
     /// <summary>
     /// Result of running a test method.
     /// </summary>
@@ -52,7 +27,7 @@ namespace TestDataAccessLayer
         /// <summary>
         /// Return the null test status.
         /// </summary>
-        public static TestStatus NullState
+        public static OperationStatus NullState
         {
             get { return TestResults.GetTestStatus(-2); }
         }
@@ -60,7 +35,7 @@ namespace TestDataAccessLayer
         /// <summary>
         /// Return the Error test status.
         /// </summary>
-        public static TestStatus ErrorState
+        public static OperationStatus ErrorState
         {
             get { return TestResults.GetTestStatus(-1); }
         }
@@ -68,7 +43,7 @@ namespace TestDataAccessLayer
         /// <summary>
         /// Return failure test status.
         /// </summary>
-        public static TestStatus FailureState
+        public static OperationStatus FailureState
         {
             get { return TestResults.GetTestStatus(0); }
         }
@@ -76,7 +51,7 @@ namespace TestDataAccessLayer
         /// <summary>
         /// Return success test status.
         /// </summary>
-        public static TestStatus SuccessState
+        public static OperationStatus SuccessState
         {
             get { return TestResults.GetTestStatus(1); }
         }
@@ -86,18 +61,18 @@ namespace TestDataAccessLayer
         /// </summary>
         /// <param name="code"></param>
         /// <returns>Returns enum value.</returns>
-        private static TestStatus GetTestStatus(int code)
+        private static OperationStatus GetTestStatus(int code)
         {
             switch (code)
             {
                 case 0:
-                    return TestStatus.FAILURE;
+                    return OperationStatus.FAILURE;
                 case 1:
-                    return TestStatus.SUCCESS;
+                    return OperationStatus.SUCCESS;
                 case -1:
-                    return TestStatus.ERROR;
+                    return OperationStatus.ERROR;
                 default:
-                    return TestStatus.NULL;
+                    return OperationStatus.NULL;
             }
         }
 
@@ -107,7 +82,7 @@ namespace TestDataAccessLayer
         /// <param name="a">First status.</param>
         /// <param name="b">Second status.</param>
         /// <returns>Returns true if match is made.</returns>
-        private static bool IsMatch(TestStatus a, TestStatus b)
+        private static bool IsMatch(OperationStatus a, OperationStatus b)
         {
             return (a == b);
         }
@@ -122,7 +97,7 @@ namespace TestDataAccessLayer
         /// <param name="failureMessage">Failure message to set.</param>
         /// <param name="errorMessage">Error message to set.</param>
         /// <returns>Returns a constructed results object.</returns>
-        public static TestResults Create(string title, TestStatus currentState = TestStatus.NULL, string nullMessage = null, string successMessage = null, string failureMessage = null, string errorMessage = null)
+        public static TestResults Create(string title, OperationStatus currentState = OperationStatus.NULL, string nullMessage = null, string successMessage = null, string failureMessage = null, string errorMessage = null)
         {
             return new TestResults(title, currentState, nullMessage, successMessage, failureMessage, errorMessage);
         }
@@ -135,7 +110,7 @@ namespace TestDataAccessLayer
         /// <returns>Returns a constructed results object.</returns>
         public static TestResults CreateSuccess(string title, string successMessage = null)
         {
-            return Create(title, currentState: TestStatus.SUCCESS, successMessage: successMessage);
+            return Create(title, currentState: OperationStatus.SUCCESS, successMessage: successMessage);
         }
 
         /// <summary>
@@ -146,7 +121,7 @@ namespace TestDataAccessLayer
         /// <returns>Returns a constructed results object.</returns>
         public static TestResults CreateFailure(string title, string failureMessage = null)
         {
-            return Create(title, currentState: TestStatus.FAILURE, failureMessage: failureMessage);
+            return Create(title, currentState: OperationStatus.FAILURE, failureMessage: failureMessage);
         }
 
         /// <summary>
@@ -157,7 +132,7 @@ namespace TestDataAccessLayer
         /// <returns>Returns a constructed results object.</returns>
         public static TestResults CreateError(string title, string errorMessage = null)
         {
-            return Create(title, currentState: TestStatus.ERROR, errorMessage: errorMessage);
+            return Create(title, currentState: OperationStatus.ERROR, errorMessage: errorMessage);
         }
 
 
@@ -173,12 +148,12 @@ namespace TestDataAccessLayer
         /// <summary>
         /// Result of the test.
         /// </summary>
-        private TestStatus state;
+        private OperationStatus state;
 
         /// <summary>
         /// Contains map of message for each state.
         /// </summary>
-        private IDictionary<TestStatus, string> messages;
+        private IDictionary<OperationStatus, string> messages;
 
         /// <summary>
         /// Stack of messages listing operations that happened in the results set.
@@ -201,7 +176,7 @@ namespace TestDataAccessLayer
         /// <summary>
         /// Result of the test.
         /// </summary>
-        public TestStatus CurrentState
+        public OperationStatus CurrentState
         {
             get { return this.state; }
             private set { this.state = value; }
@@ -233,13 +208,13 @@ namespace TestDataAccessLayer
         /// <summary>
         /// Collection of messages mapped by test state.
         /// </summary>
-        private IDictionary<TestStatus, string> Messages
+        private IDictionary<OperationStatus, string> Messages
         {
             get
             {
                 if (this.messages == null || this.messages.Count == 0)
                 {
-                    this.messages = new Dictionary<TestStatus, string>()
+                    this.messages = new Dictionary<OperationStatus, string>()
                     {
                         { TestResults.NullState, "No test results generated." },
                         { TestResults.SuccessState, "Test passed assertion." },
@@ -315,7 +290,7 @@ namespace TestDataAccessLayer
         /// </summary>
         /// <param name="state">State to set message for.</param>
         /// <returns>Returns message the index location associated with the state.</returns>
-        public string this[TestStatus state]
+        public string this[OperationStatus state]
         {
             get { return this.Messages[state]; }
             set { this.Messages[state] = value.Trim(); }
@@ -353,7 +328,7 @@ namespace TestDataAccessLayer
         /// <param name="failureMessage">Failure message to set.</param>
         /// <param name="errorMessage">Error message to set.</param>
         public TestResults(string title,
-                            TestStatus currentState, 
+                            OperationStatus currentState, 
                             string nullMessage = null,
                             string successMessage = null,
                             string failureMessage = null,
@@ -391,11 +366,11 @@ namespace TestDataAccessLayer
         /// <param name="title">Title of the object.</param>
         /// <param name="currentState">State to assign.</param>
         /// <param name="messages">Map of messages for each state.</param>
-        public TestResults(string title, TestStatus currentState, List<KeyValuePair<TestStatus, string>> messages)
+        public TestResults(string title, OperationStatus currentState, List<KeyValuePair<OperationStatus, string>> messages)
             : this(title, currentState)
         {
             // Assign the input value pairs.
-            foreach (KeyValuePair<TestStatus, string> map in messages)
+            foreach (KeyValuePair<OperationStatus, string> map in messages)
             {
                 this[map.Key] = map.Value;
             }
@@ -407,7 +382,7 @@ namespace TestDataAccessLayer
         /// <param name="title">Title of the object.</param>
         /// <param name="currentState">State to assign.</param>
         /// <param name="messages">Map of messages for each state.</param>
-        public TestResults(string title, List<KeyValuePair<TestStatus, string>> messages)
+        public TestResults(string title, List<KeyValuePair<OperationStatus, string>> messages)
             : this(title, TestResults.NullState, messages)
         {
             // Uses other constructor.
@@ -419,8 +394,8 @@ namespace TestDataAccessLayer
         /// <param name="title">Title of the object.</param>
         /// <param name="currentState">State to assign.</param>
         /// <param name="messages">Map of messages for each state.</param>
-        public TestResults(string title, TestStatus currentState, params KeyValuePair<TestStatus, string>[] messages)
-            : this(title, currentState, messages.ToList<KeyValuePair<TestStatus, string>>())
+        public TestResults(string title, OperationStatus currentState, params KeyValuePair<OperationStatus, string>[] messages)
+            : this(title, currentState, messages.ToList<KeyValuePair<OperationStatus, string>>())
         {
             // Uses other constructor.
         }
@@ -431,7 +406,7 @@ namespace TestDataAccessLayer
         /// <param name="title">Title of the object.</param>
         /// <param name="currentState">State to assign.</param>
         /// <param name="messages">Map of messages for each state.</param>
-        public TestResults(string title, params KeyValuePair<TestStatus, string>[] messages)
+        public TestResults(string title, params KeyValuePair<OperationStatus, string>[] messages)
             : this(title, TestResults.NullState, messages)
         {
             // Uses other constructor.
@@ -443,8 +418,8 @@ namespace TestDataAccessLayer
         /// <param name="title">Title of the object.</param>
         /// <param name="currentState">State to assign.</param>
         /// <param name="map">Map of messages for each state.</param>
-        public TestResults(string title, TestStatus currentState, IDictionary<TestStatus, string> map)
-            : this(title, currentState, map.ToList<KeyValuePair<TestStatus, string>>())
+        public TestResults(string title, OperationStatus currentState, IDictionary<OperationStatus, string> map)
+            : this(title, currentState, map.ToList<KeyValuePair<OperationStatus, string>>())
         {
             // Uses other constructor.
         }
@@ -455,7 +430,7 @@ namespace TestDataAccessLayer
         /// <param name="title">Title of the object.</param>
         /// <param name="currentState">State to assign.</param>
         /// <param name="map">Map of messages for each state.</param>
-        public TestResults(string title, IDictionary<TestStatus, string> map)
+        public TestResults(string title, IDictionary<OperationStatus, string> map)
             : this(title, TestResults.NullState, map)
         {
             // Uses other constructor.
@@ -486,7 +461,7 @@ namespace TestDataAccessLayer
         /// </summary>
         /// <param name="other">State to compare.</param>
         /// <returns>Returns true if current state matches input.</returns>
-        private bool IsState(TestStatus other)
+        private bool IsState(OperationStatus other)
         {
             return TestResults.IsMatch(this.CurrentState, other);
         }
@@ -495,9 +470,9 @@ namespace TestDataAccessLayer
         /// Return map as a collection of key/value pairs.
         /// </summary>
         /// <returns>Returns collection of <see cref="KeyValuePair{TKey, TValue}"/>.</returns>
-        private List<KeyValuePair<TestStatus, string>> GetMessageMap()
+        private List<KeyValuePair<OperationStatus, string>> GetMessageMap()
         {
-            return this.Messages.ToList<KeyValuePair<TestStatus, string>>();
+            return this.Messages.ToList<KeyValuePair<OperationStatus, string>>();
         }
 
         /// <summary>
@@ -632,7 +607,7 @@ namespace TestDataAccessLayer
         /// </summary>
         /// <param name="other">Value to set state to.</param>
         /// <returns>Returns reference to self.</returns>
-        private TestResults SetCurrentState(TestStatus other)
+        private TestResults SetCurrentState(OperationStatus other)
         {
             this.CurrentState = other;
             return this;

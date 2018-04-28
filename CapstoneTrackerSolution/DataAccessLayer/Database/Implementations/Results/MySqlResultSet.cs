@@ -13,6 +13,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using ISTE.DAL.Database.Interfaces;
+using Services.Interfaces;
 
 namespace ISTE.DAL.Database
 {
@@ -26,6 +27,11 @@ namespace ISTE.DAL.Database
         //////////////////////
         // Field(s).
         //////////////////////
+
+        /// <summary>
+        /// Current state of the result set.
+        /// </summary>
+        private OperationStatus state;
 
         /// <summary>
         /// Collection of rows.
@@ -45,6 +51,41 @@ namespace ISTE.DAL.Database
         //////////////////////
         // Properties.
         //////////////////////
+
+        //////
+        // IOperationStateMachine
+
+        /// <summary>
+        /// Reference to state of the result set.
+        /// </summary>
+        public OperationStatus State
+        {
+            get { return this.state; }
+        }
+
+        /// <summary>
+        /// Check if in error state.
+        /// </summary>
+        public bool IsError
+        {
+            get { return this.IsState(OperationStatus.ERROR); }
+        }
+
+        /// <summary>
+        /// Check if in failure state.
+        /// </summary>
+        public bool IsFailure
+        {
+            get { return this.IsState(OperationStatus.FAILURE); }
+        }
+
+        /// <summary>
+        /// Check if in success state.
+        /// </summary>
+        public bool IsSuccess
+        {
+            get { return this.IsState(OperationStatus.SUCCESS); }
+        }
 
         //////
         // IResultSet
@@ -244,6 +285,9 @@ namespace ISTE.DAL.Database
         /// <param name="rowsAffected">Rows affected by execution of query. (Can be zero).</param>
         public MySqlResultSet(string query, int rowsAffected)
         {
+            // Set the initial state.
+            this.SetState(OperationStatus.NULL);
+
             // Set the query.
             this.Query = query;
 
@@ -299,6 +343,57 @@ namespace ISTE.DAL.Database
 
         //////////////////////
         // Service(s).
+
+        ///////
+        // IOperationStateMachine
+
+        /// <summary>
+        /// Check if matches input state.
+        /// </summary>
+        /// <param name="other">State to compare.</param>
+        /// <returns>Returns true if match made.</returns>
+        public bool IsState(OperationStatus other)
+        {
+            return this.state == other;
+        }
+
+        /// <summary>
+        /// Check if matches input state, by integer code.
+        /// </summary>
+        /// <param name="code">Code to find comparison state.</param>
+        /// <returns>Returns true if match made.</returns>
+        public bool IsState(int code)
+        {
+            if(code >= -1 && code < 2)
+            {
+                return this.state == (OperationStatus)code;
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Set to the error state.
+        /// </summary>
+        public void Error()
+        {
+            this.SetState(OperationStatus.ERROR);
+        }
+
+        /// <summary>
+        /// Set to the fail state.
+        /// </summary>
+        public void Fail()
+        {
+            this.SetState(OperationStatus.FAILURE);
+        }
+
+        /// <summary>
+        /// Set to the pass state.
+        /// </summary>
+        public void Pass()
+        {
+            this.SetState(OperationStatus.SUCCESS);
+        }
 
         /// <summary>
         /// Return this result set's metadata as a string.
@@ -477,6 +572,18 @@ namespace ISTE.DAL.Database
 
         //////////////////////
         // Accessor(s).
+
+        //////
+        // IOperationStateMachine
+
+        /// <summary>
+        /// Return current state.
+        /// </summary>
+        /// <returns>Returns OperationStatus.</returns>
+        public OperationStatus GetState()
+        {
+            return this.state;
+        }
 
         //////
         // IResultSet
@@ -779,6 +886,33 @@ namespace ISTE.DAL.Database
         //////////////////////
         // Mutator(s).
 
+        //////
+        // IOperationStateMachine
+
+        /// <summary>
+        /// Set the current state to input value.
+        /// </summary>
+        /// <param name="other">Value to assign.</param>
+        public void SetState(OperationStatus other)
+        {
+            this.state = other;
+        }
+
+        /// <summary>
+        /// Set the current state based on input integer code.
+        /// </summary>
+        /// <param name="code">Reference to value to assign.</param>
+        public bool SetState(int code)
+        {
+            if (code >= -1 && code < 2)
+            {
+                OperationStatus status = (OperationStatus)code;
+                this.SetState(status);
+                return true;
+            }
+            return false;
+        }
+        
         //////
         // IResultSet
 

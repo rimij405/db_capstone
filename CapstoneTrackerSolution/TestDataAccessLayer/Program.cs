@@ -19,6 +19,7 @@ using ISTE.DAL.Database.Interfaces;
 
 // Project using statements.
 using Services;
+using Services.Interfaces;
 
 namespace TestDataAccessLayer
 {
@@ -71,7 +72,10 @@ namespace TestDataAccessLayer
 
             // << ADD TESTING METHODS HERE | THEY EXECUTE IN THE ORDER THEY ARE ADDED >>
             TestMethods += Test_MySqlConfiguration;
-            TestMethods += Test_MySqlDatabaseConnect;
+
+            TestMethods += Test_MySqlDatabase_Connect;
+            TestMethods += Test_MySqlDatabase_Select;
+            TestMethods += Test_MySqlDatabase_PreparedSelect;
 
             TestMethods += Test_MySqlEntry_SingleField;
             TestMethods += Test_MySqlEntry_FieldValue;
@@ -140,7 +144,7 @@ namespace TestDataAccessLayer
                     // If it failed, log and continue to next test.
                     if (result.IsFailure)
                     {
-                        r.Log(result[TestStatus.FAILURE], result.StackTrace);
+                        r.Log(result[OperationStatus.FAILURE], result.StackTrace);
                         testLogger.Write($"\nFailed test {currentTest} out of {totalTests} test(s).\n");
                         console.Pause($"Failed test {currentTest} out of {totalTests} test(s). Press any key to continue...");
                         continue;
@@ -149,7 +153,7 @@ namespace TestDataAccessLayer
                     // Increment counter.
                     if (result.IsSuccessful)
                     {
-                        r.Log(result[TestStatus.SUCCESS]);
+                        r.Log(result[OperationStatus.SUCCESS]);
                         successfulTests++;
                         testLogger.Write($"\nCompleted test {currentTest} out of {totalTests} test(s).\n");
                         console.Pause($"Completed test {currentTest} out of {totalTests} test(s). Press any key to continue...");
@@ -205,7 +209,7 @@ namespace TestDataAccessLayer
             try
             {
                 // Make divisor and log the title for the test.
-                results.Log($"-- -- -- {results.Title}");                
+                results.Log($"-- -- -- -- -- -- --\n-- -- -- {results.Title}");                
             }
             catch (Exception e)
             {
@@ -244,11 +248,12 @@ namespace TestDataAccessLayer
 
         #endregion
 
-        #region Database Configuration and Connection
+        #region Database Tests
 
         /// <summary>
         /// Test database configuration object constructor.
         /// </summary>
+        /// <returns>Returns result from test.</returns>
         private static TestResults Test_MySqlConfiguration() {
 
             // Create the results object for this test.
@@ -257,7 +262,7 @@ namespace TestDataAccessLayer
             try
             {
                 // Make divisor and log the title for the test.
-                results.Log($"-- -- -- {results.Title}");
+                results.Log($"-- -- -- -- -- -- --\n-- -- -- {results.Title}");
 
                 // Create the configuration object.
                 results.Log("Create the configuration object: ");
@@ -279,7 +284,8 @@ namespace TestDataAccessLayer
         /// <summary>
         /// Test database and its connection method.
         /// </summary>
-        private static TestResults Test_MySqlDatabaseConnect() {
+        /// <returns>Returns result from test.</returns>
+        private static TestResults Test_MySqlDatabase_Connect() {
 
             // Create the results object for this test.
             TestResults results = TestResults.Create("Testing MySqlDatabase");
@@ -287,7 +293,7 @@ namespace TestDataAccessLayer
             try
             {
                 // Make divisor and log the title for the test.
-                results.Log($"-- -- -- {results.Title}");
+                results.Log($"-- -- -- -- -- -- --\n-- -- -- {results.Title}");
 
                 // Create the database object.
                 results.Log("Creating the MySqlDatabase object.");
@@ -304,6 +310,334 @@ namespace TestDataAccessLayer
             {
                 // Wraps exception for the results.
                 throw results.Throw("Failed to create the database. " + e.Message, e);
+            }
+
+            // Return the test results.
+            return results;
+        }
+
+        /// <summary>
+        /// Test the select statement in the mysql database.
+        /// </summary>
+        /// <returns>Returns result from test.</returns>
+        private static TestResults Test_MySqlDatabase_Select()
+        {
+
+            // Set values and dependencies here.
+            string subject = "MySqlDatabase GetData() - Email Types";
+            string query = "SELECT * FROM emailtypes;";
+            
+            // Create the results object for this test.
+            TestResults results = TestResults.Create($"Testing {subject}");
+
+            // Create the assertion map.
+            Dictionary<AssertKey, bool> assertions = new Dictionary<AssertKey, bool>();
+
+            try
+            {
+                // Make divisor and log the title for the test.
+                results.Log($"-- -- -- -- -- -- --\n-- -- -- {results.Title}");
+                results.Log($"Executing \"{query}\"");
+            }
+            catch (Exception e)
+            {
+                // Wraps exception for the results.
+                throw results.Throw($"{e.Message}", e);
+            }
+            
+            try
+            {
+                if (configuration == null)
+                {
+                    results.Log($"Creating the configuration object.");
+                    configuration = new MySqlConfiguration();
+                    results.Log($"{configuration.GetConnectionString()}");
+                }    
+
+                if(database == null)
+                {
+                    results.Log($"Creating the database object.");
+                    database = new MySqlDatabase(configuration as MySqlConfiguration);
+                    results.Log($"{database.ToString()}");
+                }
+
+                if (!database.IsConnected)
+                {
+                    results.Log($"Connecting to the database.");
+                    database.Connect();
+                }
+
+                // Call the GetData method.
+                MySqlDatabase mysqldb = database as MySqlDatabase;
+                MySqlResultSet set = mysqldb.GetData(query, null) as MySqlResultSet;
+                results.Log($"{printer.FormatResultSet(set)}");
+                
+                // If entry is null, fail the test.
+                results.Log("Checking assertions...");
+
+                assertions[AssertKey.IsNullReference] = (set == null);
+                results.Log($"-- Is the object reference null? {assertions[AssertKey.IsNullReference]}");
+
+                assertions[AssertKey.IsEmpty] = set.IsEmpty;
+                results.Log($"-- Is the set empty? {assertions[AssertKey.IsEmpty]}");
+
+                bool hasAffectedRows = set.RowsAffected > 0;
+                results.Log($"-- Any affected rows? {hasAffectedRows}, {set.RowsAffected} rows");
+
+                bool hasError = set.IsError;
+                bool hasFailure = set.IsFailure;
+                bool hasSuccess = set.IsSuccess;
+                results.Log($"-- What is the operation status? Error [{hasError}], Failure [{hasFailure}], Success [{hasSuccess}]");
+
+                // Evaluate assertions.
+                assertions[AssertKey.Total] =
+                    !assertions[AssertKey.IsNullReference] &&
+                    !assertions[AssertKey.IsEmpty] &&
+                    !hasAffectedRows &&
+                    !hasError && !hasFailure && hasSuccess;
+                results.Log($"All assertions passed? {assertions[AssertKey.Total]}");
+
+                if (assertions[AssertKey.Total])
+                {
+                    results.Pass($"{subject} operation passed.");
+                }
+                else
+                {
+                    results.Fail($"{subject} operation failed.");
+                }
+            }
+            catch (Exception e)
+            {
+                // Wraps exception for the results.
+                throw results.Throw($"Exception occurred during construction of {subject}. {e.Message}", e);
+            }
+
+            // Return the test results.
+            return results;
+        }
+
+        /// <summary>
+        /// Test prepared select statement in the mysql database.
+        /// </summary>
+        /// <returns>Returns result from test.</returns>
+        private static TestResults Test_MySqlDatabase_PreparedSelect()
+        {
+
+            // Set values and dependencies here.
+            string subject = "MySqlDatabase GetData() - Student Info via Prepared Statement.";
+            string query = "SELECT * FROM capstonedb.users"
+                            + " INNER JOIN capstonedb.students USING(userID)"
+                            + " WHERE userID = @userID;";           
+            Dictionary<string, string> parameters = new Dictionary<string, string>
+            {
+                {"@userID", "3"}
+            };
+
+            // Create the results object for this test.
+            TestResults results = TestResults.Create($"Testing {subject}");
+
+            // Create the assertion map.
+            Dictionary<AssertKey, bool> assertions = new Dictionary<AssertKey, bool>();
+
+            try
+            {
+                // Make divisor and log the title for the test.
+                results.Log($"-- -- -- -- -- -- --\n-- -- -- {results.Title}");
+                results.Log(
+                    $"Executing \"{query}\"",
+                    $"with values [\"@emailtypes\" : \"{parameters["@userID"]}\"]."
+                    );
+            }
+            catch (Exception e)
+            {
+                // Wraps exception for the results.
+                throw results.Throw($"{e.Message}", e);
+            }
+
+            try
+            {
+                if (configuration == null)
+                {
+                    results.Log($"Creating the configuration object.");
+                    configuration = new MySqlConfiguration();
+                    results.Log($"{configuration.GetConnectionString()}");
+                }
+
+                if (database == null)
+                {
+                    results.Log($"Creating the database object.");
+                    database = new MySqlDatabase(configuration as MySqlConfiguration);
+                    results.Log($"{database.ToString()}");
+                }
+
+                if (!database.IsConnected)
+                {
+                    results.Log($"Connecting to the database.");
+                    database.Connect();
+                }
+
+                // Call the GetData method.
+                MySqlDatabase mysqldb = database as MySqlDatabase;
+                MySqlResultSet set = mysqldb.GetData(query, parameters) as MySqlResultSet;
+                results.Log($"{printer.FormatResultSet(set)}");
+
+                // If entry is null, fail the test.
+                results.Log("Checking assertions...");
+
+                assertions[AssertKey.IsNullReference] = (set == null);
+                results.Log($"-- Is the object reference null? {assertions[AssertKey.IsNullReference]}");
+
+                assertions[AssertKey.IsEmpty] = set.IsEmpty;
+                results.Log($"-- Is the set empty? {assertions[AssertKey.IsEmpty]}");
+
+                bool hasAffectedRows = set.RowsAffected > 0;
+                results.Log($"-- Any affected rows? {hasAffectedRows}, {set.RowsAffected} rows");
+
+                bool hasError = set.IsError;
+                bool hasFailure = set.IsFailure;
+                bool hasSuccess = set.IsSuccess;
+                results.Log($"-- What is the operation status? Error [{hasError}], Failure [{hasFailure}], Success [{hasSuccess}]");
+
+                // Evaluate assertions.
+                assertions[AssertKey.Total] =
+                    !assertions[AssertKey.IsNullReference] &&
+                    !assertions[AssertKey.IsEmpty] &&
+                    !hasAffectedRows &&
+                    !hasError && !hasFailure && hasSuccess;
+                results.Log($"All assertions passed? {assertions[AssertKey.Total]}");
+
+                if (assertions[AssertKey.Total])
+                {
+                    results.Pass($"{subject} operation passed.");
+                }
+                else
+                {
+                    results.Fail($"{subject} operation failed.");
+                }
+            }
+            catch (Exception e)
+            {
+                // Wraps exception for the results.
+                throw results.Throw($"Exception occurred during construction of {subject}. {e.Message}", e);
+            }
+
+            // Return the test results.
+            return results;
+        }
+
+        /// <summary>
+        /// Test create operation in the mysql database.
+        /// </summary>
+        /// <returns>Returns result from test.</returns>
+        private static TestResults Test_MySqlDatabase_Authenticate()
+        {
+
+            // Set values and dependencies here.
+            string subject = "MySqlDatabase Attempting authentication with default password and .";
+
+            // Set up the values to authenticiate.
+            string usernameCheck = "jxd1236";
+            string passwordCheck = "PASSWORD";
+
+            // Set up the hash query (for the password).
+            string hashQuery = "SELECT SHA2(@password) as 'Hashed Value';";
+            Dictionary<string, string> hashParameters = new Dictionary<string, string> {
+                {"@password", passwordCheck}
+            };
+
+            // 
+            string query = "SELECT username, password FROM capstonedb.users WHERE userID = @userID;";
+            Dictionary<string, string> parameters = new Dictionary<string, string>
+            {
+                {"@userID", "3"}
+            };
+
+            // Create the results object for this test.
+            TestResults results = TestResults.Create($"Testing {subject}");
+
+            // Create the assertion map.
+            Dictionary<AssertKey, bool> assertions = new Dictionary<AssertKey, bool>();
+
+            try
+            {
+                // Make divisor and log the title for the test.
+                results.Log($"-- -- -- -- -- -- --\n-- -- -- {results.Title}");
+                results.Log(
+                    $"Executing \"{query}\"",
+                    $"with values [\"@emailtypes\" : \"{parameters["@userID"]}\"]."
+                    );
+            }
+            catch (Exception e)
+            {
+                // Wraps exception for the results.
+                throw results.Throw($"{e.Message}", e);
+            }
+
+            try
+            {
+                if (configuration == null)
+                {
+                    results.Log($"Creating the configuration object.");
+                    configuration = new MySqlConfiguration();
+                    results.Log($"{configuration.GetConnectionString()}");
+                }
+
+                if (database == null)
+                {
+                    results.Log($"Creating the database object.");
+                    database = new MySqlDatabase(configuration as MySqlConfiguration);
+                    results.Log($"{database.ToString()}");
+                }
+
+                if (!database.IsConnected)
+                {
+                    results.Log($"Connecting to the database.");
+                    database.Connect();
+                }
+
+                // Call the GetData method.
+                MySqlDatabase mysqldb = database as MySqlDatabase;
+                MySqlResultSet set = mysqldb.GetData(query, parameters) as MySqlResultSet;
+                results.Log($"{printer.FormatResultSet(set)}");
+
+                // If entry is null, fail the test.
+                results.Log("Checking assertions...");
+
+                assertions[AssertKey.IsNullReference] = (set == null);
+                results.Log($"-- Is the object reference null? {assertions[AssertKey.IsNullReference]}");
+
+                assertions[AssertKey.IsEmpty] = set.IsEmpty;
+                results.Log($"-- Is the set empty? {assertions[AssertKey.IsEmpty]}");
+
+                bool hasAffectedRows = set.RowsAffected > 0;
+                results.Log($"-- Any affected rows? {hasAffectedRows}, {set.RowsAffected} rows");
+
+                bool hasError = set.IsError;
+                bool hasFailure = set.IsFailure;
+                bool hasSuccess = set.IsSuccess;
+                results.Log($"-- What is the operation status? Error [{hasError}], Failure [{hasFailure}], Success [{hasSuccess}]");
+
+                // Evaluate assertions.
+                assertions[AssertKey.Total] =
+                    !assertions[AssertKey.IsNullReference] &&
+                    !assertions[AssertKey.IsEmpty] &&
+                    !hasAffectedRows &&
+                    !hasError && !hasFailure && hasSuccess;
+                results.Log($"All assertions passed? {assertions[AssertKey.Total]}");
+
+                if (assertions[AssertKey.Total])
+                {
+                    results.Pass($"{subject} operation passed.");
+                }
+                else
+                {
+                    results.Fail($"{subject} operation failed.");
+                }
+            }
+            catch (Exception e)
+            {
+                // Wraps exception for the results.
+                throw results.Throw($"Exception occurred during construction of {subject}. {e.Message}", e);
             }
 
             // Return the test results.
@@ -384,7 +718,7 @@ namespace TestDataAccessLayer
             try
             {
                 // Make divisor and log the title for the test.
-                results.Log($"-- -- -- {results.Title}");                
+                results.Log($"-- -- -- -- -- -- --\n-- -- -- {results.Title}");                
             }
             catch (Exception e)
             {
@@ -457,7 +791,7 @@ namespace TestDataAccessLayer
             try
             {
                 // Make divisor and log the title for the test.
-                results.Log($"-- -- -- {results.Title}");
+                results.Log($"-- -- -- -- -- -- --\n-- -- -- {results.Title}");
             }
             catch (Exception e)
             {
@@ -534,7 +868,7 @@ namespace TestDataAccessLayer
             try
             {
                 // Make divisor and log the title for the test.
-                results.Log($"-- -- -- {results.Title}");
+                results.Log($"-- -- -- -- -- -- --\n-- -- -- {results.Title}");
             }
             catch (Exception e)
             {
@@ -611,7 +945,7 @@ namespace TestDataAccessLayer
             try
             {
                 // Make divisor and log the title for the test.
-                results.Log($"-- -- -- {results.Title}");
+                results.Log($"-- -- -- -- -- -- --\n-- -- -- {results.Title}");
             }
             catch (Exception e)
             {
@@ -691,7 +1025,7 @@ namespace TestDataAccessLayer
             try
             {
                 // Make divisor and log the title for the test.
-                results.Log($"-- -- -- {results.Title}");
+                results.Log($"-- -- -- -- -- -- --\n-- -- -- {results.Title}");
             }
             catch (Exception e)
             {
@@ -774,7 +1108,7 @@ namespace TestDataAccessLayer
             try
             {
                 // Make divisor and log the title for the test.
-                results.Log($"-- -- -- {results.Title}");
+                results.Log($"-- -- -- -- -- -- --\n-- -- -- {results.Title}");
             }
             catch (Exception e)
             {
@@ -858,7 +1192,7 @@ namespace TestDataAccessLayer
             try
             {
                 // Make divisor and log the title for the test.
-                results.Log($"-- -- -- {results.Title}");
+                results.Log($"-- -- -- -- -- -- --\n-- -- -- {results.Title}");
             }
             catch (Exception e)
             {
@@ -955,7 +1289,7 @@ namespace TestDataAccessLayer
             try
             {
                 // Make divisor and log the title for the test.
-                results.Log($"-- -- -- {results.Title}");
+                results.Log($"-- -- -- -- -- -- --\n-- -- -- {results.Title}");
             }
             catch (Exception e)
             {
@@ -1178,7 +1512,7 @@ namespace TestDataAccessLayer
             try
             {
                 // Make divisor and log the title for the test.
-                results.Log($"-- -- -- {results.Title}");
+                results.Log($"-- -- -- -- -- -- --\n-- -- -- {results.Title}");
             }
             catch (Exception e)
             {
@@ -1249,7 +1583,7 @@ namespace TestDataAccessLayer
             try
             {
                 // Make divisor and log the title for the test.
-                results.Log($"-- -- -- {results.Title}");
+                results.Log($"-- -- -- -- -- -- --\n-- -- -- {results.Title}");
             }
             catch (Exception e)
             {
@@ -1405,7 +1739,7 @@ namespace TestDataAccessLayer
             try
             {
                 // Make divisor and log the title for the test.
-                results.Log($"-- -- -- {results.Title}");
+                results.Log($"-- -- -- -- -- -- --\n-- -- -- {results.Title}");
             }
             catch (Exception e)
             {

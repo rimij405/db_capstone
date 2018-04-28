@@ -18,6 +18,7 @@ using System.Threading.Tasks;
 using MySql.Data.MySqlClient;
 using ISTE.DAL.Database.Interfaces;
 using Services;
+using System.Data;
 
 namespace ISTE.DAL.Database
 {
@@ -26,6 +27,27 @@ namespace ISTE.DAL.Database
     /// </summary>
     public class MySqlDatabase : IDatabase, IReadable, IWritable
     {
+
+        /// <summary>
+        /// Instance of the MySqlDatabase logger.
+        /// </summary>
+        private static Logger loggerInstance = null;
+
+        /// <summary>
+        /// Logger for exceptions within the MySqlDatabase class.
+        /// </summary>
+        public static Logger MySqlDatabaseLogger
+        {
+            get
+            {
+                if (loggerInstance == null)
+                {
+                    loggerInstance = new Logger("", "mysqldb", "log");
+                }
+                return loggerInstance;
+            }
+        }
+
         //////////////////////
         // Field(s).
         //////////////////////
@@ -34,7 +56,7 @@ namespace ISTE.DAL.Database
         /// Connection object for connecting to the database.
         /// </summary>
         private MySqlConnection connection = null;
-
+        
         //////////////////////
         // Properties.
         //////////////////////
@@ -146,6 +168,7 @@ namespace ISTE.DAL.Database
         /// <returns>Returns command object.</returns>
         private MySqlCommand CreateCommand(string mysqlQuery)
         {
+            if (String.IsNullOrEmpty(mysqlQuery)) { throw new DataAccessLayerException("Cannot execute an empty query on the database."); }
             return new MySqlCommand(mysqlQuery, this.connection);
         }
 
@@ -170,7 +193,7 @@ namespace ISTE.DAL.Database
         /// <returns>Returns prepared command object.</returns>
         private MySqlCommand Assign(MySqlCommand preparedStatement, IDictionary<string, string> parameters = null)
         {
-            if (preparedStatement.IsPrepared)
+            if (preparedStatement != null)
             {
                 if (parameters != null)
                 {
@@ -194,12 +217,202 @@ namespace ISTE.DAL.Database
 
             return preparedStatement;
         }
-        
-        //////////////////////
-        // Mutators.				
 
         //////////////////////
         // Accessors.
+        
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
+        public MySqlTransaction BeginTransaction()
+        {
+            // Crerate the default response.
+            IResultSet set = new MySqlResultSet();
+            set.Fail();
+
+            // Begin the transaction.
+            
+
+
+            MySqlCommand statement;
+            
+
+            = connection.BeginTransaction();
+
+
+
+        }
+
+        /// <summary>
+        /// Return collection of data from the database, applying any parameters if necessary. (No parameters will assume it is a statement that needs no preparation).
+        /// </summary>
+        /// <param name="sqlQuery">Query to execute on the data reader.</param>
+        /// <param name="parameters">Parameters to assign to the command.</param>
+        /// <returns>Returns result set containing response from database.</returns>
+        public IResultSet GetData(string sqlQuery, IDictionary<string, string> parameters = null)
+        {
+            // Create default response, to return on failure.
+            IResultSet set = new MySqlResultSet(sqlQuery, -1); // -1 rowsAffected means that no query has been processed.
+            set.Fail(); // Default set to failure.
+
+            // Create a reference to the command statement.
+            MySqlCommand statement = null;
+
+            // Create the MySql command statement:
+            if (parameters != null && parameters.Count > 0)
+            {
+                // If the input parameter collection is greater than zero:
+                try
+                {
+                    // Prepare the statement if necessary.
+                    statement = Prepare(sqlQuery, parameters);
+                }
+                catch (DataAccessLayerException dale)
+                {
+                    dale.Write(MySqlDatabaseLogger);
+                    set.Error();
+                }
+            }
+            else
+            {
+                // If there is no need for a prepared statement:
+                try
+                {
+                    statement = CreateCommand(sqlQuery);
+                }
+                catch (DataAccessLayerException dale)
+                {
+                    dale.Write(MySqlDatabaseLogger);
+                    set.Error();
+                }
+            }
+
+            // Attempt to execute the statement.
+            try
+            {
+                // Create reference to the reader.
+                MySqlDataReader reader = null;
+
+                // Set the rows affected to zero, since this is a read query.
+                set.SetRowsAffected(0);
+                
+                // Using a MySqlDataReader to get the values.
+                using (reader = statement.ExecuteReader())
+                {
+                    // If the statement executed properly, set can be true.
+                    set.Pass();
+
+                    // Get the fields.
+                    List<string> fields = new List<string>();
+                    using (DataTable dt = reader.GetSchemaTable())
+                    {
+                        // The column name property is in index 0 of the data table's columns.
+                        DataColumn prop = dt.Columns[0];
+                        foreach (DataRow field in dt.Rows)
+                        {   
+                            fields.Add(field[prop].ToString());
+                            MySqlDatabaseLogger.Write(prop.ColumnName + " = " + field[prop].ToString());
+                        }
+                    }
+
+                    // Loop through the resulting set.
+                    while (reader.Read())
+                    {
+                        // Create the row to handle entries.
+                        IRow row = new MySqlRow();
+
+                        // Loop through the entries.
+                        for (int index = 0; index < reader.FieldCount; index++)
+                        {
+                            string field = fields[index];
+                            string value = reader.GetValue(index).ToString();
+                            row.AddEntry(new MySqlEntry(field, value));
+                        }
+
+                        // Add the row to the result set.
+                        set.AddRow(row);
+                    }
+                }
+            }
+            catch (DataAccessLayerException dale)
+            {
+                dale.Write(MySqlDatabaseLogger);
+                set.Error();
+            }
+
+            return set;            
+        }
+
+        //////////////////////
+        // Mutators.				
+
+        /// <summary>
+        /// Return metadata from database, after executing input statement, applying any parameters if necessary. (No parameters will assume it is a statement that needs no preparation).
+        /// </summary>
+        /// <param name="sqlQuery">Query to execute on the data reader.</param>
+        /// <param name="parameters">Parameters to assign to the command.</param>
+        /// <returns>Returns result set containing response from database.</returns>
+        public IResultSet SetData(string sqlQuery, IDictionary<string, string> parameters = null)
+        {
+            // Create default response, to return on failure.
+            IResultSet set = new MySqlResultSet(sqlQuery, -1); // -1 rowsAffected means that no query has been processed.
+            set.Fail(); // Default set to failure.
+
+            // Create a reference to the command statement.
+            MySqlCommand statement = null;
+
+            // Create the MySql command statement:
+            if (parameters != null && parameters.Count > 0)
+            {
+                // If the input parameter collection is greater than zero:
+                try
+                {
+                    // Prepare the statement if necessary.
+                    statement = Prepare(sqlQuery, parameters);
+                }
+                catch (DataAccessLayerException dale)
+                {
+                    dale.Write(MySqlDatabaseLogger);
+                    set.Error();
+                }
+            }
+            else
+            {
+                // If there is no need for a prepared statement:
+                try
+                {
+                    statement = CreateCommand(sqlQuery);
+                }
+                catch (DataAccessLayerException dale)
+                {
+                    dale.Write(MySqlDatabaseLogger);
+                    set.Error();
+                }
+            }
+
+            // Attempt to execute the statement.
+            try
+            {
+                // Get the affected rows, if possible. (We don't need to add any rows or entries to this result set).
+                int rowsAffected = statement.ExecuteNonQuery();
+                set.SetRowsAffected(rowsAffected);
+
+                // Set the state of the result set, depending on outcome.
+                if(rowsAffected <= -1) { set.Error(); }
+                else if(rowsAffected == 0) { set.Fail(); }
+                else if(rowsAffected > 0) { set.Pass(); }                
+            }
+            catch (DataAccessLayerException dale)
+            {
+                dale.Write(MySqlDatabaseLogger);
+                set.Error();
+            }
+
+            // Return the result set.
+            return set;
+        }
+
 
 
 

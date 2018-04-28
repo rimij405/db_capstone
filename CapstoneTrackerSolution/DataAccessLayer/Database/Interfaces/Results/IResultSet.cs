@@ -20,6 +20,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Services.Interfaces;
 
 namespace ISTE.DAL.Database.Interfaces
 {
@@ -305,21 +306,21 @@ namespace ISTE.DAL.Database.Interfaces
         /// <returns>Return removed item. Returns null if no item found.</returns>
         TItem RemoveItem(TItem item);
     }
-
+        
     /// <summary>
     /// IResultSet is a collection of IRows.
     /// </summary>
-    public interface IResultSet : ICollectionWrapper<IRow>, IReplicate, IEmpty, IComparable
+    public interface IResultSet : ICollectionWrapper<IRow>, IReplicate, IEmpty, IComparable, IOperationStateMachine
     {
         //////////////////////
         // Properties.
         //////////////////////
-
+        
         /// <summary>
         /// Collection of <see cref="IRow"/> rows.
         /// </summary>
         List<IRow> Rows { get; }
-
+        
         /// <summary>
         /// Number of rows affected by an SQL query.
         /// </summary>
