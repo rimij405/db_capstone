@@ -37,13 +37,14 @@
             this.defenseDateValue = new System.Windows.Forms.TextBox();
             this.facultyValue = new System.Windows.Forms.ListBox();
             this.edit = new System.Windows.Forms.Button();
-            this.textBox4 = new System.Windows.Forms.TextBox();
+            this.plagarismScore = new System.Windows.Forms.TextBox();
             this.textBox5 = new System.Windows.Forms.TextBox();
-            this.textBox2 = new System.Windows.Forms.TextBox();
+            this.grade = new System.Windows.Forms.TextBox();
             this.textBox3 = new System.Windows.Forms.TextBox();
             this.statusValue = new System.Windows.Forms.TextBox();
             this.statusLabel = new System.Windows.Forms.TextBox();
             this.userPageReturn = new System.Windows.Forms.Button();
+            this.statusHistoryButton = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // titleLabel
@@ -143,14 +144,14 @@
             this.edit.UseVisualStyleBackColor = true;
             this.edit.Click += new System.EventHandler(this.edit_Click);
             // 
-            // textBox4
+            // plagarismScore
             // 
-            this.textBox4.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.textBox4.Location = new System.Drawing.Point(479, 456);
-            this.textBox4.Name = "textBox4";
-            this.textBox4.ReadOnly = true;
-            this.textBox4.Size = new System.Drawing.Size(134, 24);
-            this.textBox4.TabIndex = 37;
+            this.plagarismScore.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.plagarismScore.Location = new System.Drawing.Point(479, 456);
+            this.plagarismScore.Name = "plagarismScore";
+            this.plagarismScore.ReadOnly = true;
+            this.plagarismScore.Size = new System.Drawing.Size(134, 24);
+            this.plagarismScore.TabIndex = 37;
             // 
             // textBox5
             // 
@@ -165,14 +166,14 @@
             this.textBox5.Text = "Plagarism \r\nScore:";
             this.textBox5.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
             // 
-            // textBox2
+            // grade
             // 
-            this.textBox2.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.textBox2.Location = new System.Drawing.Point(478, 382);
-            this.textBox2.Name = "textBox2";
-            this.textBox2.ReadOnly = true;
-            this.textBox2.Size = new System.Drawing.Size(134, 24);
-            this.textBox2.TabIndex = 35;
+            this.grade.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.grade.Location = new System.Drawing.Point(478, 382);
+            this.grade.Name = "grade";
+            this.grade.ReadOnly = true;
+            this.grade.Size = new System.Drawing.Size(134, 24);
+            this.grade.TabIndex = 35;
             // 
             // textBox3
             // 
@@ -194,7 +195,7 @@
             this.statusValue.Multiline = true;
             this.statusValue.Name = "statusValue";
             this.statusValue.ReadOnly = true;
-            this.statusValue.Size = new System.Drawing.Size(134, 250);
+            this.statusValue.Size = new System.Drawing.Size(134, 192);
             this.statusValue.TabIndex = 33;
             // 
             // statusLabel
@@ -221,15 +222,27 @@
             this.userPageReturn.UseVisualStyleBackColor = true;
             this.userPageReturn.Click += new System.EventHandler(this.userPageReturn_Click);
             // 
+            // statusHistoryButton
+            // 
+            this.statusHistoryButton.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.statusHistoryButton.Location = new System.Drawing.Point(478, 298);
+            this.statusHistoryButton.Name = "statusHistoryButton";
+            this.statusHistoryButton.Size = new System.Drawing.Size(132, 34);
+            this.statusHistoryButton.TabIndex = 39;
+            this.statusHistoryButton.Text = "View Status History";
+            this.statusHistoryButton.UseVisualStyleBackColor = true;
+            this.statusHistoryButton.Click += new System.EventHandler(this.statusHistoryButton_Click);
+            // 
             // CapstonePageView
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(624, 601);
+            this.Controls.Add(this.statusHistoryButton);
             this.Controls.Add(this.userPageReturn);
-            this.Controls.Add(this.textBox4);
+            this.Controls.Add(this.plagarismScore);
             this.Controls.Add(this.textBox5);
-            this.Controls.Add(this.textBox2);
+            this.Controls.Add(this.grade);
             this.Controls.Add(this.textBox3);
             this.Controls.Add(this.statusValue);
             this.Controls.Add(this.statusLabel);
@@ -264,12 +277,13 @@
         private System.Windows.Forms.TextBox defenseDateValue;
         private System.Windows.Forms.ListBox facultyValue;
         private System.Windows.Forms.Button edit;
-        private System.Windows.Forms.TextBox textBox4;
+        private System.Windows.Forms.TextBox plagarismScore;
         private System.Windows.Forms.TextBox textBox5;
-        private System.Windows.Forms.TextBox textBox2;
+        private System.Windows.Forms.TextBox grade;
         private System.Windows.Forms.TextBox textBox3;
         private System.Windows.Forms.TextBox statusValue;
         private System.Windows.Forms.TextBox statusLabel;
         private System.Windows.Forms.Button userPageReturn;
+        private System.Windows.Forms.Button statusHistoryButton;
     }
 }

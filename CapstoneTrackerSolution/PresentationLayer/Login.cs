@@ -10,21 +10,26 @@ using System.Windows.Forms;
 
 namespace PresentationLayer
 {
+    // Login form that accepts user input and validates login information
+    // Author: Jake Toporoff
     public partial class Login : Form
     {
         FormHandler fh = FormHandler.Instance;
 
+        // Initialize all events not created through the form
         public Login()
         {
             InitializeComponent();
             this.FormClosed += new FormClosedEventHandler(this.Login_FormClosed);
         }
 
+        // Closes entire application when the x button is pressed
         private void Login_FormClosed(object sender, FormClosedEventArgs e)
         {
             Application.Exit();
         }
 
+        // Attempts to log the user in
         private void loginButton_Click(object sender, EventArgs e)
         {
             if (ValidateLogin())
@@ -42,7 +47,7 @@ namespace PresentationLayer
             }
         }
 
-        // check to make sure the user entered proper login info
+        // Checks to make sure the user entered proper login info
         private bool ValidateLogin()
         {
             if (fh.LoginSetPassword())
