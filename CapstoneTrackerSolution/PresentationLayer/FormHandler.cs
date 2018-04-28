@@ -7,12 +7,17 @@ using System.Windows.Forms;
 
 namespace PresentationLayer
 {
+    /*Form handler singleton to manage form navigation, information access and updating, and temporary information management 
+     * (ex: current user logged in and their role)
+     * Author: Jake Toporoff
+     */
     public class FormHandler
     {
         private static FormHandler instance;
 
         private FormHandler() { }
 
+        // Classes can use this to instantiate the form handler and access methods
         public static FormHandler Instance
         {
             get
@@ -25,6 +30,7 @@ namespace PresentationLayer
             }
         }
 
+        // All forms start out as null since they may not be used every session
         Login login = null;
         UserPage userPage = null;
         UserPageEdit userPageEdit = null;
@@ -33,7 +39,9 @@ namespace PresentationLayer
         CapstoneListStaff capstoneListStaff = null;
         CapstoneListFaculty capstoneListFaculty = null;
         UserList userList = null;
+        StatusHistory statusHistory = null;
 
+        // Constructors to initialize forms on use
         public void CreateLogin()  { login = new Login(); }
         public void CreateUserPage() { userPage = new UserPage(); }
         public void CreateUserPageEdit() { userPageEdit = new UserPageEdit(); }
@@ -42,7 +50,9 @@ namespace PresentationLayer
         public void CreateCapstoneListStaff() { capstoneListStaff = new CapstoneListStaff(); }
         public void CreateCapstoneListFaculty() { capstoneListFaculty = new CapstoneListFaculty(); }
         public void CreateUserList() { userList = new UserList(); }
+        public void CreateStatusHistory() { statusHistory = new StatusHistory(); }
 
+        // Form Accessors
         public Login GetLogin() { return login; }
         public UserPage GetUserPage() { return userPage; }
         public UserPageEdit GetUserPageEdit() { return userPageEdit; }
@@ -51,6 +61,7 @@ namespace PresentationLayer
         public CapstoneListStaff GetCapstoneListStaff() { return capstoneListStaff; }
         public CapstoneListFaculty GetCapstoneListFaculty() { return capstoneListFaculty; }
         public UserList GetUserList() { return userList; }
+        public StatusHistory GetStatusHistory() { return statusHistory; }
 
         // Login Set Functions
         public bool LoginSetUserName()
@@ -146,5 +157,185 @@ namespace PresentationLayer
             return;
         }
         // End UserPageEdit Set Functions
+
+        // CapstonePageView Get Functions
+        public string CapstonePVGetTitle()
+        {
+            return "capstone title";
+        }
+
+        public string CapstonePVGetAbstract()
+        {
+            return "capstone description";
+        }
+
+        public List<string> CapstonePVGetFaculty()
+        {
+            List<string> faculty = new List<string>();
+            faculty.Add("John Smith");
+            faculty.Add("Firstname Lastname");
+            return faculty;
+        }
+
+        public string CapstonePVGetDefenseDate()
+        {
+            return "DateTime";
+        }
+
+        public string CapstonePVGetStatus()
+        {
+            return "current status";
+        }
+
+        public string CapstonePVGetGrade()
+        {
+            return "Grade";
+        }
+
+        public string CapstonePVGetPlagarismScore()
+        {
+            return "Plagarism Score";
+        }
+        // End CapstonePageView Get Functions
+
+        // CapstonePageEdit Get Functions
+        public string CapstonePEGetTitle()
+        {
+            return CapstonePVGetTitle();
+        }
+
+        public string CapstonePEGetAbstract()
+        {
+            return CapstonePVGetAbstract();
+        }
+
+        public List<string> CapstonePEGetFaculty()
+        {
+            return CapstonePVGetFaculty();
+        }
+
+        public string CapstonePEGetStatus()
+        {
+            return CapstonePVGetStatus();
+        }
+
+        public string CapstonePEGetGrade()
+        {
+            return CapstonePVGetGrade();
+        }
+
+        public string CapstonePEGetPlagarismScore()
+        {
+            return CapstonePVGetPlagarismScore();
+        }
+
+        public DateTime CapstonePEGetDefenseDate()
+        {
+            return DateTime.Parse(CapstonePVGetDefenseDate());
+        }
+        // End CapstonePageEdit Get Functions
+
+        // CapstonePageEdit Set Functions
+        public void CapstonePESaveChanges()
+        {
+            return;
+        }
+        // End CapstonePageEdit Set Functions
+
+        // CapstoneListStaff GetFunctions
+        public List<string> CapstoneLSGetCapstones(int format, int selection) // format depends on the combo box selections within the form
+        {
+            List<string> capstones = new List<string>();
+            capstones.Add("The history of something important");
+            capstones.Add("A study of paint drying");
+            return capstones;
+        }
+
+        public List<string> CapstoneLSGetStatuses(int format, int selection)
+        {
+            List<string> statuses = new List<string>();
+            statuses.Add("Rejected");
+            statuses.Add("Graded");
+            return statuses;
+        }
+        // End CapstoneListStaff Get Functions
+
+        // CapstoneListFaculty Get Functions
+        public List<string> CapstoneLFGetPendingCapstones()
+        {
+            List<string> capstones = new List<string>();
+            capstones.Add("The history of something important");
+            capstones.Add("A study of paint drying");
+            return capstones;
+        }
+
+        public List<string> CapstoneLFGetCurrentCapstones()
+        {
+            List<string> capstones = new List<string>();
+            capstones.Add("The history of something important");
+            capstones.Add("A study of paint drying");
+            return capstones;
+        }
+
+        public List<string> CapstoneLFGetCurrentGrades()
+        {
+            List<string> grades = new List<string>();
+            grades.Add("F--");
+            grades.Add("A");
+            return grades;
+        }
+        // End CapstoneListFaculty Get Functions
+
+        // CapstoneListFaculty Set Functions
+        public void CapstoneLFAcceptInvitation()
+        {
+            return;
+        }
+
+        public void CapstoneLFRejectInvitation()
+        {
+            return;
+        }
+        // End CapstoneListFaculty Set Functions
+
+        // UserList Get Functions
+        public List<string> UserListGetUsers(int format, int selection)
+        {
+            List<string> users = new List<string>();
+            users.Add("John Smith");
+            users.Add("Firstname Lastname");
+            return users;
+        }
+        // End UserList Get Functions
+
+        // UserList Set Functions
+        public void UserListAddUser(string fName, string lName, string role)
+        {
+            return;
+        }
+        // End UserList Set Functions
+
+        // StatusHistory Get Functions
+        public List<string> StatusHistoryGetStatuses()
+        {
+            List<string> statuses = new List<string>();
+            statuses.Add("Pending");
+            statuses.Add("Completed");
+            return statuses;
+        }
+
+        public List<string> StatusHistoryGetStatusDates()
+        {
+            List<string> dates = new List<string>();
+            dates.Add("01/01/2001");
+            dates.Add("01/01/2002");
+            return dates;
+        }
+
+        public string StatusHistoryGetDescription(string selected)
+        {
+            return selected;
+        }
+        // End StatusHistory Get Functions
     }
 }

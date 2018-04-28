@@ -34,6 +34,13 @@
             this.selectLabel = new System.Windows.Forms.TextBox();
             this.orderValues = new System.Windows.Forms.ComboBox();
             this.orderLabel = new System.Windows.Forms.TextBox();
+            this.firstName = new System.Windows.Forms.TextBox();
+            this.roles = new System.Windows.Forms.ComboBox();
+            this.lastName = new System.Windows.Forms.TextBox();
+            this.addUserButton = new System.Windows.Forms.Button();
+            this.firstNameLabel = new System.Windows.Forms.Label();
+            this.lastNameLabel = new System.Windows.Forms.Label();
+            this.error = new System.Windows.Forms.TextBox();
             this.SuspendLayout();
             // 
             // userPageReturn
@@ -52,7 +59,7 @@
             this.usersList.FormattingEnabled = true;
             this.usersList.Location = new System.Drawing.Point(12, 12);
             this.usersList.Name = "usersList";
-            this.usersList.Size = new System.Drawing.Size(451, 576);
+            this.usersList.Size = new System.Drawing.Size(451, 498);
             this.usersList.TabIndex = 12;
             // 
             // selectValues
@@ -106,11 +113,85 @@
             this.orderLabel.Text = "Order By:";
             this.orderLabel.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
             // 
+            // firstName
+            // 
+            this.firstName.Location = new System.Drawing.Point(75, 516);
+            this.firstName.Name = "firstName";
+            this.firstName.Size = new System.Drawing.Size(237, 20);
+            this.firstName.TabIndex = 17;
+            // 
+            // roles
+            // 
+            this.roles.FormattingEnabled = true;
+            this.roles.Items.AddRange(new object[] {
+            "Student",
+            "Faculty",
+            "Staff"});
+            this.roles.Location = new System.Drawing.Point(318, 517);
+            this.roles.Name = "roles";
+            this.roles.Size = new System.Drawing.Size(145, 21);
+            this.roles.TabIndex = 18;
+            // 
+            // lastName
+            // 
+            this.lastName.Location = new System.Drawing.Point(75, 555);
+            this.lastName.Name = "lastName";
+            this.lastName.Size = new System.Drawing.Size(237, 20);
+            this.lastName.TabIndex = 19;
+            // 
+            // addUserButton
+            // 
+            this.addUserButton.Location = new System.Drawing.Point(470, 517);
+            this.addUserButton.Name = "addUserButton";
+            this.addUserButton.Size = new System.Drawing.Size(142, 34);
+            this.addUserButton.TabIndex = 20;
+            this.addUserButton.Text = "Add New User";
+            this.addUserButton.UseVisualStyleBackColor = true;
+            this.addUserButton.Click += new System.EventHandler(this.addUserButton_Click);
+            // 
+            // firstNameLabel
+            // 
+            this.firstNameLabel.AutoSize = true;
+            this.firstNameLabel.Location = new System.Drawing.Point(12, 517);
+            this.firstNameLabel.Name = "firstNameLabel";
+            this.firstNameLabel.Size = new System.Drawing.Size(57, 13);
+            this.firstNameLabel.TabIndex = 21;
+            this.firstNameLabel.Text = "First Name";
+            // 
+            // lastNameLabel
+            // 
+            this.lastNameLabel.AutoSize = true;
+            this.lastNameLabel.Location = new System.Drawing.Point(12, 562);
+            this.lastNameLabel.Name = "lastNameLabel";
+            this.lastNameLabel.Size = new System.Drawing.Size(58, 13);
+            this.lastNameLabel.TabIndex = 22;
+            this.lastNameLabel.Text = "Last Name";
+            // 
+            // error
+            // 
+            this.error.BackColor = System.Drawing.Color.DarkSalmon;
+            this.error.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.error.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.error.Location = new System.Drawing.Point(318, 557);
+            this.error.Multiline = true;
+            this.error.Name = "error";
+            this.error.ReadOnly = true;
+            this.error.Size = new System.Drawing.Size(294, 32);
+            this.error.TabIndex = 23;
+            this.error.Text = "Error Goes Here";
+            // 
             // UserList
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(624, 601);
+            this.Controls.Add(this.error);
+            this.Controls.Add(this.lastNameLabel);
+            this.Controls.Add(this.firstNameLabel);
+            this.Controls.Add(this.addUserButton);
+            this.Controls.Add(this.lastName);
+            this.Controls.Add(this.roles);
+            this.Controls.Add(this.firstName);
             this.Controls.Add(this.selectValues);
             this.Controls.Add(this.selectLabel);
             this.Controls.Add(this.orderValues);
@@ -136,5 +217,12 @@
         private System.Windows.Forms.TextBox selectLabel;
         private System.Windows.Forms.ComboBox orderValues;
         private System.Windows.Forms.TextBox orderLabel;
+        private System.Windows.Forms.TextBox firstName;
+        private System.Windows.Forms.ComboBox roles;
+        private System.Windows.Forms.TextBox lastName;
+        private System.Windows.Forms.Button addUserButton;
+        private System.Windows.Forms.Label firstNameLabel;
+        private System.Windows.Forms.Label lastNameLabel;
+        private System.Windows.Forms.TextBox error;
     }
 }

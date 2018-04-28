@@ -10,12 +10,17 @@ using System.Windows.Forms;
 
 namespace PresentationLayer
 {
+    // Form where a user can edit and update their emails and phone numbers
+    // Author: Jake Toporoff
     public partial class UserPageEdit : Form
     {
         FormHandler fh = FormHandler.Instance;
+
+        // Used to track temporary phone and email type changes
         List<int> emailTypeList;
         List<int> phoneTypeList;
 
+        // Initialize any events not created in the form and load in information
         public UserPageEdit()
         {
             InitializeComponent();
@@ -30,6 +35,7 @@ namespace PresentationLayer
             LoadValues();
         }
 
+        // Load any information that needs to be displayed in the form
         private void LoadValues()
         {
             firstName.Text = fh.UPEGetFirstName();
@@ -49,11 +55,13 @@ namespace PresentationLayer
             }
         }
 
+        // Closes entire application when the x button is pressed
         private void UserPageEdit_FormClosed(object sender, FormClosedEventArgs e)
         {
             Application.Exit();
         }
 
+        // If the email type has been changed, update the currently selected email
         private void Emails_SelectType(object sender, EventArgs e)
         {
             if(emails.SelectedItem != null)
@@ -62,6 +70,7 @@ namespace PresentationLayer
             }
         }
 
+        // If the phone type has been changed, update the currently selected phone 
         private void Phones_SelectType(object sender, EventArgs e)
         {
             if(phones.SelectedItem != null)
@@ -70,6 +79,7 @@ namespace PresentationLayer
             }
         }
 
+        // If the selected email changes, have the current email type match the selection
         private void EmailTypes_IndexChanged(object sender, EventArgs e)
         {
             if(emails.SelectedItem != null)
@@ -78,6 +88,7 @@ namespace PresentationLayer
             }
         }
 
+        // If the selected phone changes, have the current phone type match the selection
         private void PhoneTypes_IndexChanged(object sender, EventArgs e)
         {
             if(phones.SelectedItem != null)
@@ -86,6 +97,7 @@ namespace PresentationLayer
             }
         }
 
+        // Save any changes the user has made and navigate back to the user page view form
         private void save_Click(object sender, EventArgs e)
         {
             fh.UPESaveChanges();
@@ -98,6 +110,7 @@ namespace PresentationLayer
             fh.GetUserPageEdit().Hide();
         }
 
+        // Return to user page if user doesn't want to save changes
         private void cancel_Click(object sender, EventArgs e)
         {
             if (fh.GetUserPage() == null) // in case page has already been created
@@ -108,17 +121,19 @@ namespace PresentationLayer
             fh.GetUserPageEdit().Hide();
         }
 
+        // Add email
         private void emailAddButton_Click(object sender, EventArgs e)
         {
             HandleAddEmail();
         }
 
+        // Add phone number
         private void phoneAddButton_Click(object sender, EventArgs e)
         {
             HandleAddPhone();
         }
 
-        // remove email from userpage
+        // Remove email from userpage
         private void deleteEmail_Click(object sender, EventArgs e)
         {
             if (emails.SelectedItem != null)
@@ -137,7 +152,7 @@ namespace PresentationLayer
             }
         }
 
-        // remove phone from userpage
+        // Remove phone from userpage
         private void deletePhone_Click(object sender, EventArgs e)
         {
             if (phones.SelectedItem != null)
@@ -156,21 +171,21 @@ namespace PresentationLayer
             }
         }
 
-        // accept user input if they hit the enter key while focused in the email input text box
+        // Accept user input if they hit the enter key while focused in the email input text box
         private void EmailAddText_Enter(object sender, KeyEventArgs e)
         {
             if(e.KeyCode == Keys.Enter)
                 HandleAddEmail();
         }
 
-        // accept user input if they hit the enter key while focused in the phone input text box
+        // Accept user input if they hit the enter key while focused in the phone input text box
         private void PhoneAddText_Enter(object sender, KeyEventArgs e)
         {
             if (e.KeyCode == Keys.Enter)
                 HandleAddPhone();
         }
 
-        // check validity of user input in the email input text box
+        // Check validity of user input in the email input text box
         private void HandleAddEmail()
         {
             if (emailAddText.Text != "")
@@ -199,7 +214,7 @@ namespace PresentationLayer
             }
         }
 
-        // check validity of user input in the phone input text box
+        // Check validity of user input in the phone input text box
         private void HandleAddPhone()
         {
             if (phoneAddText.Text != "")

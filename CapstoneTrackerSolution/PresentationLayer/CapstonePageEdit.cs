@@ -10,11 +10,14 @@ using System.Windows.Forms;
 
 namespace PresentationLayer
 {
+    // Form to edit and update a user's capstone information. All user types can edit different parts of the form within their limitations.
+    // Author: Jake Toporoff
     public partial class CapstonePageEdit : Form
     {
         FormHandler fh = FormHandler.Instance;
         bool isStaff, isFaculty = false; // to determine user type
 
+        // Initialize any events not created in the form and load in information
         public CapstonePageEdit()
         {
             InitializeComponent();
@@ -25,6 +28,7 @@ namespace PresentationLayer
             LoadValues();
         }
 
+        // Load any information that needs to be displayed in the form
         private void LoadValues()
         {
             // load page differently based on user type
@@ -35,7 +39,6 @@ namespace PresentationLayer
                 facultyRequest.Visible = false;
                 facultyRequestConfirm.Visible = false;
                 deleteFaculty.Visible = false;
-                dragFileLabel.Visible = false;
 
                 if (isFaculty)
                 {
@@ -47,8 +50,21 @@ namespace PresentationLayer
                 {
                     gradeValue.ReadOnly = true;
                     plagarismScoreValue.ReadOnly = false;
+                    statuses.Visible = true;
                 }
             }
+
+            titleValue.Text = fh.CapstonePEGetTitle();
+            abstractValue.Text = fh.CapstonePEGetAbstract();
+            List<string> faculty = fh.CapstonePEGetFaculty();
+            for (int i = 0; i < faculty.Count; i++)
+            {
+                facultyValue.Items.Add(faculty[i]);
+            }
+            defenseDateValue.Value = fh.CapstonePEGetDefenseDate();
+            statuses.SelectedText = fh.CapstonePVGetStatus();
+            gradeValue.Text = fh.CapstonePVGetGrade();
+            plagarismScoreValue.Text = fh.CapstonePVGetPlagarismScore();
         }
 
         // Place helpful text for user if they aren't currently entering a new faculty member
@@ -65,6 +81,7 @@ namespace PresentationLayer
                 facultyRequest.Text = "";
         }
 
+        // Closes entire application when the x button is pressed
         private void CapstonePageEdit_FormClosed(object sender, FormClosedEventArgs e)
         {
             Application.Exit();
@@ -89,8 +106,11 @@ namespace PresentationLayer
             }
         }
 
+        // Save any changes to the page the user has made and navigate back to the capstone's viewing page
         private void save_Click(object sender, EventArgs e)
         {
+            fh.CapstonePESaveChanges();
+
             if (fh.GetCapstonePageView() == null) // in case page has already been created
             {
                 fh.CreateCapstonePageView();
@@ -99,6 +119,7 @@ namespace PresentationLayer
             fh.GetCapstonePageEdit().Hide();
         }
 
+        // Discard any user made changes and navigate back to the capstone's viewing page
         private void cancel_Click(object sender, EventArgs e)
         {
             if (fh.GetCapstonePageView() == null) // in case page has already been created
@@ -109,7 +130,7 @@ namespace PresentationLayer
             fh.GetCapstonePageEdit().Hide();
         }
 
-        // remove faculty member from capstone
+        // Remove faculty member from capstone
         private void deleteFaculty_Click(object sender, EventArgs e)
         {
             if(facultyValue.SelectedItem != null) // if a faculty member is selected
