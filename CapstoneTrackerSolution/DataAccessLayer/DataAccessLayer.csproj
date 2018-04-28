@@ -56,11 +56,13 @@
     <Compile Include="Database\Implementations\Results\MySqlRow.cs" />
     <Compile Include="Database\Deprecated\Fields\Field.cs" />
     <Compile Include="Database\Deprecated\Fields\IFieldTypes.cs" />
-    <Compile Include="Database\Interfaces\IClamp.cs" />
+    <Compile Include="Database\Deprecated\IClamp.cs" />
     <Compile Include="Database\Interfaces\Configuration\IConfiguration.cs" />
     <Compile Include="Database\Interfaces\Configuration\IDatabase.cs" />
     <Compile Include="Database\Deprecated\Fields\IField.cs" />
     <Compile Include="Database\Deprecated\Fields\IFieldType.cs" />
+    <Compile Include="Database\Interfaces\Configuration\IReadable.cs" />
+    <Compile Include="Database\Interfaces\Configuration\IWritable.cs" />
     <Compile Include="Database\Interfaces\Results\IResultSet.cs" />
     <Compile Include="Database\Deprecated\NonNullableField.cs" />
     <Compile Include="Database\Deprecated\NullableField.cs" />

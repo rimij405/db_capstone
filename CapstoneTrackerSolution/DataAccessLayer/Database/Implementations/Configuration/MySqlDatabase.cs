@@ -195,7 +195,6 @@ namespace ISTE.DAL.Database
             return preparedStatement;
         }
         
-
         //////////////////////
         // Mutators.				
 
