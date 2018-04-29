@@ -30,7 +30,7 @@ namespace PresentationLayer
         private void LoadValues()
         {
             // Determine which parts of the form are visible depending on user type
-            string userRoleStr = fh.UPGetUserRole();
+            string userRoleStr = fh.GetBusinessUserPage().UPGetUserRole();
             switch (userRoleStr)
             {
                 case "Staff":
@@ -46,15 +46,15 @@ namespace PresentationLayer
                     break;
             }
 
-            firstName.Text = fh.UPGetFirstName();
-            lastName.Text = fh.UPGetLastName();
+            firstName.Text = fh.GetBusinessUserPage().UPGetFirstName();
+            lastName.Text = fh.GetBusinessUserPage().UPGetLastName();
             userRole.Text = userRoleStr;
-            List<string> emailList = fh.UPGetEmails();
+            List<string> emailList = fh.GetBusinessUserPage().UPGetEmails();
             for(int i = 0; i < emailList.Count; i++)
             {
                 emails.Text += emailList[i] + Environment.NewLine;
             }
-            List<string> phoneList = fh.UPGetPhones();
+            List<string> phoneList = fh.GetBusinessUserPage().UPGetPhones();
             for(int i = 0; i < phoneList.Count; i++)
             {
                 phones.Text += phoneList[i] + Environment.NewLine;

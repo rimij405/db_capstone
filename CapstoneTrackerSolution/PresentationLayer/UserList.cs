@@ -33,7 +33,7 @@ namespace PresentationLayer
         // Load any information that needs to be displayed in the form
         private void LoadValues()
         {
-            List<string> users = fh.UserListGetUsers(0, 0);
+            List<string> users = fh.GetBusinessUserList().UserListGetUsers(0, 0);
             for(int i = 0; i < users.Count; i++)
             {
                 usersList.Items.Add(users[i]);
@@ -66,7 +66,10 @@ namespace PresentationLayer
         // Update user order when value is changed
         private void OrderValues_IndexChanged(object sender, EventArgs e)
         {
-            List<string> users = fh.UserListGetUsers(orderValues.SelectedIndex, selectValues.SelectedIndex);
+            List<string> users = fh.GetBusinessUserList().UserListGetUsers(
+                orderValues.SelectedIndex, 
+                selectValues.SelectedIndex
+                );
             for (int i = 0; i < users.Count; i++)
             {
                 usersList.Items.Clear();
@@ -77,7 +80,10 @@ namespace PresentationLayer
         // Update user selection when value is changed
         private void SelectValues_IndexChanged(object sender, EventArgs e)
         {
-            List<string> users = fh.UserListGetUsers(orderValues.SelectedIndex, selectValues.SelectedIndex);
+            List<string> users = fh.GetBusinessUserList().UserListGetUsers(
+                orderValues.SelectedIndex,
+                selectValues.SelectedIndex
+                );
             for (int i = 0; i < users.Count; i++)
             {
                 usersList.Items.Clear();
@@ -104,8 +110,11 @@ namespace PresentationLayer
         {
             if (firstName.Text != "" && lastName.Text != "") // if something is entered
             {
-                fh.UserListAddUser(firstName.Text, lastName.Text, roles.SelectedText);
-                List<string> users = fh.UserListGetUsers(orderValues.SelectedIndex, selectValues.SelectedIndex);
+                fh.GetBusinessUserList().UserListAddUser(firstName.Text, lastName.Text, roles.SelectedText);
+                List<string> users = fh.GetBusinessUserList().UserListGetUsers(
+                    orderValues.SelectedIndex, 
+                    selectValues.SelectedIndex
+                    );
                 for (int i = 0; i < users.Count; i++)
                 {
                     usersList.Items.Clear();

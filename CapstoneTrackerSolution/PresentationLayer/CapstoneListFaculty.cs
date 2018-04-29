@@ -30,9 +30,9 @@ namespace PresentationLayer
         // Load any information that needs to be displayed in the form
         private void LoadValues()
         {
-            List<string> pendingCapstones = fh.CapstoneLFGetPendingCapstones();
-            List<string> currentCapstones = fh.CapstoneLFGetCurrentCapstones();
-            List<string> grades = fh.CapstoneLFGetCurrentGrades();
+            List<string> pendingCapstones = fh.GetBusinessCapstoneListFaculty().CapstoneLFGetPendingCapstones();
+            List<string> currentCapstones = fh.GetBusinessCapstoneListFaculty().CapstoneLFGetCurrentCapstones();
+            List<string> grades = fh.GetBusinessCapstoneListFaculty().CapstoneLFGetCurrentGrades();
 
             for(int i = 0; i < pendingCapstones.Count; i++)
             {
@@ -96,7 +96,7 @@ namespace PresentationLayer
         {
             if (capstonePendingList.SelectedItem != null)
             {
-                fh.CapstoneLFAcceptInvitation();
+                fh.GetBusinessCapstoneListFaculty().CapstoneLFAcceptInvitation(capstonePendingList.SelectedItem.ToString());
 
                 capstoneCurrentList.Items.Add(capstonePendingList.SelectedItem);
                 capstonePendingList.Items.Remove(capstonePendingList.SelectedItem);
@@ -117,7 +117,7 @@ namespace PresentationLayer
         {
             if (capstonePendingList.SelectedItem != null)
             {
-                fh.CapstoneLFRejectInvitation();
+                fh.GetBusinessCapstoneListFaculty().CapstoneLFRejectInvitation(capstonePendingList.SelectedItem.ToString());
 
                 capstonePendingList.Items.Remove(capstonePendingList.SelectedItem);
                 error.Text = "Successfully declined capstone committee request";

@@ -32,17 +32,17 @@ namespace PresentationLayer
         // Load any information that needs to be displayed in the form
         private void LoadValues()
         {
-            titleValue.Text = fh.CapstonePVGetTitle();
-            abstractValue.Text = fh.CapstonePVGetAbstract();
-            List<string> faculty = fh.CapstonePVGetFaculty();
+            titleValue.Text = fh.GetBusinessCapstonePageView().CapstonePVGetTitle();
+            abstractValue.Text = fh.GetBusinessCapstonePageView().CapstonePVGetAbstract();
+            List<string> faculty = fh.GetBusinessCapstonePageView().CapstonePVGetFaculty();
             for(int i = 0; i < faculty.Count; i++)
             {
                 facultyValue.Items.Add(faculty[i]);
             }
-            defenseDateValue.Text = fh.CapstonePVGetDefenseDate();
-            statusValue.Text = fh.CapstonePVGetStatus();
-            grade.Text = fh.CapstonePVGetGrade();
-            plagarismScore.Text = fh.CapstonePVGetPlagarismScore();
+            defenseDateValue.Text = fh.GetBusinessCapstonePageView().CapstonePVGetDefenseDate();
+            statusValue.Text = fh.GetBusinessCapstonePageView().CapstonePVGetStatus();
+            grade.Text = fh.GetBusinessCapstonePageView().CapstonePVGetGrade();
+            plagarismScore.Text = fh.GetBusinessCapstonePageView().CapstonePVGetPlagarismScore();
         }
 
         // Deselect a faculty member if the user clicks elsewhere on the form

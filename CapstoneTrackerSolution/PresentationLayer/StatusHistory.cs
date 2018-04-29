@@ -28,14 +28,14 @@ namespace PresentationLayer
         // Change dislpayed status description based on currently selected status
         private void Status_IndexChanged(object sender, EventArgs e)
         {
-            statusDescriptions.Text = fh.StatusHistoryGetDescription(statusValues.Items[statusValues.SelectedIndex].ToString());
+            statusDescriptions.Text = fh.GetBusinessStatusHistory().StatusHistoryGetDescription(statusValues.Items[statusValues.SelectedIndex].ToString());
         }
 
         // Load any information that needs to be displayed in the form
         private void LoadValues()
         {
-            List<string> statuses = fh.StatusHistoryGetStatuses();
-            List<string> statusDates = fh.StatusHistoryGetStatusDates();
+            List<string> statuses = fh.GetBusinessStatusHistory().StatusHistoryGetStatuses();
+            List<string> statusDates = fh.GetBusinessStatusHistory().StatusHistoryGetStatusDates();
 
             for(int i = 0; i < statuses.Count; i++)
             {

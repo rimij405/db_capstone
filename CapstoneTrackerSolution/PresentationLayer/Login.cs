@@ -50,8 +50,8 @@ namespace PresentationLayer
         // Checks to make sure the user entered proper login info
         private bool ValidateLogin()
         {
-            if (fh.LoginSetPassword())
-                return fh.LoginSetUserName();
+            if (fh.GetBusinessLogin().LoginGetPassword())
+                return fh.GetBusinessLogin().LoginGetUserName();
             else
                 return false;
         }

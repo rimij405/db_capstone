@@ -54,17 +54,17 @@ namespace PresentationLayer
                 }
             }
 
-            titleValue.Text = fh.CapstonePEGetTitle();
-            abstractValue.Text = fh.CapstonePEGetAbstract();
-            List<string> faculty = fh.CapstonePEGetFaculty();
+            titleValue.Text = fh.GetBusinessCapstonePageEdit().CapstonePEGetTitle();
+            abstractValue.Text = fh.GetBusinessCapstonePageEdit().CapstonePEGetAbstract();
+            List<string> faculty = fh.GetBusinessCapstonePageEdit().CapstonePEGetFaculty();
             for (int i = 0; i < faculty.Count; i++)
             {
                 facultyValue.Items.Add(faculty[i]);
             }
-            defenseDateValue.Value = fh.CapstonePEGetDefenseDate();
-            statuses.SelectedText = fh.CapstonePVGetStatus();
-            gradeValue.Text = fh.CapstonePVGetGrade();
-            plagarismScoreValue.Text = fh.CapstonePVGetPlagarismScore();
+            defenseDateValue.Value = fh.GetBusinessCapstonePageEdit().CapstonePEGetDefenseDate();
+            statuses.SelectedText = fh.GetBusinessCapstonePageEdit().CapstonePEGetStatus();
+            gradeValue.Text = fh.GetBusinessCapstonePageEdit().CapstonePEGetGrade();
+            plagarismScoreValue.Text = fh.GetBusinessCapstonePageEdit().CapstonePEGetPlagarismScore();
         }
 
         // Place helpful text for user if they aren't currently entering a new faculty member
@@ -109,7 +109,20 @@ namespace PresentationLayer
         // Save any changes to the page the user has made and navigate back to the capstone's viewing page
         private void save_Click(object sender, EventArgs e)
         {
-            fh.CapstonePESaveChanges();
+            List<string> faculty = new List<string>();
+            for(int i = 0; i < facultyValue.Items.Count; i++)
+            {
+                faculty.Add(facultyValue.Items[i].ToString());
+            }
+            fh.GetBusinessCapstonePageEdit().CapstonePESaveChanges(
+                titleValue.Text,
+                abstractValue.Text,
+                faculty,
+                defenseDateValue.ToString(),
+                statuses.SelectedItem.ToString(),
+                gradeValue.Text,
+                plagarismScoreValue.Text
+                );
 
             if (fh.GetCapstonePageView() == null) // in case page has already been created
             {

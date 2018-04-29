@@ -38,17 +38,17 @@ namespace PresentationLayer
         // Load any information that needs to be displayed in the form
         private void LoadValues()
         {
-            firstName.Text = fh.UPEGetFirstName();
-            lastName.Text = fh.UPEGetLastName();
-            userRole.Text = fh.UPEGetUserRole();
-            emailTypeList = fh.UPEGetEmailTypes();
-            phoneTypeList = fh.UPEGetPhoneTypes();
-            List<string> emailList = fh.UPEGetEmails();
+            firstName.Text = fh.GetBusinessUserPageEdit().UPEGetFirstName();
+            lastName.Text = fh.GetBusinessUserPageEdit().UPEGetLastName();
+            userRole.Text = fh.GetBusinessUserPageEdit().UPEGetUserRole();
+            emailTypeList = fh.GetBusinessUserPageEdit().UPEGetEmailTypes();
+            phoneTypeList = fh.GetBusinessUserPageEdit().UPEGetPhoneTypes();
+            List<string> emailList = fh.GetBusinessUserPageEdit().UPEGetEmails();
             for (int i = 0; i < emailList.Count; i++)
             {
                 emails.Items.Add(emailList[i]);
             }
-            List<string> phoneList = fh.UPEGetPhones();
+            List<string> phoneList = fh.GetBusinessUserPageEdit().UPEGetPhones();
             for (int i = 0; i < phoneList.Count; i++)
             {
                 phones.Items.Add(phoneList[i]);
@@ -100,7 +100,20 @@ namespace PresentationLayer
         // Save any changes the user has made and navigate back to the user page view form
         private void save_Click(object sender, EventArgs e)
         {
-            fh.UPESaveChanges();
+            List<string> emailList = new List<string>();
+            List<string> phoneList = new List<string>();
+
+            for(int i = 0; i < emails.Items.Count; i++)
+            {
+                emailList.Add(emails.Items[i].ToString());
+            }
+
+            for(int i = 0; i < phones.Items.Count; i++)
+            {
+                phoneList.Add(phones.Items[i].ToString());
+            }
+
+            fh.GetBusinessUserPageEdit().UPESaveChanges(emailList, phoneList, emailTypeList, phoneTypeList);
 
             if (fh.GetUserPage() == null) // in case page has already been created
             {

@@ -36,8 +36,8 @@ namespace PresentationLayer
             orderValues.SelectedIndex = 0;
             selectValues.SelectedIndex = 1;
 
-            List<string> capstones = fh.CapstoneLSGetCapstones(0,1);
-            List<string> statuses = fh.CapstoneLSGetStatuses(0,1);
+            List<string> capstones = fh.GetBusinessCapstoneListStaff().CapstoneLSGetCapstones(0,1);
+            List<string> statuses = fh.GetBusinessCapstoneListStaff().CapstoneLSGetStatuses(0,1);
 
             for(int i = 0; i < capstones.Count; i++)
             {
@@ -77,8 +77,14 @@ namespace PresentationLayer
         // Reorder capstone list when value is changed
         private void OrderValues_IndexChanged(object sender, System.EventArgs e)
         {
-            List<string> capstones = fh.CapstoneLSGetCapstones(orderValues.SelectedIndex, selectValues.SelectedIndex);
-            List<string> statuses = fh.CapstoneLSGetStatuses(orderValues.SelectedIndex, selectValues.SelectedIndex);
+            List<string> capstones = fh.GetBusinessCapstoneListStaff().CapstoneLSGetCapstones(
+                orderValues.SelectedIndex, 
+                selectValues.SelectedIndex
+                );
+            List<string> statuses = fh.GetBusinessCapstoneListStaff().CapstoneLSGetStatuses(
+                orderValues.SelectedIndex, 
+                selectValues.SelectedIndex
+                );
 
             for (int i = 0; i < capstones.Count; i++)
             {
@@ -92,8 +98,14 @@ namespace PresentationLayer
         // Update capstone selection when value is changed
         private void SelectValues_IndexChanged(object sender, System.EventArgs e)
         {
-            List<string> capstones = fh.CapstoneLSGetCapstones(orderValues.SelectedIndex, selectValues.SelectedIndex);
-            List<string> statuses = fh.CapstoneLSGetStatuses(orderValues.SelectedIndex, selectValues.SelectedIndex);
+            List<string> capstones = fh.GetBusinessCapstoneListStaff().CapstoneLSGetCapstones(
+                orderValues.SelectedIndex, 
+                selectValues.SelectedIndex
+                );
+            List<string> statuses = fh.GetBusinessCapstoneListStaff().CapstoneLSGetStatuses(
+                orderValues.SelectedIndex,
+                selectValues.SelectedIndex
+                );
 
             for (int i = 0; i < capstones.Count; i++)
             {
