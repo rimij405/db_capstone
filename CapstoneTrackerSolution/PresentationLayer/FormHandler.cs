@@ -1,4 +1,5 @@
-﻿using System;
+﻿using BusinessLayer;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -27,6 +28,46 @@ namespace PresentationLayer
                     instance = new FormHandler();
                 }
                 return instance;
+            }
+        }
+
+        // Global form variables that need to be tracked across pages
+        string username;
+        string selectedUser;
+        string selectedCapstone;
+        string userRole;
+
+        public string GetRole()
+        {
+            return userRole;
+        }
+
+        public string GetUsername()
+        {
+            return username;
+        }
+
+        public void SetUsername(string user)
+        {
+            username = user;
+            //TODO - Set userRole
+        }
+
+        public void SetSelectedUser(string user)
+        {
+            selectedUser = user;
+        }
+
+        // input type determines whether capstone is being set with a capstone name (0) or a username (1)
+        public void SetSelectedCapstone(string capstone, int inputType)
+        {
+            if (inputType == 0)
+            {
+                selectedCapstone = capstone;
+            }
+            else
+            {
+
             }
         }
 

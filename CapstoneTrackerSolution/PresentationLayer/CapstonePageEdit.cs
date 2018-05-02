@@ -15,7 +15,8 @@ namespace PresentationLayer
     public partial class CapstonePageEdit : Form
     {
         FormHandler fh = FormHandler.Instance;
-        bool isStaff, isFaculty = false; // to determine user type
+        bool isStaff = false;
+        bool isFaculty = false; // to determine user type
 
         // Initialize any events not created in the form and load in information
         public CapstonePageEdit()
@@ -31,6 +32,11 @@ namespace PresentationLayer
         // Load any information that needs to be displayed in the form
         private void LoadValues()
         {
+            string role = fh.GetRole();
+            if (role == "staff") isStaff = true;
+            if (role == "faculty") isFaculty = true;
+
+
             // load page differently based on user type
             if(isFaculty || isStaff)
             {

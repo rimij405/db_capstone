@@ -34,6 +34,7 @@ namespace PresentationLayer
         {
             if (ValidateLogin())
             {
+                fh.SetUsername(username.Text);
                 if (fh.GetUserPage() == null) // in case page has already been created
                 {
                     fh.CreateUserPage();
@@ -50,8 +51,10 @@ namespace PresentationLayer
         // Checks to make sure the user entered proper login info
         private bool ValidateLogin()
         {
-            if (fh.GetBusinessLogin().LoginGetPassword())
-                return fh.GetBusinessLogin().LoginGetUserName();
+            if (fh.GetBusinessLogin().LoginGetPassword(password.Text) && fh.GetBusinessLogin().LoginGetUserName(username.Text))
+            {
+                return true;
+            }
             else
                 return false;
         }

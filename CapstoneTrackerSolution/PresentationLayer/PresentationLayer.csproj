@@ -45,15 +45,6 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="BusinessCapstoneListFaculty.cs" />
-    <Compile Include="BusinessCapstoneListStaff.cs" />
-    <Compile Include="BusinessCapstonePageEdit.cs" />
-    <Compile Include="BusinessCapstonePageView.cs" />
-    <Compile Include="BusinessLogin.cs" />
-    <Compile Include="BusinessStatusHistory.cs" />
-    <Compile Include="BusinessUserList.cs" />
-    <Compile Include="BusinessUserPage.cs" />
-    <Compile Include="BusinessUserPageEdit.cs" />
     <Compile Include="CapstoneListFaculty.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -168,6 +159,12 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\BusinessLayer\BusinessLayer.csproj">
+      <Project>{0DE6D35F-38AA-4905-A479-02CE3DCE01AD}</Project>
+      <Name>BusinessLayer</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

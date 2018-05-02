@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace PresentationLayer
+namespace BusinessLayer
 {
     // Business layer class that handles taking data from the database and converting it to a usable format for the
     // presentation layer and vice versa for the capstone page edit form
@@ -56,7 +56,7 @@ namespace PresentationLayer
 
         public DateTime CapstonePEGetDefenseDate()
         {
-            return DateTime.Parse("DateTime");
+            return DateTime.Parse("01/02/2006");
         }
         // End CapstonePageEdit Get Functions
 

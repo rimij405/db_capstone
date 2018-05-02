@@ -96,6 +96,7 @@ namespace PresentationLayer
         {
             if (usersList.SelectedItem != null)
             {
+                fh.SetSelectedUser(usersList.SelectedValue.ToString());
                 if (fh.GetUserPage() == null) // in case page has already been created
                 {
                     fh.CreateUserPage();

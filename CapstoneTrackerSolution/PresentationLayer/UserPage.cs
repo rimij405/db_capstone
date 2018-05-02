@@ -70,6 +70,11 @@ namespace PresentationLayer
         // Navigates to capstone view page for students, capstone list for staff, and associated capstones list for faculty
         private void viewCapstones_Click(object sender, EventArgs e)
         {
+            if(firstName.Text != fh.GetBusinessUserPage().UPGetFirstName() && lastName.Text != fh.GetBusinessUserPage().UPGetLastName())
+            {
+                fh.SetSelectedCapstone(fh.GetUsername(), 1);
+            }
+
             if (isStaff)
             {
                 if (fh.GetCapstoneListStaff() == null) // in case page has already been created

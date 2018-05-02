@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace PresentationLayer
+namespace BusinessLayer
 {
     // Business layer class that handles taking data from the database and converting it to a usable format for the
     // presentation layer and vice versa for the status history form

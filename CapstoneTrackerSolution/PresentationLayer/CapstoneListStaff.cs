@@ -59,6 +59,7 @@ namespace PresentationLayer
         {
             if (capstoneList.SelectedItem != null)
             {
+                fh.SetSelectedCapstone(capstoneList.SelectedValue.ToString(), 0);
                 if (fh.GetCapstonePageView() == null) // in case page has already been created
                 {
                     fh.CreateCapstonePageView();
