@@ -37,7 +37,7 @@ namespace TestDataAccessLayer
         /// <summary>
         /// Result printer.
         /// </summary>
-        private static MySqlResultPrinter printer = new MySqlResultPrinter(150, 1);
+        private static MySqlResultPrinter printer = new MySqlResultPrinter(50, 1);
 
         /// <summary>
         /// Configuration implementation.
@@ -428,7 +428,7 @@ namespace TestDataAccessLayer
             string query = "SELECT * FROM capstonedb.users"
                             + " INNER JOIN capstonedb.students USING(userID)"
                             + " WHERE userID = @userID;";           
-            Dictionary<string, string> parameters = new Dictionary<string, string>
+            MySqlParameters parameters = new Dictionary<string, string>
             {
                 {"@userID", "3"}
             };
@@ -445,7 +445,7 @@ namespace TestDataAccessLayer
                 results.Log($"-- -- -- -- -- -- --\n-- -- -- {results.Title}");
                 results.Log(
                     $"Executing \"{query}\"",
-                    $"with values [\"@emailtypes\" : \"{parameters["@userID"]}\"]."
+                    $"--\nParameters:\n{parameters}\n--\n"
                     );
             }
             catch (Exception e)
@@ -478,7 +478,7 @@ namespace TestDataAccessLayer
 
                 // Call the GetData method.
                 MySqlDatabase mysqldb = database as MySqlDatabase;
-                MySqlResultSet set = mysqldb.GetData(query, parameters) as MySqlResultSet;
+                MySqlResultSet set = mysqldb.GetData(query, parameters.Dictionary) as MySqlResultSet;
                 results.Log($"{printer.FormatResultSet(set)}");
 
                 // If entry is null, fail the test.
@@ -524,6 +524,134 @@ namespace TestDataAccessLayer
             // Return the test results.
             return results;
         }
+        
+        /// <summary>
+        /// Test prepared insert statement in the mysql database.
+        /// </summary>
+        /// <returns>Returns result from test.</returns>
+        private static TestResults Test_MySqlDatabase_PreparedInsert()
+        {
+            // Set values and dependencies here.
+            string subject = "MySqlDatabase SetData() - Insert example student.";
+            string query = "INSERT INTO capstonedb.users(username, password, firstName, lastName) VALUES "
+                            + "(@username, SHA2(@password, 0), @first, @last)";
+            MySqlParameters parameters = new Dictionary<string, string>
+            {
+                {"@username", "abc1236"},
+                {"@password", "PASSWORD"},
+                {"@first", "First Name (Prepared Insert)"},
+                {"@last", "Last Name (Prepared Insert)"}
+            };
+
+            // Create the results object for this test.
+            TestResults results = TestResults.Create($"Testing {subject}");
+
+            // Create the assertion map.
+            Dictionary<AssertKey, bool> assertions = new Dictionary<AssertKey, bool>();
+
+            try
+            {
+                // Make divisor and log the title for the test.
+                results.Log($"-- -- -- -- -- -- --\n-- -- -- {results.Title}");
+                results.Log(
+                    $"Executing \"{query}\"",
+                    $"--\nParameters:\n{parameters}\n--\n"
+                    );
+            }
+            catch (Exception e)
+            {
+                // Wraps exception for the results.
+                throw results.Throw($"{e.Message}", e);
+            }
+
+            try
+            {
+                if (configuration == null)
+                {
+                    results.Log($"Creating the configuration object.");
+                    configuration = new MySqlConfiguration();
+                    results.Log($"{configuration.GetConnectionString()}");
+                }
+
+                if (database == null)
+                {
+                    results.Log($"Creating the database object.");
+                    database = new MySqlDatabase(configuration as MySqlConfiguration);
+                    results.Log($"{database.ToString()}");
+                }
+
+                if (!database.IsConnected)
+                {
+                    results.Log($"Connecting to the database.");
+                    database.Connect();
+                }
+
+                // Call the GetData method.
+                MySqlDatabase mysqldb = database as MySqlDatabase;
+                MySqlResultSet set = mysqldb.SetData(query, parameters.Dictionary) as MySqlResultSet;
+                results.Log($"{(set.RowsAffected != 1 ? $"{set.RowsAffected} rows" : $"{set.RowsAffected} row")} affected.");
+                results.Log($"{printer.FormatResultSet(set)}");
+
+                // If entry is null, fail the test.
+                results.Log("Checking assertions...");
+
+                assertions[AssertKey.IsNullReference] = (set == null);
+                results.Log($"-- Is the object reference null? {assertions[AssertKey.IsNullReference]}");
+
+                assertions[AssertKey.IsEmpty] = set.IsEmpty;
+                results.Log($"-- Is the set empty? {assertions[AssertKey.IsEmpty]}");
+
+                bool hasAffectedRows = set.RowsAffected > 0;
+                results.Log($"-- Any affected rows? {hasAffectedRows}, {set.RowsAffected} rows");
+
+                bool hasError = set.IsError;
+                bool hasFailure = set.IsFailure;
+                bool hasSuccess = set.IsSuccess;
+                results.Log($"-- What is the operation status? Error [{hasError}], Failure [{hasFailure}], Success [{hasSuccess}]");
+
+                // Evaluate assertions.
+                assertions[AssertKey.Total] =
+                    !assertions[AssertKey.IsNullReference] &&
+                    assertions[AssertKey.IsEmpty] &&
+                    hasAffectedRows &&
+                    !hasError && !hasFailure && hasSuccess;
+                results.Log($"All assertions passed? {assertions[AssertKey.Total]}");
+
+                if (!assertions[AssertKey.Total])
+                {
+                    results.Fail($"{subject} operation failed.");
+                    return results;
+                }
+            }
+            catch (Exception e)
+            {
+                // Wraps exception for the results.
+                throw results.Throw($"Exception occurred during construction of {subject}. {e.Message}", e);
+            }
+
+            // Get the newly added details.
+            string subject = "MySqlDatabase SetData() - Insert example student.";
+            string query = "INSERT INTO capstonedb.users(username, password, firstName, lastName) VALUES "
+                            + "(@username, SHA2(@password, 0), @first, @last)";
+            MySqlParameters parameters = new Dictionary<string, string>
+            {
+                {"@username", "abc1236"},
+                {"@password", "PASSWORD"},
+                {"@first", "First Name (Prepared Insert)"},
+                {"@last", "Last Name (Prepared Insert)"}
+            };
+
+
+
+
+
+
+
+            // Return the test results.
+            return results;
+        }
+
+
 
         /// <summary>
         /// Test create operation in the mysql database.

@@ -222,26 +222,12 @@ namespace ISTE.DAL.Database
         // Accessors.
         
         /// <summary>
-        /// 
+        /// Returns a transaction object from the server that must be handled.
         /// </summary>
-        /// <returns></returns>
+        /// <returns>Returns a MySqlTransaction object.</returns>
         public MySqlTransaction BeginTransaction()
         {
-            // Crerate the default response.
-            IResultSet set = new MySqlResultSet();
-            set.Fail();
-
-            // Begin the transaction.
-            
-
-
-            MySqlCommand statement;
-            
-
-            = connection.BeginTransaction();
-
-
-
+            return this.connection.BeginTransaction();
         }
 
         /// <summary>

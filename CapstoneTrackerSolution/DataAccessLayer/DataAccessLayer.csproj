@@ -47,6 +47,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Database\Implementations\Configuration\MySqlParameters.cs" />
     <Compile Include="Database\Implementations\Exceptions\DataAccessLayerException.cs" />
     <Compile Include="Database\Implementations\Exceptions\DatabaseCloseException.cs" />
     <Compile Include="Database\Implementations\Exceptions\DatabaseConnectionException.cs" />
@@ -63,6 +64,7 @@
     <Compile Include="Database\Interfaces\Configuration\IDatabase.cs" />
     <Compile Include="Database\Deprecated\Fields\IField.cs" />
     <Compile Include="Database\Deprecated\Fields\IFieldType.cs" />
+    <Compile Include="Database\Interfaces\Configuration\IParameters.cs" />
     <Compile Include="Database\Interfaces\Operations\IReadable.cs" />
     <Compile Include="Database\Interfaces\Operations\ITransaction.cs" />
     <Compile Include="Database\Interfaces\Operations\IWritable.cs" />
