@@ -121,9 +121,9 @@ namespace ISTE.DAL.Database.Interfaces
         /// <summary>
         /// Authentication transaction checks if a username and a password matches in the database.
         /// </summary>
-        Authentication
+        UserAuthentication
     }
-
+    
     /// <summary>
     /// Blueprint for making transactions.
     /// </summary>
@@ -133,6 +133,11 @@ namespace ISTE.DAL.Database.Interfaces
         /// ID number given to a transaction.
         /// </summary>
         TransactionType TransactionID { get; }
+
+        /// <summary>
+        /// Current status of the transaction. (Failure indicates a rollback. Error indicates an error. Pass indicates a success. Null indicates it hasn't been run).
+        /// </summary>
+        OperationStatus TransactionStatus { get; }
 
         /// <summary>
         /// Execute the operations in the transaction.

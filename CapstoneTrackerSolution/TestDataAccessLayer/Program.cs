@@ -64,7 +64,7 @@ namespace TestDataAccessLayer
             int successfulTests = 0;
             int errors = 0;
             int totalTests = 0;
-            bool verbose = true;
+            bool verbose = false;
 
             // Create the TestMethods invocation list delegate.
             TestResults r = TestResults.Create("Test Method");
@@ -76,6 +76,9 @@ namespace TestDataAccessLayer
             TestMethods += Test_MySqlDatabase_Connect;
             TestMethods += Test_MySqlDatabase_Select;
             TestMethods += Test_MySqlDatabase_PreparedSelect;
+            TestMethods += Test_MySqlDatabase_PreparedInsert;
+            TestMethods += Test_MySqlDatabase_PreparedUpdate;
+            TestMethods += Test_MySqlDatabase_PreparedDelete;
 
             TestMethods += Test_MySqlEntry_SingleField;
             TestMethods += Test_MySqlEntry_FieldValue;
@@ -532,6 +535,7 @@ namespace TestDataAccessLayer
         private static TestResults Test_MySqlDatabase_PreparedInsert()
         {
             // Set values and dependencies here.
+            MySqlDatabase mysqldb = database as MySqlDatabase;
             string subject = "MySqlDatabase SetData() - Insert example student.";
             string query = "INSERT INTO capstonedb.users(username, password, firstName, lastName) VALUES "
                             + "(@username, SHA2(@password, 0), @first, @last)";
@@ -587,7 +591,6 @@ namespace TestDataAccessLayer
                 }
 
                 // Call the GetData method.
-                MySqlDatabase mysqldb = database as MySqlDatabase;
                 MySqlResultSet set = mysqldb.SetData(query, parameters.Dictionary) as MySqlResultSet;
                 results.Log($"{(set.RowsAffected != 1 ? $"{set.RowsAffected} rows" : $"{set.RowsAffected} row")} affected.");
                 results.Log($"{printer.FormatResultSet(set)}");
@@ -630,28 +633,410 @@ namespace TestDataAccessLayer
             }
 
             // Get the newly added details.
-            string subject = "MySqlDatabase SetData() - Insert example student.";
-            string query = "INSERT INTO capstonedb.users(username, password, firstName, lastName) VALUES "
-                            + "(@username, SHA2(@password, 0), @first, @last)";
-            MySqlParameters parameters = new Dictionary<string, string>
+            string confirmation = "SELECT username, password, firstName, lastName FROM capstonedb.users "
+                            + "WHERE username=@username AND password=SHA2(@password, 0);";
+            MySqlParameters confirmParams = (Dictionary<string, string>) parameters.Dictionary;
+            confirmParams.RemoveParameter("@first");
+            confirmParams.RemoveParameter("@last");
+
+            try
             {
-                {"@username", "abc1236"},
-                {"@password", "PASSWORD"},
-                {"@first", "First Name (Prepared Insert)"},
-                {"@last", "Last Name (Prepared Insert)"}
+                // Make divisor and log the title for the test.
+                results.Log($"Confirmation of inserted materials.");
+                results.Log(
+                    $"Executing \"{confirmation}\"",
+                    $"--\nParameters:\n{confirmParams}\n--\n"
+                    );
+
+                MySqlResultSet confirmSet = mysqldb.GetData(confirmation, confirmParams.Dictionary) as MySqlResultSet;
+                results.Log($"{(confirmSet.RowsAffected != 1 ? $"{confirmSet.RowsAffected} rows" : $"{confirmSet.RowsAffected} row")} affected.");
+                results.Log($"{printer.FormatResultSet(confirmSet)}");
+
+                // If entry is null, fail the test.
+                results.Log("Checking assertions...");
+
+                assertions[AssertKey.IsNullReference] = (confirmSet == null);
+                results.Log($"-- Is the object reference null? {assertions[AssertKey.IsNullReference]}");
+
+                assertions[AssertKey.IsEmpty] = confirmSet.IsEmpty;
+                results.Log($"-- Is the set empty? {assertions[AssertKey.IsEmpty]}");
+
+                bool hasAffectedRows = confirmSet.RowsAffected > 0;
+                results.Log($"-- Any affected rows? {hasAffectedRows}, {confirmSet.RowsAffected} rows");
+
+                bool hasError = confirmSet.IsError;
+                bool hasFailure = confirmSet.IsFailure;
+                bool hasSuccess = confirmSet.IsSuccess;
+                results.Log($"-- What is the operation status? Error [{hasError}], Failure [{hasFailure}], Success [{hasSuccess}]");
+
+                // Evaluate assertions.
+                assertions[AssertKey.Total] =
+                    !assertions[AssertKey.IsNullReference] &&
+                    !assertions[AssertKey.IsEmpty] &&
+                    !hasAffectedRows &&
+                    !hasError && !hasFailure && hasSuccess;
+                results.Log($"All assertions passed? {assertions[AssertKey.Total]}");
+
+                if (!assertions[AssertKey.Total])
+                {
+                    results.Fail($"{subject} operation failed.");
+                }
+                else
+                {
+                    results.Pass($"{subject} operation passed.");
+                }
+            }
+            catch (Exception e)
+            {
+                // Wraps exception for the results.
+                throw results.Throw($"{e.Message}", e);
+            }
+            
+            // Return the test results.
+            return results;
+        }
+        
+        /// <summary>
+        /// Test prepared delete statement in the mysql database.
+        /// </summary>
+        /// <returns>Returns result from test.</returns>
+        private static TestResults Test_MySqlDatabase_PreparedDelete()
+        {
+            // Set values and dependencies here.
+            MySqlDatabase mysqldb = database as MySqlDatabase;
+            string subject = "MySqlDatabase SetData() - Delete example student.";
+
+            // Get the item ID to delete.
+            string userID = "NULL";
+            string findQuery = "SELECT userID FROM capstonedb.users "
+                            + "WHERE username=@username;";
+            MySqlParameters findParameters = new Dictionary<string, string>
+            {
+                {"@username", "abc1236"}
             };
 
+            // Create the results object for this test.
+            TestResults results = TestResults.Create($"Testing {subject}");
 
+            // Create the assertion map.
+            Dictionary<AssertKey, bool> assertions = new Dictionary<AssertKey, bool>();
+            
+            try
+            {
+                // Make divisor and log the title for the test.
+                results.Log($"-- -- -- -- -- -- --\n-- -- -- {results.Title}");
+                results.Log(
+                    $"Executing \"{findQuery}\"",
+                    $"--\nParameters:\n{findParameters}\n--\n"
+                    );
+            }
+            catch (Exception e)
+            {
+                // Wraps exception for the results.
+                throw results.Throw($"{e.Message}", e);
+            }
 
+            try
+            {
+                if (configuration == null)
+                {
+                    results.Log($"Creating the configuration object.");
+                    configuration = new MySqlConfiguration();
+                    results.Log($"{configuration.GetConnectionString()}");
+                }
 
+                if (database == null)
+                {
+                    results.Log($"Creating the database object.");
+                    database = new MySqlDatabase(configuration as MySqlConfiguration);
+                    results.Log($"{database.ToString()}");
+                }
 
+                if (!database.IsConnected)
+                {
+                    results.Log($"Connecting to the database.");
+                    database.Connect();
+                }
 
+                // Call the GetData method.
+                MySqlResultSet set = mysqldb.GetData(findQuery, findParameters.Dictionary) as MySqlResultSet;
+                results.Log($"{(set.RowsAffected != 1 ? $"{set.RowsAffected} rows" : $"{set.RowsAffected} row")} affected.");
+                results.Log($"{printer.FormatResultSet(set)}");
+                userID = set[0, "userID"].Value;
 
+                // If entry is null, fail the test.
+                results.Log("Checking assertions...");
+
+                assertions[AssertKey.IsNullReference] = (set == null);
+                results.Log($"-- Is the object reference null? {assertions[AssertKey.IsNullReference]}");
+
+                assertions[AssertKey.IsEmpty] = set.IsEmpty;
+                results.Log($"-- Is the set empty? {assertions[AssertKey.IsEmpty]}");
+
+                bool hasAffectedRows = set.RowsAffected > 0;
+                results.Log($"-- Any affected rows? {hasAffectedRows}, {set.RowsAffected} rows");
+
+                bool hasError = set.IsError;
+                bool hasFailure = set.IsFailure;
+                bool hasSuccess = set.IsSuccess;
+                results.Log($"-- What is the operation status? Error [{hasError}], Failure [{hasFailure}], Success [{hasSuccess}]");
+
+                // Evaluate assertions.
+                assertions[AssertKey.Total] =
+                    !assertions[AssertKey.IsNullReference] &&
+                    !assertions[AssertKey.IsEmpty] &&
+                    !hasAffectedRows &&
+                    !hasError && !hasFailure && hasSuccess;
+                results.Log($"All assertions passed? {assertions[AssertKey.Total]}");
+
+                if (!assertions[AssertKey.Total])
+                {
+                    results.Fail($"{subject} operation failed.");
+                    return results;
+                }
+            }
+            catch (Exception e)
+            {
+                // Wraps exception for the results.
+                throw results.Throw($"Exception occurred during construction of {subject}. {e.Message}", e);
+            }
+            
+            // Delete using the item ID that was found.
+            string deleteQuery = "DELETE FROM capstonedb.users "
+                            + "WHERE userID=@userId";
+            MySqlParameters deleteParameters = new Dictionary<string, string>
+            {
+                {"@userId", userID},
+            };
+            
+            try
+            {
+                // Make divisor and log the title for the test.
+                results.Log($"Deleting the item with user ID: '{userID}'.");
+                results.Log(
+                    $"Executing \"{deleteQuery}\"",
+                    $"--\nParameters:\n{deleteParameters}\n--\n"
+                    );
+
+                MySqlResultSet set = mysqldb.SetData(deleteQuery, deleteParameters.Dictionary) as MySqlResultSet;
+                results.Log($"{(set.RowsAffected != 1 ? $"{set.RowsAffected} rows" : $"{set.RowsAffected} row")} affected.");
+                results.Log($"{printer.FormatResultSet(set)}");
+
+                // If entry is null, fail the test.
+                results.Log("Checking assertions...");
+
+                assertions[AssertKey.IsNullReference] = (set == null);
+                results.Log($"-- Is the object reference null? {assertions[AssertKey.IsNullReference]}");
+
+                assertions[AssertKey.IsEmpty] = set.IsEmpty;
+                results.Log($"-- Is the set empty? {assertions[AssertKey.IsEmpty]}");
+
+                bool hasAffectedRows = set.RowsAffected > 0;
+                results.Log($"-- Any affected rows? {hasAffectedRows}, {set.RowsAffected} rows");
+
+                bool hasError = set.IsError;
+                bool hasFailure = set.IsFailure;
+                bool hasSuccess = set.IsSuccess;
+                results.Log($"-- What is the operation status? Error [{hasError}], Failure [{hasFailure}], Success [{hasSuccess}]");
+
+                // Evaluate assertions.
+                assertions[AssertKey.Total] =
+                    !assertions[AssertKey.IsNullReference] &&
+                    assertions[AssertKey.IsEmpty] &&
+                    hasAffectedRows &&
+                    !hasError && !hasFailure && hasSuccess;
+                results.Log($"All assertions passed? {assertions[AssertKey.Total]}");
+
+                if (!assertions[AssertKey.Total])
+                {
+                    results.Fail($"{subject} operation failed.");
+                }
+                else
+                {
+                    results.Pass($"{subject} operation passed.");
+                }
+            }
+            catch (Exception e)
+            {
+                // Wraps exception for the results.
+                throw results.Throw($"{e.Message}", e);
+            }
+            
             // Return the test results.
             return results;
         }
 
+        /// <summary>
+        /// Test prepared update statement in the mysql database.
+        /// </summary>
+        /// <returns>Returns result from test.</returns>
+        private static TestResults Test_MySqlDatabase_PreparedUpdate()
+        {
+            // Set values and dependencies here.
+            MySqlDatabase mysqldb = database as MySqlDatabase;
+            string subject = "MySqlDatabase SetData() - Update example student.";
 
+            // Get the item ID to delete.
+            string userID = "NULL";
+            string findQuery = "SELECT userID FROM capstonedb.users "
+                            + "WHERE username=@username;";
+            MySqlParameters findParameters = new Dictionary<string, string>
+            {
+                {"@username", "abc1236"}
+            };
+
+            // Create the results object for this test.
+            TestResults results = TestResults.Create($"Testing {subject}");
+
+            // Create the assertion map.
+            Dictionary<AssertKey, bool> assertions = new Dictionary<AssertKey, bool>();
+
+            try
+            {
+                // Make divisor and log the title for the test.
+                results.Log($"-- -- -- -- -- -- --\n-- -- -- {results.Title}");
+                results.Log(
+                    $"Executing \"{findQuery}\"",
+                    $"--\nParameters:\n{findParameters}\n--\n"
+                    );
+            }
+            catch (Exception e)
+            {
+                // Wraps exception for the results.
+                throw results.Throw($"{e.Message}", e);
+            }
+
+            try
+            {
+                if (configuration == null)
+                {
+                    results.Log($"Creating the configuration object.");
+                    configuration = new MySqlConfiguration();
+                    results.Log($"{configuration.GetConnectionString()}");
+                }
+
+                if (database == null)
+                {
+                    results.Log($"Creating the database object.");
+                    database = new MySqlDatabase(configuration as MySqlConfiguration);
+                    results.Log($"{database.ToString()}");
+                }
+
+                if (!database.IsConnected)
+                {
+                    results.Log($"Connecting to the database.");
+                    database.Connect();
+                }
+
+                // Call the GetData method.
+                MySqlResultSet set = mysqldb.GetData(findQuery, findParameters.Dictionary) as MySqlResultSet;
+                results.Log($"{(set.RowsAffected != 1 ? $"{set.RowsAffected} rows" : $"{set.RowsAffected} row")} affected.");
+                results.Log($"{printer.FormatResultSet(set)}");
+                userID = set[0, "userID"].Value;
+
+                // If entry is null, fail the test.
+                results.Log("Checking assertions...");
+
+                assertions[AssertKey.IsNullReference] = (set == null);
+                results.Log($"-- Is the object reference null? {assertions[AssertKey.IsNullReference]}");
+
+                assertions[AssertKey.IsEmpty] = set.IsEmpty;
+                results.Log($"-- Is the set empty? {assertions[AssertKey.IsEmpty]}");
+
+                bool hasAffectedRows = set.RowsAffected > 0;
+                results.Log($"-- Any affected rows? {hasAffectedRows}, {set.RowsAffected} rows");
+
+                bool hasError = set.IsError;
+                bool hasFailure = set.IsFailure;
+                bool hasSuccess = set.IsSuccess;
+                results.Log($"-- What is the operation status? Error [{hasError}], Failure [{hasFailure}], Success [{hasSuccess}]");
+
+                // Evaluate assertions.
+                assertions[AssertKey.Total] =
+                    !assertions[AssertKey.IsNullReference] &&
+                    !assertions[AssertKey.IsEmpty] &&
+                    !hasAffectedRows &&
+                    !hasError && !hasFailure && hasSuccess;
+                results.Log($"All assertions passed? {assertions[AssertKey.Total]}");
+
+                if (!assertions[AssertKey.Total])
+                {
+                    results.Fail($"{subject} operation failed.");
+                    return results;
+                }
+            }
+            catch (Exception e)
+            {
+                // Wraps exception for the results.
+                throw results.Throw($"Exception occurred during construction of {subject}. {e.Message}", e);
+            }
+
+            // Delete using the item ID that was found.
+            string updateQuery = "UPDATE capstonedb.users"
+                            + " SET lastName=@last"
+                            + " WHERE userID=@userId";
+            MySqlParameters updateParameters = new Dictionary<string, string>
+            {
+                {"@userId", userID},
+                {"@last", "Update Test"}
+            };
+
+            try
+            {
+                // Make divisor and log the title for the test.
+                results.Log($"Updating the item with user ID: '{userID}'.");
+                results.Log(
+                    $"Executing \"{updateQuery}\"",
+                    $"--\nParameters:\n{updateParameters}\n--\n"
+                    );
+
+                MySqlResultSet set = mysqldb.SetData(updateQuery, updateParameters.Dictionary) as MySqlResultSet;
+                results.Log($"{(set.RowsAffected != 1 ? $"{set.RowsAffected} rows" : $"{set.RowsAffected} row")} affected.");
+                results.Log($"{printer.FormatResultSet(set)}");
+
+                // If entry is null, fail the test.
+                results.Log("Checking assertions...");
+
+                assertions[AssertKey.IsNullReference] = (set == null);
+                results.Log($"-- Is the object reference null? {assertions[AssertKey.IsNullReference]}");
+
+                assertions[AssertKey.IsEmpty] = set.IsEmpty;
+                results.Log($"-- Is the set empty? {assertions[AssertKey.IsEmpty]}");
+
+                bool hasAffectedRows = set.RowsAffected > 0;
+                results.Log($"-- Any affected rows? {hasAffectedRows}, {set.RowsAffected} rows");
+
+                bool hasError = set.IsError;
+                bool hasFailure = set.IsFailure;
+                bool hasSuccess = set.IsSuccess;
+                results.Log($"-- What is the operation status? Error [{hasError}], Failure [{hasFailure}], Success [{hasSuccess}]");
+
+                // Evaluate assertions.
+                assertions[AssertKey.Total] =
+                    !assertions[AssertKey.IsNullReference] &&
+                    assertions[AssertKey.IsEmpty] &&
+                    hasAffectedRows &&
+                    !hasError && !hasFailure && hasSuccess;
+                results.Log($"All assertions passed? {assertions[AssertKey.Total]}");
+
+                if (!assertions[AssertKey.Total])
+                {
+                    results.Fail($"{subject} operation failed.");
+                }
+                else
+                {
+                    results.Pass($"{subject} operation passed.");
+                }
+            }
+            catch (Exception e)
+            {
+                // Wraps exception for the results.
+                throw results.Throw($"{e.Message}", e);
+            }
+
+            // Return the test results.
+            return results;
+        }
 
         /// <summary>
         /// Test create operation in the mysql database.

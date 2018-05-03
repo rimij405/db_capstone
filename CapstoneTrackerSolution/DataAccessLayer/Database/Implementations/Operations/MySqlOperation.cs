@@ -175,6 +175,16 @@ namespace ISTE.DAL.Database.Implementations
             this.State = OperationStatus.NULL;
         }
 
+        /// <summary>
+        /// Create an operation that can be executed at a later point in time.
+        /// </summary>
+        /// <param name="db">Database to set.</param>
+        /// <param name="isQuery">If set to true, will return a set of data. If false, will expect rows to be affected.</param>
+        /// <param name="sql">SQL to execute.</param>
+        /// <param name="parameters">Parameters to bind to the statement.</param>
+        public MySqlOperation(MySqlDatabase db, bool isQuery, string sql, MySqlParameters parameters)
+            : this(db, isQuery, sql, parameters.Dictionary) { }
+
         //////////////////////
         // Method(s).
         //////////////////////

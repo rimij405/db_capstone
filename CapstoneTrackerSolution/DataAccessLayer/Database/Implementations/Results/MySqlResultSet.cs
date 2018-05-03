@@ -261,7 +261,7 @@ namespace ISTE.DAL.Database
                         }
                     }
                 }
-                return null;
+                return entries;
             }
         }
 
