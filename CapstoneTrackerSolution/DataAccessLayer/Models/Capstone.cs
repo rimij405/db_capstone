@@ -36,53 +36,83 @@ namespace ISTE.DAL.Models
         }
 
         // Query database for info at given ID
-        public List<List<string>> Fetch()
+        public MySqlResultSet Fetch(MySqlDatabase sqlDb)
         {
-            List<List<string>> ary = null;
-            string sqlStr = "SELECT * FROM Capstone WHERE capstoneID = '" + capstoneId + "';";
-            ary = sql.GetData(sqlStr);
-            if (ary != null && ary.Count != 0)
+            string sqlStr = "SELECT * FROM Capstone WHERE capstoneID = @capstoneId;";
+            MySqlParameters parameters = new Dictionary<string, string>
             {
-                capstoneId = ary[0][1];
-                studentId = ary[0][2];
-                chairId = ary[0][3];
-                capstoneStartTerm = ary[0][4];
-                defenseDateApprovedBy = ary[0][5];
-                defenseDate = ary[0][6];
-                title = ary[0][7];
-                abstractStr = ary[0][8];
-                plagarismScore = ary[0][9];
-                grade = ary[0][10];
-            }
-            return ary;
+                {"@capstoneId", capstoneId}
+            };
+            MySqlResultSet rs = sqlDb.GetData(sqlStr, parameters.Dictionary) as MySqlResultSet;
+            capstoneId = rs["capstoneID"][0].Value;
+            studentId = rs["studentID"][0].Value;
+            chairId = rs["chairID"][0].Value;
+            capstoneStartTerm = rs["capstoneStartTerm"][0].Value;
+            defenseDateApprovedBy = rs["defenseDateApprovedBy"][0].Value;
+            defenseDate = rs["defenseDate"][0].Value;
+            title = rs["title"][0].Value;
+            abstractStr = rs["abstract"][0].Value;
+            plagarismScore = rs["plagarismScore"][0].Value;
+            grade = rs["grade"][0].Value;
+
+            return rs;
         }
 
         // Update existing record with new information at given ID
-        public int Put()
+        public MySqlResultSet Put(MySqlDatabase sqlDb)
         {
-            string sqlStr = "UPDATE Capstone SET capstoneID = '" + capstoneId + "'," +
-                "studentID = '" + studentId + "', chairID = '" + chairId + "', capstoneStartTerm = '" + capstoneStartTerm + 
-                "', defenseDateApprovedBy = '" + defenseDateApprovedBy + "', defenseDate = '" + defenseDate + "', title = '" + title
-                + "', plagarismScore = '" + plagarismScore + "', grade = '" + grade + "' WHERE capstoneID = '" + capstoneId + "';";
-            return sql.SetData(sqlStr);
+            string sqlStr = "UPDATE Capstone SET" +
+                "studentID = @studentId, chairID = @chairId, capstoneStartTerm = @capstoneStartTerm, " +
+                "defenseDateApprovedBy = @defenseDateApprovedBy, defenseDate = @defenseDate, title = @title, " + 
+                "plagarismScore = @plagarismScore, grade = @grade WHERE capstoneID = @capstoneId;";
+            MySqlParameters parameters = new Dictionary<string, string>
+            {
+                {"@studentId", studentId },
+                {"@chairId", chairId },
+                {"@capstoneStartTerm", capstoneStartTerm },
+                {"@defenseDateApprovedBy", defenseDateApprovedBy },
+                {"@defenseDate", defenseDate },
+                {"@title", title },
+                {"@plagarismScore", plagarismScore },
+                {"@grade", grade }
+            };
+            MySqlResultSet rs = sqlDb.SetData(sqlStr, parameters.Dictionary) as MySqlResultSet;
+            return rs;
         }
 
         // Add new value to database
-        public int Post()
+        public MySqlResultSet Post(MySqlDatabase sqlDb)
         {
             string sqlStr = "INSERT INTO Capstone(capstoneID, studentID, " +
                 "chairID, capstoneStartTerm, defenseDateApprovedBy, defenseDate, title, plagarismScore, grade)" +
-                "VALUES('" + capstoneId + "', '" + studentId + "', '" + chairId + "', '" + capstoneStartTerm + 
-                "', " + defenseDateApprovedBy + "', '" + defenseDate + "', '" + "', '" + title + "', '" +
-                "', '" + plagarismScore + "', '" + grade + "');";
-            return sql.SetData(sqlStr);
+                "VALUES(@capstoneId, @studentId, @chairId, @capstoneStartTerm, @defenseDateApprovedBy, @defenseDate" +
+                ", @title, @plagarismScore, @grade);";
+            MySqlParameters parameters = new Dictionary<string, string>
+            {
+                {"@capstoneId", capstoneId },
+                {"@studentId", studentId },
+                {"@chairId", chairId },
+                {"@capstoneStartTerm", capstoneStartTerm },
+                {"@defenseDateApprovedBy", defenseDateApprovedBy },
+                {"@defenseDate", defenseDate },
+                {"@title", title },
+                {"@plagarismScore", plagarismScore },
+                {"@grade", grade }
+            };
+            MySqlResultSet rs = sqlDb.SetData(sqlStr, parameters.Dictionary) as MySqlResultSet;
+            return rs;
         }
 
         // Delete record from database at given ID
-        public int Delete()
+        public MySqlResultSet Delete(MySqlDatabase sqlDb)
         {
-            string sqlStr = "DELETE FROM Capstone WHERE capstoneID = " + capstoneId + ";";
-            return sql.SetData(sqlStr);
+            string sqlStr = "DELETE FROM Capstone WHERE capstoneID = @capstoneId;";
+            MySqlParameters parameters = new Dictionary<string, string>
+            {
+                {"@capstoneId", capstoneId }
+            };
+            MySqlResultSet rs = sqlDb.SetData(sqlStr, parameters.Dictionary) as MySqlResultSet;
+            return rs;
         }
     }
 }

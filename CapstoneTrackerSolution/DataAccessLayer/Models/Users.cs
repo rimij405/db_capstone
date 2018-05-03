@@ -25,46 +25,68 @@ namespace ISTE.DAL.Models
             lastName = ln;
         }
 
-        // Query database for info at given ID
-        public List<List<string>> Fetch()
+        public MySqlResultSet Fetch(MySqlDatabase sqlDb)
         {
-            List<List<string>> ary = null;
-            string sqlStr = "SELECT * FROM Users WHERE userID = '" + userId + "';";
-            ary = sql.GetData(sqlStr);
-            if (ary != null && ary.Count != 0)
+            string sqlStr = "SELECT * FROM Users WHERE userID = @userId;";
+            MySqlParameters parameters = new Dictionary<string, string>
             {
-                userId = ary[0][1];
-                username = ary[0][2];
-                password = ary[0][3];
-                firstName = ary[0][4];
-                lastName = ary[0][5];
-            }
-            return ary;
+                {"@userId", userId }
+            };
+            MySqlResultSet rs = sqlDb.GetData(sqlStr, parameters.Dictionary) as MySqlResultSet;
+            userId = rs[0, "userID"].Value;
+            username = rs[0, "username"].Value;
+            password = rs[0, "password"].Value;
+            firstName = rs[0, "firstName"].Value;
+            lastName = rs[0, "lastName"].Value;
+
+            return rs;
         }
 
         // Update existing record with new information at given ID
-        public int Put()
+        public MySqlResultSet Put(MySqlDatabase sqlDb)
         {
-            string sqlStr = "UPDATE Users SET userID = '" + userId + "'," +
-                "username = '" + username + "', password = '" + password + "', firstName = '" + firstName + "', lastName = '" + lastName + "' WHERE" +
-                " userID = '" + userId + "';";
-            return sql.SetData(sqlStr);
+            string sqlStr = "UPDATE Users SET username = @username, password = @password, firstName = @firstName, " +
+                "lastName = @lastName WHERE userID = @userId;";
+            MySqlParameters parameters = new Dictionary<string, string>
+            {
+                {"@username", username },
+                {"@password", password },
+                {"@firstName", firstName },
+                {"@lastName", lastName },
+                {"@userId", userId }
+            };
+            MySqlResultSet rs = sqlDb.SetData(sqlStr, parameters.Dictionary) as MySqlResultSet;
+            return rs;
         }
 
         // Add new value to database
-        public int Post()
+        public MySqlResultSet Post(MySqlDatabase sqlDb)
         {
             string sqlStr = "INSERT INTO Users(userID, username, " +
-                "password, firstName, lastName) VALUES('" + userId + "', '" + username + "', '" +
-                password + "', '" + firstName + "', '" + lastName + "');";
-            return sql.SetData(sqlStr);
+                "password, firstName, lastName) VALUES(@userId, @username, @password, " +
+                "@firstName, @lastName);";
+            MySqlParameters parameters = new Dictionary<string, string>
+            {
+                {"@userId", userId},
+                {"@username", username },
+                {"@password", password },
+                {"@firstName", firstName },
+                {"@lastName", lastName }
+            };
+            MySqlResultSet rs = sqlDb.SetData(sqlStr, parameters.Dictionary) as MySqlResultSet;
+            return rs;
         }
 
         // Delete record from database at given ID
-        public int Delete()
+        public MySqlResultSet Delete(MySqlDatabase sqlDb)
         {
-            string sqlStr = "DELETE FROM Users WHERE userID = '" + userId + "';";
-            return sql.SetData(sqlStr);
+            string sqlStr = "DELETE FROM Users WHERE userID = @userId;";
+            MySqlParameters parameters = new Dictionary<string, string>
+            {
+                {"@userId", userId}
+            };
+            MySqlResultSet rs = sqlDb.SetData(sqlStr, parameters.Dictionary) as MySqlResultSet;
+            return rs;
         }
     }
 }

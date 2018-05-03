@@ -22,18 +22,19 @@ namespace ISTE.DAL.Models
         }
 
         // Query database for info at given ID
-        public List<List<string>> Fetch()
+        public MySqlResultSet Fetch(MySqlDatabase sqlDb)
         {
-            List<List<string>> ary = null;
-            string sqlStr = "SELECT * FROM EmailTypes WHERE emailCode = '" + emailCode + "';";
-            ary = sql.GetData(sqlStr);
-            if (ary != null && ary.Count != 0)
+            string sqlStr = "SELECT * FROM EmailTypes WHERE emailCode = @emailCode;";
+            MySqlParameters parameters = new Dictionary<string, string>
             {
-                emailCode = ary[0][1];
-                name = ary[0][2];
-                description = ary[0][3];
-            }
-            return ary;
+                {"@emailCode", emailCode}
+            };
+            MySqlResultSet rs = sqlDb.GetData(sqlStr, parameters.Dictionary) as MySqlResultSet;
+            emailCode = rs[0, "emailCode"].Value;
+            name = rs[0, "name"].Value;
+            description = rs[0, "description"].Value;
+
+            return rs;
         }
     }
 }

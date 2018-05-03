@@ -22,41 +22,60 @@ namespace ISTE.DAL.Models
         }
 
         // Query database for info at given ID
-        public List<List<string>> Fetch()
+        public MySqlResultSet Fetch(MySqlDatabase sqlDb)
         {
-            List<List<string>> ary = null;
-            string sqlStr = "SELECT * FROM StatusHistoryEvent WHERE capstoneID = '" + capstoneId + "';";
-            ary = sql.GetData(sqlStr);
-            if (ary != null && ary.Count != 0)
+            string sqlStr = "SELECT * FROM StatusHistoryEvent WHERE capstoneID = @capstoneId;";
+            MySqlParameters parameters = new Dictionary<string, string>
             {
-                capstoneId = ary[0][1];
-                statusCode = ary[0][2];
-                timeStamp = ary[0][3];
-            }
-            return ary;
+                {"@capstoneId", capstoneId }
+            };
+            MySqlResultSet rs = sqlDb.GetData(sqlStr, parameters.Dictionary) as MySqlResultSet;
+            capstoneId = rs[0, "capstoneID"].Value;
+            statusCode = rs[0, "statusCode"].Value;
+            timeStamp = rs[0, "timeStamp"].Value;
+
+            return rs;
         }
 
         // Update existing record with new information at given ID
-        public int Put()
+        public MySqlResultSet Put(MySqlDatabase sqlDb)
         {
-            string sqlStr = "UPDATE StatusHistoryEvent SET capstoneID = '" + capstoneId + "'," +
-                "statusCode = '" + statusCode + ", timeStamp = '" + timeStamp + "';";
-            return sql.SetData(sqlStr);
+            string sqlStr = "UPDATE StatusHistoryEvent SET statusCode = @statusCode, timeStamp = @timeStamp WHERE capstoneID = @capstoneId;";
+            MySqlParameters parameters = new Dictionary<string, string>
+            {
+                {"@statusCode", statusCode },
+                {"@timeStamp", timeStamp },
+                {"@capstoneId", capstoneId }
+            };
+            MySqlResultSet rs = sqlDb.SetData(sqlStr, parameters.Dictionary) as MySqlResultSet;
+            return rs;
         }
 
         // Add new value to database
-        public int Post()
+        public MySqlResultSet Post(MySqlDatabase sqlDb)
         {
             string sqlStr = "INSERT INTO StatusHistoryEvent(capstoneID, statusCode, timeStamp)" +
-                "VALUES('" + capstoneId + "', '" + statusCode + "', '" + timeStamp + "');";
-            return sql.SetData(sqlStr);
+                "VALUES(@capstoneId, @statusCode, @timeStamp);";
+            MySqlParameters parameters = new Dictionary<string, string>
+            {
+                {"@capstoneId", capstoneId },
+                {"@statusCode", statusCode },
+                {"@timeStamp", timeStamp}
+            };
+            MySqlResultSet rs = sqlDb.SetData(sqlStr, parameters.Dictionary) as MySqlResultSet;
+            return rs;
         }
 
         // Delete record from database at given ID
-        public int Delete()
+        public MySqlResultSet Delete(MySqlDatabase sqlDb)
         {
-            string sqlStr = "DELETE FROM StatusHistoryEvent WHERE capstoneID = '" + capstoneId + "';";
-            return sql.SetData(sqlStr);
+            string sqlStr = "DELETE FROM StatusHistoryEvent WHERE capstoneID = @capstoneId;";
+            MySqlParameters parameters = new Dictionary<string, string>
+            {
+                {"@capstoneId", capstoneId }
+            };
+            MySqlResultSet rs = sqlDb.SetData(sqlStr, parameters.Dictionary) as MySqlResultSet;
+            return rs;
         }
     }
 }
