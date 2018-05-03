@@ -37,27 +37,32 @@ namespace PresentationLayer
         string selectedCapstone;
         string userRole;
 
+        // Get user role to determine how certain forms will load
         public string GetRole()
         {
             return userRole;
         }
 
+        // Get username to be used on userpage
         public string GetUsername()
         {
             return username;
         }
 
+        // Set global username variable (and user role) once user has logged in
         public void SetUsername(string user)
         {
             username = user;
             //TODO - Set userRole
         }
 
+        // Set global selected username variable in order to load correct user page when a user is selected
         public void SetSelectedUser(string user)
         {
             selectedUser = user;
         }
 
+        // Set global selected capstone variable in order to load correct capstone when one is selected
         // input type determines whether capstone is being set with a capstone name (0) or a username (1)
         public void SetSelectedCapstone(string capstone, int inputType)
         {
@@ -67,7 +72,7 @@ namespace PresentationLayer
             }
             else
             {
-
+                //selectedCapstone = capstone name retrieved from username
             }
         }
 
