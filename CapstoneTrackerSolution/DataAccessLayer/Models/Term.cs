@@ -26,30 +26,37 @@ namespace ISTE.DAL.Models
         }
 
         // Query database for info at given ID
-        public List<List<string>> Fetch()
+        public MySqlResultSet Fetch(MySqlDatabase sqlDb)
         {
-            List<List<string>> ary = null;
-            string sqlStr = "SELECT * FROM Term WHERE termCode = '" + termCode + "';";
-            ary = sql.GetData(sqlStr);
-            if (ary != null && ary.Count != 0)
+            string sqlStr = "SELECT * FROM Term WHERE termCode = @term;";
+            MySqlParameters parameters = new Dictionary<string, string>
             {
-                termCode = ary[0][1];
-                termStart = ary[0][2];
-                termEnd = ary[0][3];
-                gradeDeadline = ary[0][4];
-                addDropDeadline = ary[0][5];
-            }
-            return ary;
+                {"@term", termCode}
+            };
+            MySqlResultSet rs = sqlDb.GetData(sqlStr, parameters.Dictionary) as MySqlResultSet;
+            termCode = rs[0, "termCode"].Value;
+            termStart = rs[0, "termStart"].Value;
+            termEnd = rs[0, "termEnd"].Value;
+            gradeDeadline = rs[0, "gradeDeadline"].Value;
+            addDropDeadline = rs[0, "addDropDeadline"].Value;
+
+            return rs;
         }
 
         // Update existing record with new information at given ID
-        public int Put()
+        public MySqlResultSet Put(MySqlDatabase sqlDb)
         {
-            string sqlStr = "UPDATE Term SET termCode = '" + termCode + "'," +
-                "termStart = '" + termStart + ", termEnd = '" + termEnd +
-                "', gradeDeadline = '" + gradeDeadline + 
-                "', addDropDeadline = '" + addDropDeadline + "';";
-            return sql.SetData(sqlStr);
+            string sqlStr = "UPDATE Term SET termStart = @termStart, termEnd = @termEnd, " +
+                "gradeDeadline = @gradeDeadline, addDropDeadline = @addDropDeadline WHERE termCode = @termCode;";
+            MySqlParameters parameters = new Dictionary<string, string>
+            {
+                {"@termStart", termStart},
+                {"@termEnd", termEnd },
+                {"@gradeDeadline", gradeDeadline },
+                {"@addDropDeadline", addDropDeadline }
+            };
+            MySqlResultSet rs = sqlDb.GetData(sqlStr, parameters.Dictionary) as MySqlResultSet;
+            return rs;
         }
     }
 }

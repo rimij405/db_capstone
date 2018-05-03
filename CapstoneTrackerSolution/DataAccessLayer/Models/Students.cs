@@ -20,39 +20,56 @@ namespace ISTE.DAL.Models
         }
 
         // Query database for info at given ID
-        public List<List<string>> Fetch()
+        public MySqlResultSet Fetch(MySqlDatabase sqlDb)
         {
-            List<List<string>> ary = null;
-            string sqlStr = "SELECT * FROM Students WHERE userID = '" + userId + "';";
-            ary = sql.GetData(sqlStr);
-            if (ary != null && ary.Count != 0)
+            string sqlStr = "SELECT * FROM Students WHERE userID = @userId;";
+            MySqlParameters parameters = new Dictionary<string, string>
             {
-                userId = ary[0][1];
-                mastersStart= ary[0][2];
-            }
-            return ary;
+                {"@userId", userId }
+            };
+            MySqlResultSet rs = sqlDb.GetData(sqlStr, parameters.Dictionary) as MySqlResultSet;
+            userId = rs[0, "userID"].Value;
+            mastersStart = rs[0, "mastersStart"].Value;
+
+            return rs;
         }
 
         // Update existing record with new information at given ID
-        public int Put()
+        public MySqlResultSet Put(MySqlDatabase sqlDb)
         {
-            string sqlStr = "UPDATE Students SET userID = '" + userId + "'," +
-                "mastersStart = '" + mastersStart + "';";
-            return sql.SetData(sqlStr);
+            string sqlStr = "UPDATE Students SET mastersStart = @mastersStart WHERE userID = @userId;";
+            MySqlParameters parameters = new Dictionary<string, string>
+            {
+                {"@mastersStart", mastersStart},
+                {"@userId", userId}
+            };
+            MySqlResultSet rs = sqlDb.SetData(sqlStr, parameters.Dictionary) as MySqlResultSet;
+            return rs;
         }
 
         // Add new value to database
-        public int Post()
+        public MySqlResultSet Post(MySqlDatabase sqlDb)
         {
-            string sqlStr = "INSERT INTO Students(userID, mastersStart) VALUES('" + userId + "', '" + mastersStart + "');";
-            return sql.SetData(sqlStr);
+            string sqlStr = "INSERT INTO Students(userID, mastersStart) VALUES(@userId, @mastersStart);";
+            MySqlParameters parameters = new Dictionary<string, string>
+            {
+                {"@userId", userId},
+                {"@mastersStart", mastersStart}
+            };
+            MySqlResultSet rs = sqlDb.SetData(sqlStr, parameters.Dictionary) as MySqlResultSet;
+            return rs;
         }
 
         // Delete record from database at given ID
-        public int Delete()
+        public MySqlResultSet Delete(MySqlDatabase sqlDb)
         {
-            string sqlStr = "DELETE FROM Students WHERE userID = '" + userId + "';";
-            return sql.SetData(sqlStr);
+            string sqlStr = "DELETE FROM Students WHERE userID = @userId;";
+            MySqlParameters parameters = new Dictionary<string, string>
+            {
+                {"@userId", userId}
+            };
+            MySqlResultSet rs = sqlDb.SetData(sqlStr, parameters.Dictionary) as MySqlResultSet;
+            return rs;
         }
     }
 }

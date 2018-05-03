@@ -21,42 +21,60 @@ namespace ISTE.DAL.Models
             phoneType = pt;
         }
 
-        // Query database for info at given ID
-        public List<List<string>> Fetch()
+        public MySqlResultSet Fetch(MySqlDatabase sqlDb)
         {
-            List<List<string>> ary = null;
-            string sqlStr = "SELECT * FROM UserPhones WHERE userID = '" + userId + "';";
-            ary = sql.GetData(sqlStr);
-            if (ary != null && ary.Count != 0)
+            string sqlStr = "SELECT * FROM UserPhones WHERE userID = @userId;";
+            MySqlParameters parameters = new Dictionary<string, string>
             {
-                userId = ary[0][1];
-                number = ary[0][2];
-                phoneType = ary[0][3];
-            }
-            return ary;
+                {"@userId", userId }
+            };
+            MySqlResultSet rs = sqlDb.GetData(sqlStr, parameters.Dictionary) as MySqlResultSet;
+            userId = rs[0, "userID"].Value;
+            number = rs[0, "number"].Value;
+            phoneType = rs[0, "phoneType"].Value;
+
+            return rs;
         }
 
         // Update existing record with new information at given ID
-        public int Put()
+        public MySqlResultSet Put(MySqlDatabase sqlDb)
         {
-            string sqlStr = "UPDATE UserPhones SET userID = '" + userId + "'," +
-                "number = '" + number + ", phoneType = '" + phoneType + "';";
-            return sql.SetData(sqlStr);
+            string sqlStr = "UPDATE UserEmails SET number = @number, phoneType = @phoneType WHERE userID = @userId;";
+            MySqlParameters parameters = new Dictionary<string, string>
+            {
+                {"@number", number },
+                {"@phoneType", phoneType },
+                {"@userId", userId }
+            };
+            MySqlResultSet rs = sqlDb.SetData(sqlStr, parameters.Dictionary) as MySqlResultSet;
+            return rs;
         }
 
         // Add new value to database
-        public int Post()
+        public MySqlResultSet Post(MySqlDatabase sqlDb)
         {
-            string sqlStr = "INSERT INTO UserPhones(userID, number, phoneType)" + 
-                "VALUES('" + userId + "', '" + number + "', '" + phoneType + "');";
-            return sql.SetData(sqlStr);
+            string sqlStr = "INSERT INTO UserEmails(userID, number, phonetype)" +
+                "VALUES(@userId, @number, @phoneType);";
+            MySqlParameters parameters = new Dictionary<string, string>
+            {
+                {"@userId", userId},
+                {"@number", number },
+                {"@phoneType", phoneType }
+            };
+            MySqlResultSet rs = sqlDb.SetData(sqlStr, parameters.Dictionary) as MySqlResultSet;
+            return rs;
         }
 
         // Delete record from database at given ID
-        public int Delete()
+        public MySqlResultSet Delete(MySqlDatabase sqlDb)
         {
-            string sqlStr = "DELETE FROM UserPhones WHERE userID = '" + userId + "';";
-            return sql.SetData(sqlStr);
+            string sqlStr = "DELETE FROM UserPhones WHERE userID = @userId;";
+            MySqlParameters parameters = new Dictionary<string, string>
+            {
+                {"@userId", userId}
+            };
+            MySqlResultSet rs = sqlDb.SetData(sqlStr, parameters.Dictionary) as MySqlResultSet;
+            return rs;
         }
     }
 }

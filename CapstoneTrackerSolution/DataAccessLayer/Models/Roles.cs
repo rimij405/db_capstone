@@ -22,18 +22,19 @@ namespace ISTE.DAL.Models
         }
 
         // Query database for info at given ID
-        public List<List<string>> Fetch()
+        public MySqlResultSet Fetch(MySqlDatabase sqlDb)
         {
-            List<List<string>> ary = null;
-            string sqlStr = "SELECT * FROM Statuses WHERE code = '" + code + "';";
-            ary = sql.GetData(sqlStr);
-            if (ary != null && ary.Count != 0)
+            string sqlStr = "SELECT * FROM Roles WHERE code = @code;";
+            MySqlParameters parameters = new Dictionary<string, string>
             {
-                code = ary[0][1];
-                name = ary[0][2];
-                description = ary[0][3];
-            }
-            return ary;
+                {"@code", code }
+            };
+            MySqlResultSet rs = sqlDb.GetData(sqlStr, parameters.Dictionary) as MySqlResultSet;
+            code = rs[0, "code"].Value;
+            name = rs[0, "name"].Value;
+            description = rs[0, "description"].Value;
+
+            return rs;
         }
     }
 }
