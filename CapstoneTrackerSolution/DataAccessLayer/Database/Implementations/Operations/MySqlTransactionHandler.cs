@@ -158,7 +158,7 @@ namespace ISTE.DAL.Database.Implementations
     /// <summary>
     /// Authenticates a transaction within the database.
     /// </summary>
-    public class MySqlAuthorization : MySqlTransactionHandler
+    /* public class MySqlAuthorization : MySqlTransactionHandler
     {
 
 
@@ -166,6 +166,6 @@ namespace ISTE.DAL.Database.Implementations
         {
             throw new NotImplementedException();
         }
-    }
+    }*/
 
 }
