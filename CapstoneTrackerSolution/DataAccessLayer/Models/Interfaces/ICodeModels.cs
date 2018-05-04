@@ -11,6 +11,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 // additional using statements.
+using ISTE.DAL.Database.Implementations;
 using ISTE.DAL.Database.Interfaces;
 
 namespace ISTE.DAL.Models.Interfaces
@@ -31,32 +32,15 @@ namespace ISTE.DAL.Models.Interfaces
         IDateTimeFormat Timestamp
         {
             get;
+            set;
         }
-
-        //////////////////////
-        // Method(s).
-        //////////////////////
-
-        //////////////////////
-        // Accessor method(s).
-
-        /// <summary>
-        /// Timestamp associated with a particular model.
-        /// </summary>
-        /// <returns>Return timestamp.</returns>
-        IDateTimeFormat GetTimestamp();
-
-        /// <summary>
-        /// Set the timestamp.
-        /// </summary>
-        /// <param name="timestamp">Time to set.</param>
-        void SetTimestamp(IDateTimeFormat timestamp);
+        
     }
-
+    
     /// <summary>
     /// Represents a collection of code models.
     /// </summary>
-    public interface ICodeGlossary<TCodeModel> : IDatabaseObjectReader where TCodeModel : ICodeModel
+    public interface ICodeGlossary<TCodeItem> : IDatabaseObjectReader where TCodeItem : ICodeItem
     {
         //////////////////////
         // Properties.
@@ -92,22 +76,50 @@ namespace ISTE.DAL.Models.Interfaces
         /// </summary>
         /// <param name="code">Code to find model for.</param>
         /// <returns>Returns the code model.</returns>
-        TCodeModel Find(string code);
+        TCodeItem Find(string code);
 
         /// <summary>
         /// Returns a code model associated with the input name. Returns null if it doesn't exist.
         /// </summary>
         /// <param name="name">Name of model to find.</param>
         /// <returns>Returns the code model.</returns>
-        TCodeModel FindByName(string name);
+        TCodeItem FindByName(string name);
+        
+    }
+
+    /// <summary>
+    /// Collection of term models.
+    /// </summary>
+    public interface ITerms
+    {
+        //////////////////////
+        // Accessor method(s).
 
         /// <summary>
-        /// Return a code model created from the input code.
+        /// Returns a code model associated with the input code. Returns null if it doesn't exist.
         /// </summary>
-        /// <param name="code">Code associated with type.</param>
-        /// <returns>Returns a phone type object.</returns>
-        TCodeModel GetModel(string code);
+        /// <param name="code">Code to find model for.</param>
+        /// <returns>Returns the code model.</returns>
+        ITermModel Find(string code);
 
+    }
+
+    /// <summary>
+    /// Glossary of all status events.
+    /// </summary>
+    public interface IStatusEvents
+    {
+        //////////////////////
+        // Accessor method(s).
+
+        /// <summary>
+        /// Returns a code model associated with the input code. Returns null if it doesn't exist.
+        /// </summary>
+        /// <param name="capstoneID">Primary key composite.</param>
+        /// <param name="statusCode">Primary key composite.</param>
+        /// <param name="timestamp">Primary key composite.</param>
+        /// <returns>Returns the code model.</returns>
+        IStatusEventModel Find(string capstoneID, string statusCode, string timestamp);
     }
 
     /// <summary>
@@ -148,7 +160,7 @@ namespace ISTE.DAL.Models.Interfaces
         /// <summary>
         /// Start of the term.
         /// </summary>
-        IDateTimeRange TermStart
+        IDateTimeFormat TermStart
         {
             get;
         }
@@ -156,7 +168,7 @@ namespace ISTE.DAL.Models.Interfaces
         /// <summary>
         /// End of the term.
         /// </summary>
-        IDateTimeRange TermEnd
+        IDateTimeFormat TermEnd
         {
             get;
         }
@@ -164,7 +176,7 @@ namespace ISTE.DAL.Models.Interfaces
         /// <summary>
         /// Grade deadline.
         /// </summary>
-        IDateTimeRange GradeDeadline
+        IDateTimeFormat GradeDeadline
         {
             get;
         }
@@ -172,7 +184,7 @@ namespace ISTE.DAL.Models.Interfaces
         /// <summary>
         /// Add-drop deadline.
         /// </summary>
-        IDateTimeRange AddDropDeadline
+        IDateTimeFormat AddDropDeadline
         {
             get;
         }        
@@ -212,34 +224,8 @@ namespace ISTE.DAL.Models.Interfaces
     /// <summary>
     /// Represents a status that can be used.
     /// </summary>
-    public interface IStatusModel : ICodeItem
-    {
-        //////////////////////
-        // Method(s).
-        //////////////////////
-
-        //////////////////////
-        // Accessor method(s).
-
-        /// <summary>
-        /// Return the code of the status.
-        /// </summary>
-        /// <returns>Return role code.</returns>
-        string GetStatusCode();
-
-        /// <summary>
-        /// Return the name of the status.
-        /// </summary>
-        /// <returns>Return name.</returns>
-        string GetStatusName();
-
-        /// <summary>
-        /// Return the description of the status.
-        /// </summary>
-        /// <returns>Return description.</returns>
-        string GetStatusDescription();
-    }
-
+    public interface IStatusModel : ICodeItem{}
+    
     /// <summary>
     /// Represents a status and a timestamp.
     /// </summary>
@@ -253,33 +239,7 @@ namespace ISTE.DAL.Models.Interfaces
     /// <summary>
     /// Represents a role that a user can have.
     /// </summary>
-    public interface IRoleTypeModel : ICodeItem
-    {
-        //////////////////////
-        // Method(s).
-        //////////////////////
-
-        //////////////////////
-        // Accessor method(s).
-
-        /// <summary>
-        /// Return the code of the role.
-        /// </summary>
-        /// <returns>Return role code.</returns>
-        string GetRoleCode();
-
-        /// <summary>
-        /// Return the name of the role.
-        /// </summary>
-        /// <returns>Return name.</returns>
-        string GetRoleName();
-
-        /// <summary>
-        /// Return the description of the role.
-        /// </summary>
-        /// <returns>Return description.</returns>
-        string GetRoleDescription();
-    }
+    public interface IRoleTypeModel : ICodeItem{}
 
     /// <summary>
     /// Glosary of all email types.
@@ -289,33 +249,7 @@ namespace ISTE.DAL.Models.Interfaces
     /// <summary>
     /// Represents an email type.
     /// </summary>
-    public interface IEmailTypeModel : ICodeItem
-    {
-        //////////////////////
-        // Method(s).
-        //////////////////////
-
-        //////////////////////
-        // Accessor method(s).
-
-        /// <summary>
-        /// Get the code associated with the given email type.
-        /// </summary>
-        /// <returns>Returns code.</returns>
-        string GetEmailTypeCode();
-
-        /// <summary>
-        /// Returns the name of the email type.
-        /// </summary>
-        /// <returns>Returns type.</returns>
-        string GetEmailType();
-
-        /// <summary>
-        /// Returns the description associated with the email.
-        /// </summary>
-        /// <returns>Returns description.</returns>
-        string GetEmailTypeDescription();
-    }
+    public interface IEmailTypeModel : ICodeItem{}
 
     /// <summary>
     /// Glossary of all phone types.
@@ -325,32 +259,6 @@ namespace ISTE.DAL.Models.Interfaces
     /// <summary>
     /// Represents a phone type.
     /// </summary>
-    public interface IPhoneTypeModel : ICodeItem
-    {
-        //////////////////////
-        // Method(s).
-        //////////////////////
-
-        //////////////////////
-        // Accessor method(s).
-
-        /// <summary>
-        /// Get the code associated with the given phone type.
-        /// </summary>
-        /// <returns>Returns code.</returns>
-        string GetPhoneTypeCode();
-
-        /// <summary>
-        /// Returns the name of the phone type.
-        /// </summary>
-        /// <returns>Returns type.</returns>
-        string GetPhoneType();
-
-        /// <summary>
-        /// Returns the description associated with the phone.
-        /// </summary>
-        /// <returns>Returns description.</returns>
-        string GetPhoneTypeDescription();
-    }
+    public interface IPhoneTypeModel : ICodeItem{}
     
 }

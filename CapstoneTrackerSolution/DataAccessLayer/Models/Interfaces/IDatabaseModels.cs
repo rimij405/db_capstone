@@ -107,7 +107,7 @@ namespace ISTE.DAL.Models.Interfaces
     /// <summary>
     /// Represents a capstone object.
     /// </summary>
-    public interface ICapstone : IUserProperty, IStudentProperty, IFacultyProperty, IDatabaseObject, IDatabaseObjectReader, IDatabaseObjectInserter, IDatabaseObjectUpdater
+    public interface ICapstoneModel : IUserProperty, IStudentProperty, IFacultyProperty, IDatabaseObject, IDatabaseObjectReader, IDatabaseObjectInserter, IDatabaseObjectUpdater
     {
         //////////////////////
         // Properties.
@@ -127,7 +127,7 @@ namespace ISTE.DAL.Models.Interfaces
         /// <summary>
         /// Represents the start term of the capstone.
         /// </summary>
-        ITermModel CapstoneStartTerm
+        IUIDFormat CapstoneStartTerm
         {
             get;
             set;
@@ -154,7 +154,7 @@ namespace ISTE.DAL.Models.Interfaces
         /// <summary>
         /// Plagiarism score.
         /// </summary>
-        string PlagarismScore
+        string PlagiarismScore
         {
             get;
             set;
@@ -318,7 +318,7 @@ namespace ISTE.DAL.Models.Interfaces
         /// <summary>
         /// Represents the currently active capstone for a student.
         /// </summary>
-        ICapstone ActiveCapstone
+        ICapstoneModel ActiveCapstone
         {
             get;
             set;
@@ -327,7 +327,7 @@ namespace ISTE.DAL.Models.Interfaces
         /// <summary>
         /// Reference to all capstones a student may have.
         /// </summary>
-        List<ICapstone> AllCapstones
+        List<ICapstoneModel> AllCapstones
         {
             get;
             set;
@@ -374,13 +374,13 @@ namespace ISTE.DAL.Models.Interfaces
         /// Add a new capstone to the student. (Cannot be added while there is an active capstone).
         /// </summary>
         /// <param name="capstone">Capstone to add.</param>
-        void AddCapstone(ICapstone capstone);
+        void AddCapstone(ICapstoneModel capstone);
 
         /// <summary>
         /// Update capstone.
         /// </summary>
         /// <param name="capstone">Capstone to update.</param>
-        void UpdateCapstone(ICapstone capstone);
+        void UpdateCapstone(ICapstoneModel capstone);
     }
 
     /// <summary>
@@ -493,7 +493,24 @@ namespace ISTE.DAL.Models.Interfaces
         /// <param name="phoneNumber">Value of property to check.</param>
         /// <returns>Return true if property and its value is found.</returns>
         bool HasPhoneNumber(string phoneNumber);
-        
+
+        //////////////////////
+        // Accessor method(s).
+
+        /// <summary>
+        /// Retrieve collection of user properties that match the type.
+        /// </summary>
+        /// <param name="propertyType">Type of properties to return.</param>
+        /// <returns>Returns collection of properties.</returns>
+        List<IUserProperty> GetProperties(UserProperties propertyType);
+
+        /// <summary>
+        /// Retrieve collection of user properties that match the type.
+        /// </summary>
+        /// <typeparam name="TUserProperty">Type of properties to return.</typeparam>
+        /// <returns>Returns collection of properties.</returns>
+        List<TUserProperty> GetProperties<TUserProperty>() where TUserProperty : IUserProperty;
+
         //////////////////////
         // Mutator method(s).
 
@@ -611,7 +628,7 @@ namespace ISTE.DAL.Models.Interfaces
         /// <summary>
         /// Data representing phone type.
         /// </summary>
-        IPhoneTypeModel PhoneType
+        IUIDFormat PhoneType
         {
             get;
             set;
@@ -640,7 +657,7 @@ namespace ISTE.DAL.Models.Interfaces
         /// <summary>
         /// Data representing email type.
         /// </summary>
-        IEmailTypeModel EmailType
+        IUIDFormat EmailType
         {
             get;
             set;
@@ -659,32 +676,36 @@ namespace ISTE.DAL.Models.Interfaces
         /// <summary>
         /// Represents role associated with a role code.
         /// </summary>
-        IRoleTypeModel RoleCode
+        IUIDFormat RoleCode
         {
             get;
+            set;
+        }
+
+        /// <summary>
+        /// Status code of current status.
+        /// </summary>
+        IUIDFormat StatusCode
+        {
+            get;
+            set;
         }
 
         /// <summary>
         /// Represents role associated with a role entry.
         /// </summary>
-        IStatusEventModel RoleStatus
+        IDateTimeFormat Timestamp
         {
             get;
+            set;
         }
-
-        //////////////////////
-        // Method(s).
-        //////////////////////
-
-        //////////////////////
-        // Service method(s).
 
         /// <summary>
         /// Return true if the status event is authorizes for this role.
         /// </summary>
+        /// <param name="database">Database to check validity from.</param>
         /// <returns>Returns true if role is in the database AND has a valid status.</returns>
-        bool StillValid();
-
+        bool IsValid(IReadable database);
     }
     
 }

@@ -20,7 +20,7 @@ using ISTE.DAL.Database.Interfaces;
 using Services;
 using System.Data;
 
-namespace ISTE.DAL.Database
+namespace ISTE.DAL.Database.Implementations
 {
     /// <summary>
     /// Connect to a MySqlDatabase.
@@ -236,6 +236,17 @@ namespace ISTE.DAL.Database
         /// <param name="sqlQuery">Query to execute on the data reader.</param>
         /// <param name="parameters">Parameters to assign to the command.</param>
         /// <returns>Returns result set containing response from database.</returns>
+        public IResultSet GetData(string sqlQuery, MySqlParameters parameters)
+        {
+            return GetData(sqlQuery, parameters.Dictionary);
+        }
+
+        /// <summary>
+        /// Return collection of data from the database, applying any parameters if necessary. (No parameters will assume it is a statement that needs no preparation).
+        /// </summary>
+        /// <param name="sqlQuery">Query to execute on the data reader.</param>
+        /// <param name="parameters">Parameters to assign to the command.</param>
+        /// <returns>Returns result set containing response from database.</returns>
         public IResultSet GetData(string sqlQuery, IDictionary<string, string> parameters = null)
         {
             // Create default response, to return on failure.
@@ -339,6 +350,17 @@ namespace ISTE.DAL.Database
         /// <param name="sqlQuery">Query to execute on the data reader.</param>
         /// <param name="parameters">Parameters to assign to the command.</param>
         /// <returns>Returns result set containing response from database.</returns>
+        public IResultSet SetData(string sqlQuery, MySqlParameters parameters)
+        {
+            return this.SetData(sqlQuery, parameters.Dictionary);
+        }
+
+        /// <summary>
+        /// Return metadata from database, after executing input statement, applying any parameters if necessary. (No parameters will assume it is a statement that needs no preparation).
+        /// </summary>
+        /// <param name="sqlQuery">Query to execute on the data reader.</param>
+        /// <param name="parameters">Parameters to assign to the command.</param>
+        /// <returns>Returns result set containing response from database.</returns>
         public IResultSet SetData(string sqlQuery, IDictionary<string, string> parameters = null)
         {
             // Create default response, to return on failure.
@@ -398,13 +420,8 @@ namespace ISTE.DAL.Database
             // Return the result set.
             return set;
         }
-
-
-
-
-
-
-        public List<List<string>> GetData(string sql)
+        
+       /* public List<List<string>> GetData(string sql)
         {
             List<List<string>> ary = new List<List<string>>();
             if (Connect())
@@ -452,6 +469,6 @@ namespace ISTE.DAL.Database
             }
             Close();
             return rc;
-        }
+        }*/
     }
 }

@@ -33,7 +33,9 @@
     </DocumentationFile>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="MySql.Data, Version=8.0.11.0, Culture=neutral, PublicKeyToken=c5687fc88969c44d, processorArchitecture=MSIL" />
+    <Reference Include="MySql.Data, Version=6.10.6.0, Culture=neutral, PublicKeyToken=c5687fc88969c44d, processorArchitecture=MSIL">
+      <EmbedInteropTypes>False</EmbedInteropTypes>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -45,35 +47,35 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Database\Implementations\Configuration\MySqlParameters.cs" />
-    <Compile Include="Database\Implementations\Exceptions\DataAccessLayerException.cs" />
-    <Compile Include="Database\Implementations\Exceptions\DatabaseCloseException.cs" />
-    <Compile Include="Database\Implementations\Exceptions\DatabaseConnectionException.cs" />
+    <Compile Include="Database\Exceptions\DataAccessLayerException.cs" />
+    <Compile Include="Database\Exceptions\DatabaseCloseException.cs" />
+    <Compile Include="Database\Exceptions\DatabaseConnectionException.cs" />
     <Compile Include="Database\Implementations\Operations\MySqlOperation.cs" />
     <Compile Include="Database\Implementations\Operations\MySqlTransactionHandler.cs" />
     <Compile Include="Database\Implementations\Results\MySqlEntry.cs" />
     <Compile Include="Database\Implementations\Results\MySqlResultSet.cs" />
     <Compile Include="Database\Implementations\Results\MySqlResultPrinter.cs" />
     <Compile Include="Database\Implementations\Results\MySqlRow.cs" />
-    <Compile Include="Database\Deprecated\Fields\Field.cs" />
-    <Compile Include="Database\Deprecated\Fields\IFieldTypes.cs" />
-    <Compile Include="Database\Deprecated\IClamp.cs" />
+    <Compile Include="Database\Implementations\Types\Formats.cs" />
     <Compile Include="Database\Interfaces\Configuration\IConfiguration.cs" />
     <Compile Include="Database\Interfaces\Configuration\IDatabase.cs" />
-    <Compile Include="Database\Deprecated\Fields\IField.cs" />
-    <Compile Include="Database\Deprecated\Fields\IFieldType.cs" />
     <Compile Include="Database\Interfaces\Configuration\IParameters.cs" />
     <Compile Include="Database\Interfaces\Operations\IReadable.cs" />
     <Compile Include="Database\Interfaces\Operations\ITransaction.cs" />
     <Compile Include="Database\Interfaces\Operations\IWritable.cs" />
     <Compile Include="Database\Interfaces\Results\IResultSet.cs" />
-    <Compile Include="Database\Deprecated\NonNullableField.cs" />
-    <Compile Include="Database\Deprecated\NullableField.cs" />
-    <Compile Include="Database\Deprecated\FieldTypes.cs" />
+    <Compile Include="Database\Interfaces\Types\IFormats.cs" />
+    <Compile Include="Models\Exceptions\DatabaseOperationException.cs" />
+    <Compile Include="Models\Implementations\MySqlDatabaseObject.cs" />
+    <Compile Include="Models\Implementations\MySqlUserProperties.cs" />
+    <Compile Include="Models\Implementations\MySqlCodes.cs" />
+    <Compile Include="Models\Interfaces\ICodeModels.cs" />
     <Compile Include="Models\Interfaces\IDatabaseObject.cs" />
     <Compile Include="Database\Implementations\Configuration\MySqlConfiguration.cs" />
     <Compile Include="Database\Implementations\Configuration\MySqlDatabase.cs" />
     <Compile Include="Models\Capstone.cs" />
     <Compile Include="Models\EmailTypes.cs" />
+    <Compile Include="Models\Interfaces\IDatabaseModels.cs" />
     <Compile Include="Models\PhoneTypes.cs" />
     <Compile Include="Models\Roles.cs" />
     <Compile Include="Models\Statuses.cs" />
@@ -83,12 +85,11 @@
     <Compile Include="Models\UserEmails.cs" />
     <Compile Include="Models\UserPhones.cs" />
     <Compile Include="Models\UserRoles.cs" />
-    <Compile Include="Models\Users.cs" />
+    <Compile Include="Models\Implementations\MySqlUser.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Gateways\" />
-    <Folder Include="Models\Exceptions\" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Services\Services.csproj">

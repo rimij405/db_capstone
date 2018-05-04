@@ -33,14 +33,14 @@ CREATE TABLE `capstone` (
   `defenseDate` datetime DEFAULT NULL,
   `title` varchar(100) NOT NULL,
   `abstract` varchar(140) NOT NULL,
-  `plagarismScore` int(10) unsigned DEFAULT NULL,
+  `plagiarismScore` int(10) unsigned DEFAULT NULL,
   `grade` int(10) unsigned DEFAULT NULL,
   PRIMARY KEY (`capstoneID`),
   KEY `capstone_studentID_fk` (`studentID`),
   KEY `capstone_chairID_fk` (`chairID`),
   KEY `capstone_capstoneStartTerm_fk` (`capstoneStartTerm`),
   KEY `capstone_defenseDateApprovedBy_fk` (`defenseDateApprovedBy`),
-  CONSTRAINT `capstone_capstoneStartTerm_fk` FOREIGN KEY (`capstoneStartTerm`) REFERENCES `term` (`termCode`),
+  CONSTRAINT `capstone_capstoneStartTerm_fk` FOREIGN KEY (`capstoneStartTerm`) REFERENCES `term` (`code`),
   CONSTRAINT `capstone_chairID_fk` FOREIGN KEY (`chairID`) REFERENCES `users` (`userID`),
   CONSTRAINT `capstone_defenseDateApprovedBy_fk` FOREIGN KEY (`defenseDateApprovedBy`) REFERENCES `users` (`userID`),
   CONSTRAINT `capstone_studentID_fk` FOREIGN KEY (`studentID`) REFERENCES `users` (`userID`)
@@ -54,7 +54,7 @@ CREATE TABLE `capstone` (
 
 LOCK TABLES `capstone` WRITE;
 /*!40000 ALTER TABLE `capstone` DISABLE KEYS */;
-INSERT INTO `capstone` (`capstoneID`, `studentID`, `chairID`, `capstoneStartTerm`, `defenseDateApprovedBy`, `defenseDate`, `title`, `abstract`, `plagarismScore`, `grade`) VALUES (1,3,2,02171,NULL,NULL,'Example','This is an example proposal.',NULL,NULL),(2,4,2,02178,NULL,NULL,'Example 2','This is another example.',NULL,NULL);
+INSERT INTO `capstone` (`capstoneID`, `studentID`, `chairID`, `capstoneStartTerm`, `defenseDateApprovedBy`, `defenseDate`, `title`, `abstract`, `plagiarismScore`, `grade`) VALUES (1,3,2,02171,NULL,NULL,'Example','This is an example proposal.',NULL,NULL),(2,4,2,02178,NULL,NULL,'Example 2','This is another example.',NULL,NULL);
 /*!40000 ALTER TABLE `capstone` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -99,21 +99,21 @@ DROP TABLE IF EXISTS `emailtypes`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `emailtypes` (
-  `emailCode` int(10) unsigned NOT NULL,
+  `code` int(10) unsigned NOT NULL,
   `name` varchar(45) NOT NULL,
   `description` varchar(45) DEFAULT NULL,
-  PRIMARY KEY (`emailCode`)
+  PRIMARY KEY (`code`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
 -- Dumping data for table `emailtypes`
 --
--- ORDER BY:  `emailCode`
+-- ORDER BY:  `code`
 
 LOCK TABLES `emailtypes` WRITE;
 /*!40000 ALTER TABLE `emailtypes` DISABLE KEYS */;
-INSERT INTO `emailtypes` (`emailCode`, `name`, `description`) VALUES (1,'SCHOOL','School email.'),(2,'PRIMARY','Primary email.'),(3,'WORK','Work email.'),(4,'PERSONAL','Personal email.');
+INSERT INTO `emailtypes` (`code`, `name`, `description`) VALUES (1,'SCHOOL','School email.'),(2,'PRIMARY','Primary email.'),(3,'WORK','Work email.'),(4,'PERSONAL','Personal email.');
 /*!40000 ALTER TABLE `emailtypes` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -125,21 +125,21 @@ DROP TABLE IF EXISTS `phonetypes`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `phonetypes` (
-  `phoneCode` int(10) unsigned NOT NULL,
+  `code` int(10) unsigned NOT NULL,
   `name` varchar(45) NOT NULL,
   `description` varchar(45) DEFAULT NULL,
-  PRIMARY KEY (`phoneCode`)
+  PRIMARY KEY (`code`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
 -- Dumping data for table `phonetypes`
 --
--- ORDER BY:  `phoneCode`
+-- ORDER BY:  `code`
 
 LOCK TABLES `phonetypes` WRITE;
 /*!40000 ALTER TABLE `phonetypes` DISABLE KEYS */;
-INSERT INTO `phonetypes` (`phoneCode`, `name`, `description`) VALUES (1,'PRIMARY','Primary number.'),(2,'HOME','Home number.'),(3,'MOBILE','Mobile number.'),(4,'WORK','Work/Office number.');
+INSERT INTO `phonetypes` (`code`, `name`, `description`) VALUES (1,'PRIMARY','Primary number.'),(2,'HOME','Home number.'),(3,'MOBILE','Mobile number.'),(4,'WORK','Work/Office number.');
 /*!40000 ALTER TABLE `phonetypes` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -235,7 +235,7 @@ CREATE TABLE `students` (
   `mastersStart` int(5) unsigned zerofill NOT NULL,
   PRIMARY KEY (`userID`),
   KEY `students_mastersStart_fk` (`mastersStart`),
-  CONSTRAINT `students_mastersStart_fk` FOREIGN KEY (`mastersStart`) REFERENCES `term` (`termCode`),
+  CONSTRAINT `students_mastersStart_fk` FOREIGN KEY (`mastersStart`) REFERENCES `term` (`code`),
   CONSTRAINT `students_userID_fk` FOREIGN KEY (`userID`) REFERENCES `users` (`userID`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -259,23 +259,23 @@ DROP TABLE IF EXISTS `term`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `term` (
-  `termCode` int(5) unsigned zerofill NOT NULL,
+  `code` int(5) unsigned zerofill NOT NULL,
   `termStart` date NOT NULL DEFAULT '2000-01-01',
   `termEnd` date NOT NULL DEFAULT '2000-01-01',
   `gradeDeadline` date NOT NULL DEFAULT '2000-01-01',
   `addDropDeadline` date NOT NULL DEFAULT '2000-01-01',
-  PRIMARY KEY (`termCode`)
+  PRIMARY KEY (`code`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
 -- Dumping data for table `term`
 --
--- ORDER BY:  `termCode`
+-- ORDER BY:  `code`
 
 LOCK TABLES `term` WRITE;
 /*!40000 ALTER TABLE `term` DISABLE KEYS */;
-INSERT INTO `term` (`termCode`, `termStart`, `termEnd`, `gradeDeadline`, `addDropDeadline`) VALUES (02171,'2017-08-19','2018-01-01','2017-12-21','2017-09-05'),(02175,'2018-01-08','2018-05-12','2018-05-10','2018-01-23'),(02178,'2018-05-17','2018-08-16','2018-08-16','2018-05-24');
+INSERT INTO `term` (`code`, `termStart`, `termEnd`, `gradeDeadline`, `addDropDeadline`) VALUES (02171,'2017-08-19','2018-01-01','2017-12-21','2017-09-05'),(02175,'2018-01-08','2018-05-12','2018-05-10','2018-01-23'),(02178,'2018-05-17','2018-08-16','2018-08-16','2018-05-24');
 /*!40000 ALTER TABLE `term` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -292,7 +292,7 @@ CREATE TABLE `useremails` (
   `emailType` int(10) unsigned NOT NULL,
   PRIMARY KEY (`userID`,`email`),
   KEY `userEmails_emailType_fk` (`emailType`),
-  CONSTRAINT `userEmails_emailType_fk` FOREIGN KEY (`emailType`) REFERENCES `emailtypes` (`emailCode`),
+  CONSTRAINT `userEmails_emailType_fk` FOREIGN KEY (`emailType`) REFERENCES `emailtypes` (`code`),
   CONSTRAINT `userEmails_userID_fk` FOREIGN KEY (`userID`) REFERENCES `users` (`userID`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -321,7 +321,7 @@ CREATE TABLE `userphones` (
   `phoneType` int(10) unsigned NOT NULL,
   PRIMARY KEY (`userID`,`number`),
   KEY `userPhones_phoneType_fk` (`phoneType`),
-  CONSTRAINT `userPhones_phoneType_fk` FOREIGN KEY (`phoneType`) REFERENCES `phonetypes` (`phoneCode`),
+  CONSTRAINT `userPhones_phoneType_fk` FOREIGN KEY (`phoneType`) REFERENCES `phonetypes` (`code`),
   CONSTRAINT `userPhones_userID_fk` FOREIGN KEY (`userID`) REFERENCES `users` (`userID`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;

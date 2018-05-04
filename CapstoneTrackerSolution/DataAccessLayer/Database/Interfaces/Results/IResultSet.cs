@@ -1038,6 +1038,20 @@ namespace ISTE.DAL.Database.Interfaces
         // Mutator(s).
 
         /// <summary>
+        /// Set the field.
+        /// </summary>
+        /// <param name="field">Field to set.</param>
+        /// <returns>Return reference to self.</returns>
+        IEntry SetField(string field);
+
+        /// <summary>
+        /// Sets value for entry.
+        /// </summary>
+        /// <param name="value">Value to set.</param>
+        /// <returns>Returns reference to self.</returns>
+        IEntry SetValue(string value);
+
+        /// <summary>
         /// Sets the values for a particular entry, using individual strings for the key and value.
         /// </summary>
         /// <returns>Returns reference to self.</returns>

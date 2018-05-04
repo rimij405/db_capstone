@@ -17,14 +17,41 @@ using System.Threading.Tasks;
 
 // Custom using statements.
 using ISTE.DAL.Database.Interfaces;
+using ISTE.DAL.Models;
 
 // This namespace contains all interfaces
 namespace ISTE.DAL.Models.Interfaces
 {
     /// <summary>
+    /// Represents type of database operation.
+    /// </summary>
+    public enum DatabaseOperation
+    {
+        /// <summary>
+        /// Create/Insert operation.
+        /// </summary>
+        Create,
+
+        /// <summary>
+        /// Select/Read operation.
+        /// </summary>
+        Read,
+
+        /// <summary>
+        /// Update operation.
+        /// </summary>
+        Update,
+
+        /// <summary>
+        /// Delete operation.
+        /// </summary>
+        Delete
+    }
+
+    /// <summary>
     /// Comparable interface that will allow DBOs to be compared.
     /// </summary>
-    public interface IDatabaseObjectComparable : IComparable, IComparable<IDatabaseObject>
+    public interface IDatabaseObjectComparable : IComparable<IDatabaseObject>
     {
         /// <summary>
         /// Check if two database objects have the same primary key.
@@ -102,7 +129,7 @@ namespace ISTE.DAL.Models.Interfaces
         /// <summary>
         /// Reference to the collection of IEntries that make up a data object.
         /// </summary>
-        IRow Model {
+        List<IEntry> Model {
             get;
             set;
         }
@@ -148,35 +175,14 @@ namespace ISTE.DAL.Models.Interfaces
         /// </summary>
         /// <returns>Returns a dictionary containing a set of parameters.</returns>
         IDictionary<string, string> GetParameters();
-
-        /// <summary>
-        /// Return index of a particular entry in the object. Returns -1 if field doesn't exist.
-        /// </summary>
-        /// <param name="field">Fieldname to access.</param>
-        /// <returns>Returns index of the entry.</returns>
-        int GetIndex(string field);
-
-        /// <summary>
-        /// Return entry at particular field.
-        /// </summary>
-        /// <param name="fieldIndex">Field to access.</param>
-        /// <returns>Returns entry containing field and value, if possible.</returns>
-        IEntry Get(int fieldIndex);
-
+                
         /// <summary>
         /// Return entry at particular field.
         /// </summary>
         /// <param name="field">Fieldname to access.</param>
         /// <returns>Returns entry containing field and value, if possible.</returns>
         IEntry Get(string field);
-
-        /// <summary>
-        /// Returns value at a particular field.
-        /// </summary>
-        /// <param name="fieldIndex">Field to access.</param>
-        /// <returns>Returns value of particular field.</returns>
-        string GetValue(int fieldIndex);
-
+        
         /// <summary>
         /// Returns value at a particular field.
         /// </summary>
@@ -188,6 +194,13 @@ namespace ISTE.DAL.Models.Interfaces
         // Mutator method(s).      
 
         /// <summary>
+        /// Set an entry at a particular field.
+        /// </summary>
+        /// <param name="field">Field.</param>
+        /// <param name="value">Value to set.</param>
+        void Set(string field, string value = null);
+
+        /// <summary>
         /// Attempts to set value at a particular entry.
         /// </summary>
         /// <param name="field">Fieldname to access.</param>
@@ -195,47 +208,8 @@ namespace ISTE.DAL.Models.Interfaces
         /// <returns>Returns value of particular field.</returns>
         bool SetValue(string field, string value);
 
-        /// <summary>
-        /// Attempts to set value at a particular entry.
-        /// </summary>
-        /// <param name="fieldIndex">Field to access.</param>
-        /// <param name="value">Value to set.</param>
-        /// <returns>Returns value of particular field.</returns>
-        bool SetValue(int fieldIndex, string value);
-
     }
 
-    /// <summary>
-    /// Represents an error that can be returned by the database.
-    /// </summary>
-    public enum DatabaseError
-    {
-        /// <summary>
-        /// No error.
-        /// </summary>
-        NONE = 0,
-
-        /// <summary>
-        /// Unknown error has been thrown.
-        /// </summary>
-        UNKNOWN = -1,
-
-        /// <summary>
-        /// There was an error with the SQL command syntax.
-        /// </summary>
-        SYNTAX = 1,
-
-        /// <summary>
-        /// An insert command could not be resolved due to a duplicate unique field value.
-        /// </summary>
-        DUPLICATE = 2,
-
-        /// <summary>
-        /// A record doesn't exist to perform a fetch or update operation.
-        /// </summary>
-        MISSING = 3
-    }
-    
     /// <summary>
     /// Fetch data for a particular database object.
     /// </summary>

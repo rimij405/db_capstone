@@ -287,7 +287,7 @@ namespace ISTE.DAL.Database
         /// </summary>
         /// <param name="field">Field to set.</param>
         /// <returns>Return reference to self.</returns>
-        private IEntry SetField(string field)
+        public IEntry SetField(string field)
         {
             // Cannot set when readonly.
             if (this.IsReadOnly) { return this; }
@@ -300,7 +300,7 @@ namespace ISTE.DAL.Database
         /// </summary>
         /// <param name="value">Value to set.</param>
         /// <returns>Return reference to self.</returns>
-        private IEntry SetValue(string value)
+        public IEntry SetValue(string value)
         {
             // Cannot set when readonly.
             if (this.IsReadOnly) { return this; }
