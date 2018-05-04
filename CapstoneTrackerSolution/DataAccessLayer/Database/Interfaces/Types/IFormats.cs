@@ -1,0 +1,135 @@
+﻿/*
+    IFormat.cs
+    ---
+    Ian Effendi
+ */
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace ISTE.DAL.Database.Interfaces
+{
+    /// <summary>
+    /// Helper format for converting between two types.
+    /// </summary>
+    /// <typeparam name="T">Data type for conversion.</typeparam>
+    public interface IFormat<T> where T : IComparable
+    {
+        /// <summary>
+        /// Return the value as the .NET compatible type.
+        /// </summary>
+        T Value
+        {
+            get;
+        }
+
+        /// <summary>
+        /// Get the value as the SQL format.
+        /// </summary>
+        string SQLValue
+        {
+            get;
+        }
+                
+        /// <summary>
+        /// Compare internal value with input SQL value.
+        /// </summary>
+        /// <param name="sqlValue">Value to compare.</param>
+        /// <returns>Returns true if values match.</returns>
+        bool IsEqual(string sqlValue);
+
+        /// <summary>
+        /// Attempt to set the value.
+        /// </summary>
+        /// <param name="value">Value to set.</param>
+        void SetValue(T value);
+
+        /// <summary>
+        /// Attempt to set the value.
+        /// </summary>
+        /// <param name="value">Value to set.</param>
+        void SetValue(string value);
+    }
+
+    /// <summary>
+    /// Represent a range between value types.
+    /// /// </summary>
+    /// <typeparam name="T">Data type for conversion.</typeparam>
+    public interface IRange<T> where T : IComparable
+    {
+        /// <summary>
+        /// The maximum.
+        /// </summary>
+        T Max
+        {
+            get;
+        }
+
+        /// <summary>
+        /// Return the value as the .NET compatible type.
+        /// </summary>
+        T Value
+        {
+            get;
+        }
+
+        /// <summary>
+        /// The minimum.
+        /// </summary>
+        T Min
+        {
+            get;
+        }
+
+        /// <summary>
+        /// Attempt to set the value. Returns false if out of range.
+        /// </summary>
+        /// <param name="value">Value to set.</param>
+        /// <returns>Return true if within range.</returns>
+        bool Set(T value);
+
+        /// <summary>
+        /// Attempt to set the value. Returns false if out of range.
+        /// </summary>
+        /// <param name="value">Value to set.</param>
+        /// <returns>Return true if within range.</returns>
+        bool Set(string value);
+
+        /// <summary>
+        /// Check if a particular value is within the range.
+        /// </summary>
+        /// <param name="other">Value to check.</param>
+        /// <returns>Value to compare.</returns>
+        bool InRange(T other);
+
+        /// <summary>
+        /// Check if a particular value is within the range.
+        /// </summary>
+        /// <param name="other">Value to check.</param>
+        /// <returns>Value to compare.</returns>
+        bool InRange(string other);
+    }
+
+    /// <summary>
+    /// Represents a date-time format for .NET.
+    /// </summary>
+    public interface IDateTimeFormat : IFormat<DateTime> { }
+
+    /// <summary>
+    /// Represents a date-time range for .NET.
+    /// </summary>
+    public interface IDateTimeRange : IRange<DateTime> { }    
+
+    /// <summary>
+    /// Represents a unique identifier.
+    /// </summary>
+    public interface IUIDFormat : IFormat<int> { }
+
+    /// <summary>
+    /// Represents a yes/no flag.
+    /// </summary>
+    public interface IFlagFormat : IFormat<bool> { }
+}
