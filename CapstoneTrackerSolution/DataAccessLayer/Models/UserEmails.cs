@@ -1,9 +1,12 @@
-﻿using ISTE.DAL.Database;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+
+using ISTE.DAL.Database;
+using ISTE.DAL.Database.Implementations;
+using ISTE.DAL.Database.Interfaces;
 
 namespace ISTE.DAL.Models
 {

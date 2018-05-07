@@ -12,7 +12,7 @@ using System.Text;
 using System.Threading.Tasks;
 using ISTE.DAL.Database.Interfaces;
 
-namespace ISTE.DAL.Database
+namespace ISTE.DAL.Database.Implementations
 {
     /// <summary>
     /// Represents a field-value pair to be returned from a MySqlDatabase class via a MySqlResultSet.

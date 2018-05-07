@@ -349,7 +349,7 @@ namespace ISTE.DAL.Models.Implementations
     /// <summary>
     /// Student property class.
     /// </summary>
-    public abstract class MySqlFacultyProperty : MySqlUserProperty, IStudentProperty
+    public abstract class MySqlFacultyProperty : MySqlUserProperty, IFacultyProperty
     {
         /// <summary>
         /// Student identifier.
@@ -923,7 +923,7 @@ namespace ISTE.DAL.Models.Implementations
             // Assign values based on the results object.
             if (results != null)
             {
-                this.Email = new MySqlID(results[0, "email"].Value);
+                this.Email = (string) new MySqlID(results[0, "email"].Value);
                 this.EmailType = new MySqlID(results[0, "emailType"].Value);
             }
         }
@@ -1053,7 +1053,7 @@ namespace ISTE.DAL.Models.Implementations
             // Assign values based on the results object.
             if (results != null)
             {
-                this.PhoneNumber = new MySqlID(results[0, "number"].Value);
+                this.PhoneNumber = (string) new MySqlID(results[0, "number"].Value);
                 this.PhoneType = new MySqlID(results[0, "phoneType"].Value);
             }
         }

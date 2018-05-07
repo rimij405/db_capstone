@@ -14,7 +14,7 @@ using System.Threading.Tasks;
 using ISTE.DAL.Database.Interfaces;
 using MySql.Data.MySqlClient;
 
-namespace ISTE.DAL.Database
+namespace ISTE.DAL.Database.Implementations
 {
     /// <summary>
     /// Parameters to be used with a MySqlDatabase.

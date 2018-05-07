@@ -583,6 +583,18 @@ namespace ISTE.DAL.Models.Implementations
         //////////////////////
 
         //////////////////////
+        // Service method(s).
+
+        /// <summary>
+        /// Return the term object as a string.
+        /// </summary>
+        /// <returns>Returns string.</returns>
+        public override string ToString()
+        {
+            return $"Term [{this.Code.SQLValue} | {this.TermStart.SQLValue} | {this.TermEnd.SQLValue} | {this.GradeDeadline.SQLValue} | {this.AddDropDeadline.SQLValue}]";
+        }
+
+        //////////////////////
         // Accessor method(s).
 
         /// <summary>
@@ -1811,7 +1823,7 @@ namespace ISTE.DAL.Models.Implementations
         /// <returns>Return the role type.</returns>
         public static MySqlRoleType Create(string code, string name, string description)
         {
-            return new MySqlRoleType(code, name, description);
+            return new MySqlRoleType((MySqlID) code, name, description);
         }
 
         //////////////////////

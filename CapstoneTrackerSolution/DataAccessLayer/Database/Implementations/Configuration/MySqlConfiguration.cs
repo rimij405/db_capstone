@@ -19,7 +19,7 @@ using MySql.Data.MySqlClient;
 using ISTE.DAL.Database.Interfaces;
 using Services;
 
-namespace ISTE.DAL.Database
+namespace ISTE.DAL.Database.Implementations
 {
     /// <summary>
     /// MySqlConfiguration class.

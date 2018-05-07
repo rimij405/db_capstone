@@ -14,12 +14,16 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using ISTE.DAL.Database;
-using ISTE.DAL.Database.Interfaces;
 
 // Project using statements.
+using ISTE.DAL.Database; // Exceptions.
+using ISTE.DAL.Database.Implementations; // Classes.
+using ISTE.DAL.Database.Interfaces; // Interfaces.
 using Services;
 using Services.Interfaces;
+using ISTE.DAL.Models.Implementations;
+using ISTE.DAL.Models.Interfaces;
+using ISTE.DAL.Models;
 
 namespace TestDataAccessLayer
 {
@@ -64,7 +68,7 @@ namespace TestDataAccessLayer
             int successfulTests = 0;
             int errors = 0;
             int totalTests = 0;
-            bool verbose = false;
+            bool verbose = true;
 
             // Create the TestMethods invocation list delegate.
             TestResults r = TestResults.Create("Test Method");
@@ -72,28 +76,46 @@ namespace TestDataAccessLayer
 
             // << ADD TESTING METHODS HERE | THEY EXECUTE IN THE ORDER THEY ARE ADDED >>
             TestMethods += Test_MySqlConfiguration;
-
             TestMethods += Test_MySqlDatabase_Connect;
+
+            // Data type (.NET <==> SQL) tests.
+            TestMethods += Test_Format_MySqlID;
+            TestMethods += Test_Format_MySqlDateTime;
+            TestMethods += Test_Format_MySqlFlag;
+
+            // Model tests.
+            TestMethods += Test_Model_MySqlTerm;
+
+            /***
             TestMethods += Test_MySqlDatabase_Select;
             TestMethods += Test_MySqlDatabase_PreparedSelect;
             TestMethods += Test_MySqlDatabase_PreparedInsert;
             TestMethods += Test_MySqlDatabase_PreparedUpdate;
             TestMethods += Test_MySqlDatabase_PreparedDelete;
+            */
 
+            /*
             TestMethods += Test_MySqlEntry_SingleField;
             TestMethods += Test_MySqlEntry_FieldValue;
             TestMethods += Test_MySqlEntry_KeyValuePair;
             TestMethods += Test_MySqlEntry_Clone;
             TestMethods += Test_MySqlEntry_Equality;
+            */
 
+            /*
             TestMethods += Test_MySqlRow_Empty;
             TestMethods += Test_MySqlRow_Fields;
             TestMethods += Test_MySqlRow_Mutators;
+            */
 
+            /*
             TestMethods += Test_MySqlResultSet_Empty;
             TestMethods += Test_MySqlResultSet_Mutators;
+            */
 
+            /*
             TestMethods += Test_Logger_Empty;
+            */
 
             Logger testLogger = new Logger("", "test", "log");
             testLogger.Clear();
@@ -251,7 +273,786 @@ namespace TestDataAccessLayer
 
         #endregion
 
+        #region Data Format Tests
+        
+        /// <summary>
+        /// Test the MySqlID format.
+        /// </summary>
+        /// <returns>Returns the test's results.</returns>
+        private static TestResults Test_Format_MySqlID()
+        {
+            // Set values and dependencies here.
+            string subject = "IUIDFormat: MySqlID";
+            
+            // Create the results object for this test.
+            TestResults results = TestResults.Create($"Testing {subject}");
+
+            try
+            {
+                // Make divisor and log the title for the test.
+                results.Log($"-- -- -- -- -- -- --\n-- -- -- {results.Title}");                
+            }
+            catch (Exception e)
+            {
+                // Wraps exception for the results.
+                throw results.Throw($"{e.Message}", e);
+            }
+
+            // Set up error message.
+            string errorMessage = "An error occured while testing MySqlID.";
+
+            // << REPEAT FOR EVERY OPERATION >>
+            try
+            { 
+                // Perform the correct operations.
+                MySqlID test;
+                bool validation = false;
+                MySqlID answerKey = new MySqlID(1);
+                MySqlID lesserKey = new MySqlID(0);
+                results.Log($"Creating answer key: {answerKey.ToString()}");
+                results.Log($"Creating lesser than key: {lesserKey.ToString()}", "");
+
+                #region Construction/Assignment Tests.
+
+                test = new MySqlID(1);
+                results.Log($"Testing explicit value construction (new MySqlID(1)): {test}");
+
+                #region Validation Tests.
+
+                // IsEqual(obj);
+                validation = test.IsEqual(answerKey);
+                results.Log($"Testing equality via IsEqual(obj): {validation}");
+                if (!validation) { results.Fail("Failed equality test."); return results; }
+
+                // IsEqualValue(int);
+                validation = test.IsEqualValue(answerKey.Value);
+                results.Log($"Testing equality via IsEqualValue(int): {validation}");
+                if (!validation) { results.Fail("Failed equality test."); return results; }
+
+                // IsEqualSQL(string);
+                validation = test.IsEqualSQL(answerKey.SQLValue);
+                results.Log($"Testing equality via IsEqualSQL(string): {validation}");
+                if (!validation) { results.Fail("Failed equality test."); return results; }
+
+                // IsEqual(null) == false.
+                validation = test.IsEqual(null);
+                results.Log($"Testing equality via IsEqual(null): {validation}");
+                if (validation) { results.Fail("Failed equality test."); return results; }
+
+                #endregion
+
+                test = new MySqlID("0001");
+                results.Log($"Testing SQL value construction (new MySqlID(\"0001\")): {test}");
+
+                #region Validation Tests.
+
+                // IsEqual(obj);
+                validation = test.IsEqual(answerKey);
+                results.Log($"Testing equality via IsEqual(obj): {validation}");
+                if (!validation) { results.Fail("Failed equality test."); return results; }
+
+                // IsEqualValue(int);
+                validation = test.IsEqualValue(answerKey.Value);
+                results.Log($"Testing equality via IsEqualValue(int): {validation}");
+                if (!validation) { results.Fail("Failed equality test."); return results; }
+
+                // IsEqualSQL(string);
+                validation = test.IsEqualSQL(answerKey.SQLValue);
+                results.Log($"Testing equality via IsEqualSQL(string): {validation}");
+                if (!validation) { results.Fail("Failed equality test."); return results; }
+
+                // IsEqual(null) == false.
+                validation = test.IsEqual(null);
+                results.Log($"Testing equality via IsEqual(null): {validation}");
+                if (validation) { results.Fail("Failed equality test."); return results; }
+
+                #endregion
+
+                test = 1;
+                results.Log($"Testing implicit value construction via integer cast (= 1): {test}");
+
+                #region Validation Tests.
+
+                // IsEqual(obj);
+                validation = test.IsEqual(answerKey);
+                results.Log($"Testing equality via IsEqual(obj): {validation}");
+                if (!validation) { results.Fail("Failed equality test."); return results; }
+
+                // IsEqualValue(int);
+                validation = test.IsEqualValue(answerKey.Value);
+                results.Log($"Testing equality via IsEqualValue(int): {validation}");
+                if (!validation) { results.Fail("Failed equality test."); return results; }
+
+                // IsEqualSQL(string);
+                validation = test.IsEqualSQL(answerKey.SQLValue);
+                results.Log($"Testing equality via IsEqualSQL(string): {validation}");
+                if (!validation) { results.Fail("Failed equality test."); return results; }
+
+                // IsEqual(null) == false.
+                validation = test.IsEqual(null);
+                results.Log($"Testing equality via IsEqual(null): {validation}");
+                if (validation) { results.Fail("Failed equality test."); return results; }
+
+                #endregion
+
+                test = (MySqlID)("01");
+                results.Log($"Testing implicit value construction via string cast (= (MySqlID)(\"01\")): {test}");
+
+                #region Validation Tests.
+
+                // IsEqual(obj);
+                validation = test.IsEqual(answerKey);
+                results.Log($"Testing equality via IsEqual(obj): {validation}");
+                if (!validation) { results.Fail("Failed equality test."); return results; }
+
+                // IsEqualValue(int);
+                validation = test.IsEqualValue(answerKey.Value);
+                results.Log($"Testing equality via IsEqualValue(int): {validation}");
+                if (!validation) { results.Fail("Failed equality test."); return results; }
+
+                // IsEqualSQL(string);
+                validation = test.IsEqualSQL(answerKey.SQLValue);
+                results.Log($"Testing equality via IsEqualSQL(string): {validation}");
+                if (!validation) { results.Fail("Failed equality test."); return results; }
+
+                // IsEqual(null) == false.
+                validation = test.IsEqual(null);
+                results.Log($"Testing equality via IsEqual(null): {validation}");
+                if (validation) { results.Fail("Failed equality test."); return results; }
+
+                #endregion
+
+                results.Log("Passed all construction and assignment tests.", "");
+
+                #endregion
+
+                #region Equality Tests.
+
+                results.Log($"Comparison index of test.CompareTo(lesserKey): {test.CompareTo(lesserKey)}");
+                results.Log($"Comparison index of test.CompareTo(0): {test.CompareTo(0)}");
+                results.Log($"Comparison index of test.CompareTo(1): {test.CompareTo(1)}");
+                results.Log($"Comparison index of test.CompareTo(2): {test.CompareTo(2)}");
+                results.Log($"Comparison index of test.CompareTo(\"00\"): {test.CompareTo("00")}");
+                results.Log($"Comparison index of test.CompareTo(\"01\"): {test.CompareTo("01")}");
+                results.Log($"Comparison index of test.CompareTo(\"02\"): {test.CompareTo("02")}");
+
+                #region Validation Tests.
+
+                validation = test.IsLessThan(lesserKey);
+                results.Log($"Testing less than inequality via IsLessThan(obj): {validation}");
+                if (validation) { results.Fail("Failed inequality test."); return results; }
+                
+                validation = test.IsLessThanValue(0);
+                results.Log($"Testing less than inequality via IsLessThan(int): {validation}");
+                if (validation) { results.Fail("Failed equality test."); return results; }
+                
+                validation = test.IsLessThanSQL(lesserKey.SQLValue);
+                results.Log($"Testing less than inequality via IsLessThan(string): {validation}");
+                if (validation) { results.Fail("Failed equality test."); return results; }
+
+                #endregion
+
+                #region Validation Tests.
+
+                validation = test.IsGreaterThan(lesserKey);
+                results.Log($"Testing greater than inequality via IsGreaterThan(obj): {validation}");
+                if (!validation) { results.Fail("Failed inequality test."); return results; }
+
+                validation = test.IsGreaterThan(0);
+                results.Log($"Testing greater than inequality via IsGreaterThan(int): {validation}");
+                if (!validation) { results.Fail("Failed equality test."); return results; }
+
+                validation = test.IsGreaterThan(lesserKey.SQLValue);
+                results.Log($"Testing greater than inequality via IsGreaterThan(string): {validation}");
+                if (!validation) { results.Fail("Failed equality test."); return results; }
+
+                #endregion
+                
+                results.Log("Passed all comparison tests.");
+
+                #endregion
+
+                results.Log($"Printing values out:",
+                    $".NET: {test.ToString()}",
+                    $"Value: {test.Value}",
+                    $"SQL: {test.SQLValue}");
+
+                results.Pass("All tests completed.");
+                
+            }
+            catch (Exception e)
+            {
+                // Wraps exception for the results.
+                throw results.Throw($"{errorMessage} {e.Message}", e);
+            }
+
+            // Return the test results.
+            return results;
+        }
+        
+        /// <summary>
+        /// Test the MySqlDateTime format.
+        /// </summary>
+        /// <returns>Returns the test's results.</returns>
+        private static TestResults Test_Format_MySqlDateTime()
+        {
+            // Set values and dependencies here.
+            string subject = "IDateTimeFormat: MySqlDateTime";
+
+            // Create the results object for this test.
+            TestResults results = TestResults.Create($"Testing {subject}");
+
+            try
+            {
+                // Make divisor and log the title for the test.
+                results.Log($"-- -- -- -- -- -- --\n-- -- -- {results.Title}");
+            }
+            catch (Exception e)
+            {
+                // Wraps exception for the results.
+                throw results.Throw($"{e.Message}", e);
+            }
+
+            // Set up error message.
+            string errorMessage = "An error occured while testing MySqlDateTime.";
+
+            // << REPEAT FOR EVERY OPERATION >>
+            try
+            {
+                // Perform the correct operations.
+                MySqlDateTime test;
+                bool validation = false;
+                MySqlDateTime answerKey = new MySqlDateTime("1997-12-09 11:59:59");
+                MySqlDateTime lesserKey = new MySqlDateTime("1996-12-09 11:59:59");
+                results.Log($"Creating answer key: {answerKey.ToString()}");
+                results.Log($"Creating lesser than key: {lesserKey.ToString()}", "");
+
+                #region Construction/Assignment Tests.
+
+                test = new MySqlDateTime(new DateTime(1997, 12, 09, 11, 59, 59));
+                results.Log($"Testing explicit value construction (new MySqlDateTime(new DateTime(1997, 12, 09, 11, 59, 59))): {test}");
+
+                #region Validation Tests.
+
+                // IsEqual(obj);
+                validation = test.IsEqual(answerKey);
+                results.Log($"Testing equality via IsEqual(obj): {validation}");
+                if (!validation) { results.Fail("Failed equality test."); return results; }
+
+                // IsEqualValue(int);
+                validation = test.IsEqualValue(answerKey.Value);
+                results.Log($"Testing equality via IsEqualValue(DateTime): {validation}");
+                if (!validation) { results.Fail("Failed equality test."); return results; }
+
+                // IsEqualSQL(string);
+                validation = test.IsEqualSQL(answerKey.SQLValue);
+                results.Log($"Testing equality via IsEqualSQL(string): {validation}");
+                if (!validation) { results.Fail("Failed equality test."); return results; }
+
+                // IsEqual(null) == false.
+                validation = test.IsEqual(null);
+                results.Log($"Testing equality via IsEqual(null): {validation}");
+                if (validation) { results.Fail("Failed equality test."); return results; }
+
+                #endregion
+
+                test = new MySqlDateTime("1997-12-09 11:59:59");
+                results.Log($"Testing SQL value construction (new MySqlID(\"0001\")): {test}");
+
+                #region Validation Tests.
+
+                // IsEqual(obj);
+                validation = test.IsEqual(answerKey);
+                results.Log($"Testing equality via IsEqual(obj): {validation}");
+                if (!validation) { results.Fail("Failed equality test."); return results; }
+
+                // IsEqualValue(int);
+                validation = test.IsEqualValue(answerKey.Value);
+                results.Log($"Testing equality via IsEqualValue(DateTime): {validation}");
+                if (!validation) { results.Fail("Failed equality test."); return results; }
+
+                // IsEqualSQL(string);
+                validation = test.IsEqualSQL(answerKey.SQLValue);
+                results.Log($"Testing equality via IsEqualSQL(string): {validation}");
+                if (!validation) { results.Fail("Failed equality test."); return results; }
+
+                // IsEqual(null) == false.
+                validation = test.IsEqual(null);
+                results.Log($"Testing equality via IsEqual(null): {validation}");
+                if (validation) { results.Fail("Failed equality test."); return results; }
+
+                #endregion
+
+                test = new DateTime(1997, 12, 09, 11, 59, 59);
+                results.Log($"Testing implicit value construction via DateTime cast (= new DateTime(1997, 12, 09, 11, 59, 59)): {test}");
+
+                #region Validation Tests.
+
+                // IsEqual(obj);
+                validation = test.IsEqual(answerKey);
+                results.Log($"Testing equality via IsEqual(obj): {validation}");
+                if (!validation) { results.Fail("Failed equality test."); return results; }
+
+                // IsEqualValue(int);
+                validation = test.IsEqualValue(answerKey.Value);
+                results.Log($"Testing equality via IsEqualValue(DateTime): {validation}");
+                if (!validation) { results.Fail("Failed equality test."); return results; }
+
+                // IsEqualSQL(string);
+                validation = test.IsEqualSQL(answerKey.SQLValue);
+                results.Log($"Testing equality via IsEqualSQL(string): {validation}");
+                if (!validation) { results.Fail("Failed equality test."); return results; }
+
+                // IsEqual(null) == false.
+                validation = test.IsEqual(null);
+                results.Log($"Testing equality via IsEqual(null): {validation}");
+                if (validation) { results.Fail("Failed equality test."); return results; }
+
+                #endregion
+
+                test = (MySqlDateTime)("1997-12-09 11:59:59");
+                results.Log($"Testing implicit value construction via string cast (= ((MySqlDateTime)(\"1997-12-09 11:59:59\")): {test}");
+
+                #region Validation Tests.
+
+                // IsEqual(obj);
+                validation = test.IsEqual(answerKey);
+                results.Log($"Testing equality via IsEqual(obj): {validation}");
+                if (!validation) { results.Fail("Failed equality test."); return results; }
+
+                // IsEqualValue(int);
+                validation = test.IsEqualValue(answerKey.Value);
+                results.Log($"Testing equality via IsEqualValue(DateTime): {validation}");
+                if (!validation) { results.Fail("Failed equality test."); return results; }
+
+                // IsEqualSQL(string);
+                validation = test.IsEqualSQL(answerKey.SQLValue);
+                results.Log($"Testing equality via IsEqualSQL(string): {validation}");
+                if (!validation) { results.Fail("Failed equality test."); return results; }
+
+                // IsEqual(null) == false.
+                validation = test.IsEqual(null);
+                results.Log($"Testing equality via IsEqual(null): {validation}");
+                if (validation) { results.Fail("Failed equality test."); return results; }
+
+                #endregion
+
+                results.Log("Passed all construction and assignment tests.", "");
+
+                #endregion
+
+                #region Equality Tests.
+
+                results.Log($"Comparison index of test.CompareTo(lesserKey): {test.CompareTo(lesserKey)}");
+                results.Log($"Comparison index of test.CompareTo(new DateTime(1996, 12, 09, 11, 59, 59)): {test.CompareTo(new DateTime(1996, 12, 09, 11, 59, 59))}");
+                results.Log($"Comparison index of test.CompareTo(new DateTime(1997, 12, 09, 11, 59, 59)): {test.CompareTo(new DateTime(1997, 12, 09, 11, 59, 59))}");
+                results.Log($"Comparison index of test.CompareTo(new DateTime(1998, 12, 09, 11, 59, 59)): {test.CompareTo(new DateTime(1998, 12, 09, 11, 59, 59))}");
+                results.Log($"Comparison index of test.CompareTo(\"1996-12-09 11:59:59\"): {test.CompareTo("1996-12-09 11:59:59")}");
+                results.Log($"Comparison index of test.CompareTo(\"1997-12-09 11:59:59\"): {test.CompareTo("1997-12-09 11:59:59")}");
+                results.Log($"Comparison index of test.CompareTo(\"1998-12-09 11:59:59\"): {test.CompareTo("1998-12-09 11:59:59")}");
+
+                #region Validation Tests.
+
+                validation = test.IsLessThan(lesserKey);
+                results.Log($"Testing less than inequality via IsLessThan(obj): {validation}");
+                if (validation) { results.Fail("Failed inequality test."); return results; }
+
+                validation = test.IsLessThanValue(new DateTime(1996, 12, 09, 11, 59, 59));
+                results.Log($"Testing less than inequality via IsLessThan(DateTime): {validation}");
+                if (validation) { results.Fail("Failed equality test."); return results; }
+
+                validation = test.IsLessThanSQL(lesserKey.SQLValue);
+                results.Log($"Testing less than inequality via IsLessThan(string): {validation}");
+                if (validation) { results.Fail("Failed equality test."); return results; }
+
+                #endregion
+
+                #region Validation Tests.
+
+                validation = test.IsGreaterThan(lesserKey);
+                results.Log($"Testing greater than inequality via IsGreaterThan(obj): {validation}");
+                if (!validation) { results.Fail("Failed inequality test."); return results; }
+
+                validation = test.IsGreaterThan(new DateTime(1996, 12, 09, 11, 59, 59));
+                results.Log($"Testing greater than inequality via IsGreaterThan(DateTime): {validation}");
+                if (!validation) { results.Fail("Failed equality test."); return results; }
+
+                validation = test.IsGreaterThan(lesserKey.SQLValue);
+                results.Log($"Testing greater than inequality via IsGreaterThan(string): {validation}");
+                if (!validation) { results.Fail("Failed equality test."); return results; }
+
+                #endregion
+
+                results.Log("Passed all comparison tests.");
+
+                #endregion
+
+                #region Operator Tests.
+
+                TimeSpan hour = new TimeSpan(1, 1, 1);
+
+                test += hour;
+                results.Log($"Testing increment of \"{hour}\".");
+                results.Log($"{test.Value}");
+
+                test -= hour;
+                results.Log($"Testing decrement of \"{hour}\".");
+                results.Log($"{test.Value}");
+
+                #endregion
+
+                results.Log($"Printing values out:",
+                    $".NET: {test.ToString()}",
+                    $"Value: {test.Value}",
+                    $"SQL: {test.SQLValue}");
+
+                results.Pass("All tests completed.");
+
+            }
+            catch (Exception e)
+            {
+                // Wraps exception for the results.
+                throw results.Throw($"{errorMessage} {e.Message}", e);
+            }
+
+            // Return the test results.
+            return results;
+        }
+
+
+        /// <summary>
+        /// Test the MySqlFlag format.
+        /// </summary>
+        /// <returns>Returns the test's results.</returns>
+        private static TestResults Test_Format_MySqlFlag()
+        {
+            // Set values and dependencies here.
+            string subject = "IFlagFormat: MySqlFlag";
+
+            // Create the results object for this test.
+            TestResults results = TestResults.Create($"Testing {subject}");
+
+            try
+            {
+                // Make divisor and log the title for the test.
+                results.Log($"-- -- -- -- -- -- --\n-- -- -- {results.Title}");
+            }
+            catch (Exception e)
+            {
+                // Wraps exception for the results.
+                throw results.Throw($"{e.Message}", e);
+            }
+
+            // Set up error message.
+            string errorMessage = "An error occured while testing MySqlFlag.";
+
+            // << REPEAT FOR EVERY OPERATION >>
+            try
+            {
+                // Perform the correct operations.
+                MySqlFlag test;
+                bool validation = false;
+                MySqlFlag answerKey = new MySqlFlag(true);
+                MySqlFlag lesserKey = new MySqlFlag(false);
+                results.Log($"Creating answer key: {answerKey.ToString()}");
+                results.Log($"Creating lesser than key: {lesserKey.ToString()}", "");
+
+                #region Construction/Assignment Tests.
+
+                test = new MySqlFlag(true);
+                results.Log($"Testing explicit value construction (new MySqlFlag(true)): {test}");
+
+                #region Validation Tests.
+
+                // IsEqual(obj);
+                validation = test.IsEqual(answerKey);
+                results.Log($"Testing equality via IsEqual(obj): {validation}");
+                if (!validation) { results.Fail("Failed equality test."); return results; }
+
+                // IsEqualValue(int);
+                validation = test.IsEqualValue(answerKey.Value);
+                results.Log($"Testing equality via IsEqualValue(bool): {validation}");
+                if (!validation) { results.Fail("Failed equality test."); return results; }
+
+                // IsEqualSQL(string);
+                validation = test.IsEqualSQL(answerKey.SQLValue);
+                results.Log($"Testing equality via IsEqualSQL(string): {validation}");
+                if (!validation) { results.Fail("Failed equality test."); return results; }
+
+                // IsEqual(null) == false.
+                validation = test.IsEqual(null);
+                results.Log($"Testing equality via IsEqual(null): {validation}");
+                if (validation) { results.Fail("Failed equality test."); return results; }
+
+                #endregion
+
+                test = new MySqlFlag("1");
+                results.Log($"Testing SQL value construction (new MySqlID(\"1\")): {test}");
+
+                #region Validation Tests.
+
+                // IsEqual(obj);
+                validation = test.IsEqual(answerKey);
+                results.Log($"Testing equality via IsEqual(obj): {validation}");
+                if (!validation) { results.Fail("Failed equality test."); return results; }
+
+                // IsEqualValue(int);
+                validation = test.IsEqualValue(answerKey.Value);
+                results.Log($"Testing equality via IsEqualValue(bool): {validation}");
+                if (!validation) { results.Fail("Failed equality test."); return results; }
+
+                // IsEqualSQL(string);
+                validation = test.IsEqualSQL(answerKey.SQLValue);
+                results.Log($"Testing equality via IsEqualSQL(string): {validation}");
+                if (!validation) { results.Fail("Failed equality test."); return results; }
+
+                // IsEqual(null) == false.
+                validation = test.IsEqual(null);
+                results.Log($"Testing equality via IsEqual(null): {validation}");
+                if (validation) { results.Fail("Failed equality test."); return results; }
+
+                #endregion
+
+                test = 1;
+                results.Log($"Testing implicit value construction via integer cast (= 1): {test}");
+
+                #region Validation Tests.
+
+                // IsEqual(obj);
+                validation = test.IsEqual(answerKey);
+                results.Log($"Testing equality via IsEqual(obj): {validation}");
+                if (!validation) { results.Fail("Failed equality test."); return results; }
+
+                // IsEqualValue(int);
+                validation = test.IsEqualValue(answerKey.Value);
+                results.Log($"Testing equality via IsEqualValue(bool): {validation}");
+                if (!validation) { results.Fail("Failed equality test."); return results; }
+
+                // IsEqualSQL(string);
+                validation = test.IsEqualSQL(answerKey.SQLValue);
+                results.Log($"Testing equality via IsEqualSQL(string): {validation}");
+                if (!validation) { results.Fail("Failed equality test."); return results; }
+
+                // IsEqual(null) == false.
+                validation = test.IsEqual(null);
+                results.Log($"Testing equality via IsEqual(null): {validation}");
+                if (validation) { results.Fail("Failed equality test."); return results; }
+
+                #endregion
+
+                test = (MySqlFlag)("Y");
+                results.Log($"Testing implicit value construction via string cast (= (MySqlFlag)(\"YES\")): {test}");
+
+                #region Validation Tests.
+
+                // IsEqual(obj);
+                validation = test.IsEqual(answerKey);
+                results.Log($"Testing equality via IsEqual(obj): {validation}");
+                if (!validation) { results.Fail("Failed equality test."); return results; }
+
+                // IsEqualValue(int);
+                validation = test.IsEqualValue(answerKey.Value);
+                results.Log($"Testing equality via IsEqualValue(int): {validation}");
+                if (!validation) { results.Fail("Failed equality test."); return results; }
+
+                // IsEqualSQL(string);
+                validation = test.IsEqualSQL(answerKey.SQLValue);
+                results.Log($"Testing equality via IsEqualSQL(string): {validation}");
+                if (!validation) { results.Fail("Failed equality test."); return results; }
+
+                // IsEqual(null) == false.
+                validation = test.IsEqual(null);
+                results.Log($"Testing equality via IsEqual(null): {validation}");
+                if (validation) { results.Fail("Failed equality test."); return results; }
+
+                #endregion
+
+                results.Log("Passed all construction and assignment tests.", "");
+
+                #endregion
+
+                #region Equality Tests.
+
+                results.Log($"Comparison index of test.CompareTo(lesserKey): {test.CompareTo(lesserKey)}");
+                results.Log($"Comparison index of test.CompareTo(0): {test.CompareTo(0)}");
+                results.Log($"Comparison index of test.CompareTo(true): {test.CompareTo(true)}");
+                results.Log($"Comparison index of test.CompareTo(false): {test.CompareTo(false)}");
+                results.Log($"Comparison index of test.CompareTo(\"NO\"): {test.CompareTo("NO")}");
+                results.Log($"Comparison index of test.CompareTo(\"YES\"): {test.CompareTo("YES")}");
+                results.Log($"Comparison index of test.CompareTo(\"false\"): {test.CompareTo("false")}");
+
+                #region Validation Tests.
+
+                validation = test.IsLessThan(lesserKey);
+                results.Log($"Testing less than inequality via IsLessThan(obj): {validation}");
+                if (validation) { results.Fail("Failed inequality test."); return results; }
+
+                validation = test.IsLessThanValue(false);
+                results.Log($"Testing less than inequality via IsLessThan(bool): {validation}");
+                if (validation) { results.Fail("Failed equality test."); return results; }
+
+                validation = test.IsLessThanSQL(lesserKey.SQLValue);
+                results.Log($"Testing less than inequality via IsLessThan(string): {validation}");
+                if (validation) { results.Fail("Failed equality test."); return results; }
+
+                #endregion
+
+                #region Validation Tests.
+
+                validation = test.IsGreaterThan(lesserKey);
+                results.Log($"Testing greater than inequality via IsGreaterThan(obj): {validation}");
+                if (!validation) { results.Fail("Failed inequality test."); return results; }
+
+                validation = test.IsGreaterThan(false);
+                results.Log($"Testing greater than inequality via IsGreaterThan(bool): {validation}");
+                if (!validation) { results.Fail("Failed equality test."); return results; }
+
+                validation = test.IsGreaterThan(lesserKey.SQLValue);
+                results.Log($"Testing greater than inequality via IsGreaterThan(string): {validation}");
+                if (!validation) { results.Fail("Failed equality test."); return results; }
+
+                #endregion
+
+                results.Log("Passed all comparison tests.");
+
+                #endregion
+
+                results.Log($"Printing values out:",
+                    $".NET: {test.ToString()}",
+                    $"Value: {test.Value}",
+                    $"SQL: {test.SQLValue}");
+
+                results.Pass("All tests completed.");
+
+            }
+            catch (Exception e)
+            {
+                // Wraps exception for the results.
+                throw results.Throw($"{errorMessage} {e.Message}", e);
+            }
+
+            // Return the test results.
+            return results;
+        }
+
+
+
+        #endregion
+
+        #region Model Tests
+
+        private static TestResults Test_Model_MySqlTerm()
+        {
+            // Set values and dependencies here.
+            string subject = "Testing Model: MySqlTerm";
+            
+            // Create the results object for this test.
+            TestResults results = TestResults.Create($"Testing {subject}");
+
+            try
+            {
+                // Make divisor and log the title for the test.
+                results.Log($"-- -- -- -- -- -- --\n-- -- -- {results.Title}");                
+            }
+            catch (Exception e)
+            {
+                // Wraps exception for the results.
+                throw results.Throw($"{e.Message}", e);
+            }
+
+            // << REPEAT FOR EVERY OPERATION >>
+            string exceptionMessage = "Failed to validate MySqlTerm object.";
+            try
+            {
+
+                // Perform the correct operations.
+                results.Log("Checking if items are valid.");
+                if (!PrepareTestResults(results))
+                {
+                    throw new DataAccessLayerException("Couldn't connect to the database.");
+                }
+
+                // Create an MySqlTerm object.
+                results.Log("Creating the MySqlTerm object to fetch data for.");
+                ITermModel term = MySqlTerm.Create("02171", "", "", "", "");
+                results.Log("Initial: " + term.ToString());
+                
+                // Fetch term data.
+                IResultSet set = term.Fetch(database as IReadable, out DatabaseError error);
+                results.Log(printer.FormatResultSet(set));
+                results.Log("Fetched: " + term.ToString());
+
+                if (set.IsFailure) {
+                    results.Fail("Fetch of item failed.");
+                    return results;
+                }
+
+                // Validate term object item.
+                ITermModel answerKey = MySqlTerm.Create("2171", "2017-08-19", "2018-01-01", "2017-12-21", "2017-09-05");
+                results.Log("Answer Key: " + answerKey);
+                bool validation = term.Equals(answerKey);
+
+                if (validation)
+                {
+                    results.Pass("Term object successfully passed.");
+                    return results;
+                }
+
+                results.Fail("Term object is missing information.");
+            }
+            catch (Exception e)
+            {
+                // Wraps exception for the results.
+                throw results.Throw($"{exceptionMessage} {e.Message}", e);
+            }
+
+            // Return the test results.
+            return results;
+        }
+
+        #endregion
+
+
         #region Database Tests
+
+        /// <summary>
+        /// Prepare the configuration and database, and then connect to the database.
+        /// </summary>
+        /// <param name="results">Results to log items to.</param>
+        /// <returns>Returns true if successful.</returns>
+        private static bool PrepareTestResults(TestResults results)
+        {
+            try
+            {
+                if (configuration == null)
+                {
+                    results.Log($"Creating the configuration object.");
+                    configuration = new MySqlConfiguration();
+                    results.Log($"{configuration.GetConnectionString()}");
+                }
+
+                if (database == null)
+                {
+                    results.Log($"Creating the database object.");
+                    database = new MySqlDatabase(configuration as MySqlConfiguration);
+                    results.Log($"{database.ToString()}");
+                }
+
+                if (!database.IsConnected)
+                {
+                    results.Log($"Connecting to the database.");
+                    database.Connect();
+                }
+
+                return true;
+            }
+            catch (Exception e)
+            {
+                results.Fail("Couldn't prepare test components.");
+                results.Error(e);
+                return false;
+            }
+        }
 
         /// <summary>
         /// Test database configuration object constructor.
@@ -372,7 +1173,7 @@ namespace TestDataAccessLayer
 
                 // Call the GetData method.
                 MySqlDatabase mysqldb = database as MySqlDatabase;
-                MySqlResultSet set = mysqldb.GetData(query, null) as MySqlResultSet;
+                MySqlResultSet set = mysqldb.GetData(query) as MySqlResultSet;
                 results.Log($"{printer.FormatResultSet(set)}");
                 
                 // If entry is null, fail the test.
@@ -1110,7 +1911,7 @@ namespace TestDataAccessLayer
 
                 // Call the GetData method.
                 MySqlDatabase mysqldb = database as MySqlDatabase;
-                MySqlResultSet set = mysqldb.GetData(query, parameters) as MySqlResultSet;
+                MySqlResultSet set = mysqldb.GetData(query, parameters: parameters) as MySqlResultSet;
                 results.Log($"{printer.FormatResultSet(set)}");
 
                 // If entry is null, fail the test.

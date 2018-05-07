@@ -1,4 +1,5 @@
-CREATE DATABASE  IF NOT EXISTS `capstonedb` /*!40100 DEFAULT CHARACTER SET utf8 */;
+DROP DATABASE  IF EXISTS `capstonedb`;
+CREATE DATABASE IF NOT EXISTS `capstonedb` /*!40100 DEFAULT CHARACTER SET utf8 */;
 USE `capstonedb`;
 -- MySQL dump 10.13  Distrib 5.7.17, for Win64 (x86_64)
 --

@@ -550,7 +550,7 @@ namespace TestDataAccessLayer
         /// <returns>Returns reference to self.</returns>
         public TestResults Log(string stackMessage)
         {
-            this.Stack.Add(stackMessage.Trim());
+            this.Stack.Add(stackMessage);
             return this;
         }
 

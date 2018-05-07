@@ -301,7 +301,7 @@ namespace ISTE.DAL.Database.Implementations
         {
 
 
-            selectUser = new MySqlOperation(db, true, this.Query, this.TransactionParameters);
+            // selectUser = new MySqlOperation(db, true, this.Query, this.TransactionParameters);
         }
 
         //////////////////////
@@ -317,7 +317,7 @@ namespace ISTE.DAL.Database.Implementations
         /// <returns>Returns a result set from the transaction.</returns>
         protected override IResultSet Execute()
         {
-            IResultSet results = FindUser();
+            return FindUser();
         }
 
         //////////////////////

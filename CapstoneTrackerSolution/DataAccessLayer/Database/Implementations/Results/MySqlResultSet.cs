@@ -15,7 +15,7 @@ using System.Threading.Tasks;
 using ISTE.DAL.Database.Interfaces;
 using Services.Interfaces;
 
-namespace ISTE.DAL.Database.Implementations;
+namespace ISTE.DAL.Database.Implementations
 {
     
     /// <summary>

@@ -221,7 +221,7 @@ namespace ISTE.DAL.Models.Implementations
         /// Creation of an empty user.
         /// </summary>
         public MySqlUser()
-            : this(new MySqlID(), "", "", "", "")
+            : this(new MySqlID(null), "", "", "", "")
         { }
 
         /// <summary>

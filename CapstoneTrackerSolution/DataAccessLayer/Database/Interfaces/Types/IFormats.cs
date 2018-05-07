@@ -4,14 +4,57 @@
     Ian Effendi
  */
 
+ // using statements.
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace ISTE.DAL.Database.Interfaces
-{
+{    
+    /// <summary>
+    /// Interface representing type comparisons.
+    /// </summary>
+    /// <typeparam name="T">Type to compare.</typeparam>
+    public interface IComparison<T> where T : IComparable
+    {
+        //////////////////////
+        // Method(s).
+        //////////////////////
+
+        //////////////////////
+        // Services.	
+
+        /// <summary>
+        /// Return a 1, 0, or -1 representing the inequality (or equality) between the left and right value.
+        /// </summary>
+        /// <param name="left">Left value.</param>
+        /// <param name="right">Right value.</param>
+        /// <returns>Return comparison sort index.</returns>
+        int CompareValue(T left, T right);
+
+        /// <summary>
+        /// Compare two values.
+        /// </summary>
+        /// <param name="left">Left value.</param>
+        /// <param name="right">Right value.</param>
+        /// <returns>Returns true if both values are equal.</returns>
+        bool IsEqualValue(T left, T right);
+
+        /// <summary>
+        /// Returns true if the left value is greater than the right value.
+        /// </summary>
+        /// <param name="left">Left value.</param>
+        /// <param name="right">Right value.</param>
+        /// <returns>Returns true if the left value is greater than the right value.</returns>
+        bool IsGreaterThanValue(T left, T right);
+
+        /// <summary>
+        /// Returns true if the left value is less than the right value.
+        /// </summary>
+        /// <param name="left">Left value.</param>
+        /// <param name="right">Right value.</param>
+        /// <returns>Returns true if the left value is less than the right value.</returns>
+        bool IsLessThanValue(T left, T right);
+    }
+    
     /// <summary>
     /// Helper format for converting between two types.
     /// </summary>
@@ -33,13 +76,18 @@ namespace ISTE.DAL.Database.Interfaces
         {
             get;
         }
-                
+
         /// <summary>
-        /// Compare internal value with input SQL value.
+        /// Return the value as its .NET compatible type.
         /// </summary>
-        /// <param name="sqlValue">Value to compare.</param>
-        /// <returns>Returns true if values match.</returns>
-        bool IsEqual(string sqlValue);
+        /// <returns>Return value.</returns>
+        T GetValue();
+
+        /// <summary>
+        /// Return the value as its SQL string.
+        /// </summary>
+        /// <returns>Return value.</returns>
+        string GetSQL();
 
         /// <summary>
         /// Attempt to set the value.
@@ -51,7 +99,7 @@ namespace ISTE.DAL.Database.Interfaces
         /// Attempt to set the value.
         /// </summary>
         /// <param name="value">Value to set.</param>
-        void SetValue(string value);
+        void SetSQL(string value);
     }
 
     /// <summary>
@@ -85,18 +133,16 @@ namespace ISTE.DAL.Database.Interfaces
         }
 
         /// <summary>
-        /// Attempt to set the value. Returns false if out of range.
+        /// Attempt to set the value.
         /// </summary>
         /// <param name="value">Value to set.</param>
-        /// <returns>Return true if within range.</returns>
-        bool Set(T value);
+        bool TrySetValue(T value);
 
         /// <summary>
-        /// Attempt to set the value. Returns false if out of range.
+        /// Attempt to set the value.
         /// </summary>
         /// <param name="value">Value to set.</param>
-        /// <returns>Return true if within range.</returns>
-        bool Set(string value);
+        bool TrySetSQL(string value);
 
         /// <summary>
         /// Check if a particular value is within the range.

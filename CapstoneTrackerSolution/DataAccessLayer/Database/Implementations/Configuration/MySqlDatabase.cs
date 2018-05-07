@@ -234,6 +234,16 @@ namespace ISTE.DAL.Database.Implementations
         /// Return collection of data from the database, applying any parameters if necessary. (No parameters will assume it is a statement that needs no preparation).
         /// </summary>
         /// <param name="sqlQuery">Query to execute on the data reader.</param>
+        /// <returns>Returns result set containing response from database.</returns>
+        public IResultSet GetData(string sqlQuery)
+        {
+            return GetData(sqlQuery, dictionary: null);
+        }
+
+        /// <summary>
+        /// Return collection of data from the database, applying any parameters if necessary. (No parameters will assume it is a statement that needs no preparation).
+        /// </summary>
+        /// <param name="sqlQuery">Query to execute on the data reader.</param>
         /// <param name="parameters">Parameters to assign to the command.</param>
         /// <returns>Returns result set containing response from database.</returns>
         public IResultSet GetData(string sqlQuery, MySqlParameters parameters)
@@ -245,9 +255,9 @@ namespace ISTE.DAL.Database.Implementations
         /// Return collection of data from the database, applying any parameters if necessary. (No parameters will assume it is a statement that needs no preparation).
         /// </summary>
         /// <param name="sqlQuery">Query to execute on the data reader.</param>
-        /// <param name="parameters">Parameters to assign to the command.</param>
+        /// <param name="dictionary">Parameters to assign to the command.</param>
         /// <returns>Returns result set containing response from database.</returns>
-        public IResultSet GetData(string sqlQuery, IDictionary<string, string> parameters = null)
+        public IResultSet GetData(string sqlQuery, IDictionary<string, string> dictionary = null)
         {
             // Create default response, to return on failure.
             IResultSet set = new MySqlResultSet(sqlQuery, -1); // -1 rowsAffected means that no query has been processed.
@@ -257,13 +267,13 @@ namespace ISTE.DAL.Database.Implementations
             MySqlCommand statement = null;
 
             // Create the MySql command statement:
-            if (parameters != null && parameters.Count > 0)
+            if (dictionary != null && dictionary.Count > 0)
             {
                 // If the input parameter collection is greater than zero:
                 try
                 {
                     // Prepare the statement if necessary.
-                    statement = Prepare(sqlQuery, parameters);
+                    statement = Prepare(sqlQuery, dictionary);
                 }
                 catch (DataAccessLayerException dale)
                 {
