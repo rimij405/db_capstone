@@ -23,7 +23,7 @@ namespace ISTE.DAL.Models.Implementations
     /// <summary>
     /// Represents a user model.
     /// </summary>
-    public class MySqlUser : MySqlDatabaseObject, IUserModel
+    public class MySqlUser : MySqlDatabaseObjectModel, IUserModel
     {
 
         //////////////////////
@@ -40,9 +40,9 @@ namespace ISTE.DAL.Models.Implementations
         /// Create a row filled with the appropriate user fields.
         /// </summary>
         /// <returns>Returns a row.</returns>
-        private static List<IEntry> CreateUserModel()
+        private static IRow CreateUserModel()
         {
-            return new List<IEntry>() {
+            return (MySqlRow) new List<IEntry>() {
                 new MySqlEntry("userID"),
                 new MySqlEntry("username"),
                 new MySqlEntry("password"),
@@ -60,9 +60,9 @@ namespace ISTE.DAL.Models.Implementations
         /// <param name="firstName">First name.</param>
         /// <param name="lastName">Last name.</param>
         /// <returns>Returns a populated row.</returns>
-        private static List<IEntry> CreateUserModel(string userID, string username, string password, string firstName, string lastName)
+        private static IRow CreateUserModel(string userID, string username, string password, string firstName, string lastName)
         {
-            return new List<IEntry>() {
+            return (MySqlRow) new List<IEntry>() {
                   new MySqlEntry("userID", userID),
                   new MySqlEntry("username", username),
                   new MySqlEntry("password", password),
@@ -94,11 +94,11 @@ namespace ISTE.DAL.Models.Implementations
         {
             get
             {
-                return new MySqlID(this.GetValue("userID"));
+                return new MySqlID(this["userID"].Value);
             }
             set
             {
-                this.SetValue("userID", value.SQLValue);
+                this["userID"].SetValue(value.SQLValue);
             }
         }
 
@@ -109,11 +109,11 @@ namespace ISTE.DAL.Models.Implementations
         {
             get
             {
-                return this.GetValue("username");
+                return this["username"].Value;
             }
             set
             {
-                this.SetValue("username", value);
+                this["username"].SetValue(value);
             }
         }
 
@@ -124,11 +124,11 @@ namespace ISTE.DAL.Models.Implementations
         {
             get
             {
-                return this.GetValue("password");
+                return this["password"].Value;
             }
             set
             {
-                this.SetValue("password", value);
+                this["password"].SetValue(value);
             }
         }
 
@@ -139,11 +139,11 @@ namespace ISTE.DAL.Models.Implementations
         {
             get
             {
-                return this.GetValue("firstName");
+                return this["firstName"].Value;
             }
             set
             {
-                this.SetValue("firstName", value);
+                this["firstName"].SetValue(value);
             }
         }
 
@@ -154,11 +154,11 @@ namespace ISTE.DAL.Models.Implementations
         {
             get
             {
-                return this.GetValue("lastName");
+                return this["lastName"].Value;
             }
             set
             {
-                this.SetValue("lastName", value);
+                this["lastName"].SetValue(value);
             }
         }
 
@@ -564,7 +564,27 @@ namespace ISTE.DAL.Models.Implementations
         {
             throw new NotImplementedException();
         }
-        
+
+        public override IDatabaseObjectModel Clone()
+        {
+            throw new NotImplementedException();
+        }
+
+        protected override string GetQuery()
+        {
+            throw new NotImplementedException();
+        }
+
+        protected override MySqlParameters GetParameters(string query)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override int CompareModels(IDatabaseObjectModel left, IDatabaseObjectModel right)
+        {
+            throw new NotImplementedException();
+        }
+
         /*
         string userId;
         string username;

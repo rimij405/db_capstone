@@ -1,5 +1,5 @@
 ﻿/*
-    DatabaseObject.cs
+    MySqlDatabaseObject.cs
     ---
     Ian Effendi
  */
@@ -16,124 +16,317 @@ using ISTE.DAL.Database.Interfaces;
 using ISTE.DAL.Database;
 using ISTE.DAL.Database.Implementations;
 using ISTE.DAL.Models.Interfaces;
+using Services.Interfaces;
 
 namespace ISTE.DAL.Models.Implementations
 {
 
     /// <summary>
-    /// Base database object class.
+    /// Represents a MySqlDatabaseObjectMemento.
     /// </summary>
-    public abstract class MySqlDatabaseObject : IDatabaseObject
+    public struct MySqlDatabaseObjectMemento : IDatabaseObjectMemento
     {
+        //////////////////////
+        // Static Member(s).
+        //////////////////////
+
+        //////////////////////
+        // Conversion operators.
+
+        /// <summary>
+        /// Cast to MySqlRow.
+        /// </summary>
+        /// <param name="memento">Memento to cast.</param>
+        public static explicit operator MySqlRow(MySqlDatabaseObjectMemento memento)
+        {
+            return memento.Data as MySqlRow;
+        }
+
+        /// <summary>
+        /// Cast to MySqlDatabaseObjectMemento.
+        /// </summary>
+        /// <param name="row">Row to cast.</param>
+        public static explicit operator MySqlDatabaseObjectMemento(MySqlRow row)
+        {
+            return new MySqlDatabaseObjectMemento(row, new List<IPrimaryKey>(), new Stack<IDatabaseObjectMemento>());
+        }
+        
         //////////////////////
         // Field(s).
         //////////////////////
 
         /// <summary>
-        /// Holds collection of entries representing the user.
+        /// MySqlRow data.
         /// </summary>
-        private List<IEntry> internalModel;
+        private MySqlRow internalData;
 
         /// <summary>
-        /// Collection of primary keys.
+        /// Internal memento stack.
         /// </summary>
-        private List<IEntry> primaryKeys;
+        private Stack<IDatabaseObjectMemento> internalHistory;
+
+        /// <summary>
+        /// Internal storage of primary keys.
+        /// </summary>
+        private List<IPrimaryKey> internalKeys;
 
         //////////////////////
         // Properties.
         //////////////////////
 
         /// <summary>
-        /// Reference to the collection of IEntries that make up a data object.
+        /// Reference to internal model.
         /// </summary>
-        public List<IEntry> Model
+        public IRow Data
         {
-            get {
-                return this.internalModel = (this.internalModel ?? new List<IEntry>()) ;
+            get
+            {
+                return this.internalData;
             }
+        }
+
+        /// <summary>
+        /// Reference to history at time of creation.
+        /// </summary>
+        public Stack<IDatabaseObjectMemento> History
+        {
+            get
+            {
+                return this.internalHistory;
+            }
+        }
+
+        /// <summary>
+        /// Reference to the primary keys.
+        /// </summary>
+        public IList<IPrimaryKey> PrimaryKeys
+        {
+            get
+            {
+                return this.internalKeys;
+            }
+        }
+
+        //////////////////////
+        // Indexer(s).
+        
+        //////////////////////
+        // Constructor(s).
+        //////////////////////
+
+        /// <summary>
+        /// Create a memento with the input data values.
+        /// </summary>
+        /// <param name="data">Record data to store.</param>
+        /// <param name="keys">Primary keys of the data.</param>
+        /// <param name="history">History.</param>
+        public MySqlDatabaseObjectMemento(IRow data, IList<IPrimaryKey> keys, Stack<IDatabaseObjectMemento> history)
+        {
+            // Clone the data.
+            this.internalData = data.Clone() as MySqlRow;
+            this.internalData.IsReadOnly = true;
+
+            // Clone the list.
+            this.internalKeys = new List<IPrimaryKey>(keys);
+
+            // Clones the stack.
+            IDatabaseObjectMemento[] stack = history.ToArray<IDatabaseObjectMemento>();
+            stack.Reverse<IDatabaseObjectMemento>();
+            this.internalHistory = new Stack<IDatabaseObjectMemento>(stack);          
+        }
+
+        /// <summary>
+        /// Clone a memento.
+        /// </summary>
+        /// <param name="memento">Memento to clone.</param>
+        public MySqlDatabaseObjectMemento(MySqlDatabaseObjectMemento memento)
+        {
+            // Clone the data.
+            this.internalData = memento.Data.Clone() as MySqlRow;
+            this.internalData.IsReadOnly = true;
+
+            // Clone the list.
+            this.internalKeys = new List<IPrimaryKey>(memento.PrimaryKeys);
+
+            // Clones the stack.
+            IDatabaseObjectMemento[] stack = memento.History.ToArray<IDatabaseObjectMemento>();
+            stack.Reverse<IDatabaseObjectMemento>();
+            this.internalHistory = new Stack<IDatabaseObjectMemento>(stack);
+        }
+
+        //////////////////////
+        // Method(s).
+        //////////////////////
+        
+        //////////////////////
+        // Mutator method(s).
+
+        /// <summary>
+        /// Compare internal data for the memento against the model.
+        /// </summary>
+        /// <param name="model">Model to compare.</param>
+        /// <returns>Returns the comparison index value.</returns>
+        public int Compare(IDatabaseObjectModel model)
+        {
+            return this.Data.Compare(model.Model);
+        }
+    }
+
+    /// <summary>
+    /// Base database object class.
+    /// </summary>
+    public abstract class MySqlDatabaseObjectModel : IDatabaseObjectModel, IComparison<IDatabaseObjectModel>
+    {
+
+        //////////////////////
+        // Static Member(s).
+        //////////////////////
+
+        //////////////////////
+        // Conversion operators.
+
+        /// <summary>
+        /// Cast to MySqlRow.
+        /// </summary>
+        /// <param name="model">Cast to MySqlRow.</param>
+        public static implicit operator MySqlRow(MySqlDatabaseObjectModel model)
+        {
+            return model.Model.Clone() as MySqlRow;
+        }
+
+        //////////////////////
+        // Field(s).
+        //////////////////////
+
+        /// <summary>
+        /// Internal data structure storing the database model's data.
+        /// </summary>
+        private MySqlRow internalModel;
+
+        /// <summary>
+        /// Internal data structure storing the primary keys.
+        /// </summary>
+        private List<IPrimaryKey> internalKeys;
+
+        /// <summary>
+        /// Stack for the memento history.
+        /// </summary>
+        private Stack<IDatabaseObjectMemento> internalHistory;
+
+        //////////////////////
+        // Properties.
+        //////////////////////
+
+        /// <summary>
+        /// Stack of the model's mementos.
+        /// </summary>
+        public Stack<IDatabaseObjectMemento> History
+        {
+            get
+            {
+                if (this.internalHistory == null)
+                {
+                    this.internalHistory = new Stack<IDatabaseObjectMemento>();
+                }
+                return this.internalHistory;
+            }
+        }
+
+        /// <summary>
+        /// Peek at the top-most memento.
+        /// </summary>
+        public IDatabaseObjectMemento Snapshot
+        {
+            get
+            {
+                return this.History.Peek();
+            }
+        }
+
+        /// <summary>
+        /// Internal model to store database model data.
+        /// </summary>
+        public IRow Model
+        {
+            get
+            {
+                if (this.internalModel == null)
+                {
+                    this.internalModel = new MySqlRow();
+                }
+                return this.internalModel;
+            }
+
             protected set
             {
-                this.internalModel = value;
+                this.internalModel = value as MySqlRow;
             }
         }
 
         /// <summary>
-        /// Database object reference to individual fields.
+        /// Collection of primary keys.
         /// </summary>
-        /// <param name="field">Fieldname of field to get/set.</param>
-        /// <returns>Returns entry associated with value at the particular field.</returns>
-        public IEntry this[string field]
+        public IList<IPrimaryKey> PrimaryKeys
         {
             get
             {
-                if (this.Model.Count > 0)
+                if (this.internalKeys == null)
                 {
-                    foreach (IEntry entry in this.Model)
-                    {
-                        if (entry.HasField(field))
-                        {
-                            return entry;
-                        }
-                    }
+                    this.internalKeys = new List<IPrimaryKey>();
                 }
-                return null;
+                return this.internalKeys;
             }
-            set
-            {
-                IEntry entry = this[field];
-                if (entry != null) { entry.SetValue(value.Value); }
-            }
+        }
+
+        //////////////////////
+        // Indexer(s).
+
+        /// <summary>
+        /// Return entry at index reference, if one exists.
+        /// </summary>
+        /// <param name="index">Field index to reference.</param>
+        /// <returns>Return entry at index.</returns>
+        public IEntry this[int index]
+        {
+            get { return this.Model[index]; }
         }
 
         /// <summary>
-        /// Storage of entry containing the primary key for the object.
+        /// Return entry with matching fieldname, if one exists.
         /// </summary>
-        public List<IEntry> PrimaryKey
+        /// <param name="fieldname">Field to reference.</param>
+        /// <returns>Return entry at field.</returns>
+        public IEntry this[string fieldname]
         {
-            get
-            {
-                if (this.primaryKeys == null)
-                {
-                    this.primaryKeys = new List<IEntry>();
-                }
-                return this.primaryKeys;
-            }
-            set
-            {
-                if (this.primaryKeys == null)
-                {
-                    this.primaryKeys = new List<IEntry>();
-                }
-                foreach (IEntry key in value)
-                {
-                    if (this.HasField(key.Field))
-                    {
-                        if (!this.primaryKeys.Contains(key))
-                        {
-                            this.primaryKeys.Add(key);
-                        }
-                    }
-                }
-            }
+            get { return this.Model[fieldname]; }
         }
+
+        //////////////////////
+        // Constructor(s).
+        //////////////////////
 
         /// <summary>
-        /// Check if object is empty.
+        /// Empty model constructor.
         /// </summary>
-        public bool IsEmpty
-        {
-            get
-            {
-                if (this.Model.Count == 0) { return true; }
-                foreach (IEntry entry in this.Model)
-                {
-                    if (!entry.IsNull) { return false; }
-                }
-                return true;
-            }
-        }
+        protected MySqlDatabaseObjectModel() { }
 
-        List<IEntry> IDatabaseObject.Model { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        /// <summary>
+        /// Creates a model from an input row.
+        /// </summary>
+        /// <param name="model">Model data.</param>
+        protected MySqlDatabaseObjectModel(MySqlRow model)
+        {
+            this.internalModel = new MySqlRow(model);
+        }
+        
+        /// <summary>
+        /// Create a model from an input memento.
+        /// </summary>
+        /// <param name="memento">Stored model data.</param>
+        protected MySqlDatabaseObjectModel(IDatabaseObjectMemento memento)
+        {
+            this.Load(memento);
+        }
 
         //////////////////////
         // Method(s).
@@ -142,364 +335,131 @@ namespace ISTE.DAL.Models.Implementations
         //////////////////////
         // Service method(s).
 
+        #region IReplicate
+
         /// <summary>
-        /// Check if it has property.
+        /// Clone object.
         /// </summary>
-        /// <param name="field">Property to check.</param>
-        /// <returns>Returns true if found.</returns>
-        public bool HasField(string field)
+        /// <returns>Return clone.</returns>
+        public abstract IDatabaseObjectModel Clone();
+
+        /// <summary>
+        /// Clone object.
+        /// </summary>
+        /// <returns>Return clone.</returns>
+        public object Clone(object objectToClone)
         {
-            foreach (IEntry entry in this.Model)
+            if (objectToClone is MySqlDatabaseObjectModel obj)
             {
-                if (entry.HasField(field)) { return true; }
+                return obj.Clone();
             }
-            return false;
-        }
-
-        /// <summary>
-        /// Check if it has property.
-        /// </summary>
-        /// <param name="field">Property to check.</param>
-        /// <returns>Returns true if found.</returns>
-        public bool HasPrimaryKey(string field)
-        {
-            if (!String.IsNullOrEmpty(field))
+            if (objectToClone is IReplicate replicant)
             {
-                foreach (IEntry entry in PrimaryKey)
-                {
-                    if (entry.HasField(field))
-                    {
-                        return true;
-                    }
-                }
+                return replicant.Clone(replicant);
             }
-            return false;
+            return null;
         }
 
-        /// <summary>
-        /// Check if it has property.
-        /// </summary>
-        /// <param name="field">Property to check.</param>
-        /// <returns>Returns true if found.</returns>
-        public bool HasPrimaryKey(IEntry field)
-        {
-            if (field != null)
-            {
-                foreach (IEntry entry in PrimaryKey)
-                {
-                    if (entry.HasField(field.Field))
-                    {
-                        return true;
-                    }
-                }
-            }
-            return false;
-        }
+        #endregion
 
-        /// <summary>
-        /// Check if it has all properties.
-        /// </summary>
-        /// <param name="fields">Properties to check.</param>
-        /// <returns>Returns true if found.</returns>
-        public bool HasPrimaryKey(List<string> fields)
-        {
-            if (fields != null && fields.Count > 0)
-            {
-                int expected = fields.Count;
-                foreach (string field in fields)
-                {
-                    if (this.HasPrimaryKey(field)) { expected--; }
-                }
-                return (expected <= 0);
-            }
-            return false;
-        }
+        #region IComparison
 
-        /// <summary>
-        /// Check if it has all properties.
-        /// </summary>
-        /// <param name="fields">Properties to check.</param>
-        /// <returns>Returns true if found.</returns>
-        public bool HasPrimaryKey(params string[] fields)
-        {
-            return this.HasPrimaryKey(fields.ToList<string>());
-        }
-
-        /// <summary>
-        /// Check if it has all properties.
-        /// </summary>
-        /// <param name="fields">Properties to check.</param>
-        /// <returns>Returns true if found.</returns>
-        public bool HasPrimaryKey(List<IEntry> fields)
-        {
-            if (fields != null && fields.Count > 0)
-            {
-                int expected = fields.Count;
-                foreach (IEntry field in fields)
-                {
-                    if (this.HasPrimaryKey(field)) { expected--; }
-                }
-                return (expected <= 0);
-            }
-            return false;
-        }
-
-        /// <summary>
-        /// Check if it has all properties.
-        /// </summary>
-        /// <param name="fields">Properties to check.</param>
-        /// <returns>Returns true if found.</returns>
-        public bool HasPrimaryKey(params IEntry[] fields)
-        {
-            return this.HasPrimaryKey(fields.ToList<IEntry>());
-        }
-
-        /// <summary>
-        /// Compare fields of one database object to another.
-        /// </summary>
-        /// <param name="other">Comparison.</param>
-        /// <returns>Return result of comparison.</returns>
-        public bool HasSameFields(IDatabaseObject other)
-        {
-            if (other != null)
-            {                
-                foreach (IEntry field in other.Model)
-                {
-                    if (!this.HasField(field.Field))
-                    {
-                        return false;
-                    }
-                }
-                return true;
-            }
-            return false;
-        }
-
-        /// <summary>
-        /// Compare primary keys of one database object to another.
-        /// </summary>
-        /// <param name="other">Comparison.</param>
-        /// <returns>Return result of comparison.</returns>
-        public bool HasSamePrimaryKey(IDatabaseObject other)
-        {
-            if (this.HasSameFields(other))
-            {
-                return this.HasPrimaryKey(other.PrimaryKey);
-            }
-            return false;
-        }
-
-        /// <summary>
-        /// Compare actual values of one database object to another.
-        /// </summary>
-        /// <param name="other">Comparison.</param>
-        /// <returns>Return result of comparison.</returns>
-        public bool HasSameValues(IDatabaseObject other)
-        {
-            if (this.HasSamePrimaryKey(other))
-            {
-                MySqlRow rowA = new MySqlRow(this.Model);
-                MySqlRow rowB = new MySqlRow(other.Model);
-                return (rowA.Equals(rowB));
-            }
-            return false;
-        }
-
-        //////////////////////
-        // Helper method(s).
-
-        /// <summary>
-        /// Compare two database objects.
-        /// </summary>
-        /// <param name="other">Object to compare.</param>
-        /// <returns>Returns sort integer.</returns>
-        public int CompareTo(IDatabaseObject other)
-        {
-            if (other != null)
-            {
-                return new MySqlRow(this.Model).CompareTo(new MySqlRow(other.Model));
-            }
-            return Int32.MinValue;
-        }
+        #endregion
 
         //////////////////////
         // Accessor method(s).
-        
-        /// <summary>
-        /// Retrieve entry at field.
-        /// </summary>
-        /// <param name="field">Field to access.</param>
-        /// <returns>Returns entry at field.</returns>
-        public IEntry Get(string field)
-        {
-            return this[field];
-        }
-        
-        /// <summary>
-        /// Get map of fields to their values as a set of MySql parameters.
-        /// </summary>
-        /// <returns>Returns map of fields and their parameters.</returns>
-        public IDictionary<string, string> GetParameters()
-        {
-            Dictionary<string, string> parameters = new Dictionary<string, string>();
-            foreach (IEntry entry in this.Model)
-            {
-                string field = entry.Field;
-                string value = entry.Value;
-                field = $"@{field.ToUpper()[0]}{field.ToLower().Substring(1)}";
-                parameters.Add(field, value);
-            }
-            return parameters;
-        }
-        
-        /// <summary>
-        /// Get value of entry at a particular field.
-        /// </summary>
-        /// <param name="field">Field to access.</param>
-        /// <returns>Returns value.</returns>
-        public string GetValue(string field)
-        {
-            IEntry entry = this.Get(field);
-            if (entry != null) { return entry.Value; }
-            return "";
-        }
-
-        //////////////////////
-        // Mutator method(s).
 
         /// <summary>
-        /// Set value of entry in given field.
+        /// Return the query to be used with the fetch request.
         /// </summary>
-        /// <param name="field">Field.</param>
-        /// <param name="value">Value to set.</param>
-        public void Set(string field, string value = null)
-        {
-            IEntry entry = this.Get(field);
-            if (entry != null)
-            {
-                if (value == null) { entry.MakeNull(); }
-                else { entry.SetValue(value); }
-            }
-        }
-
-        /// <summary>
-        /// Set value at input entry.
-        /// </summary>
-        /// <param name="field">Field to access.</param>
-        /// <param name="value">Value to set.</param>
-        /// <returns>Returns true if operation is successful.</returns>
-        public bool SetValue(string field, string value)
-        {
-            if (!String.IsNullOrEmpty(field))
-            {
-                IEntry entry = this.Get(field);
-                entry.SetData(entry.Field, value);
-                return true;
-            }
-            return false;
-        }
-
-    }
-
-    /// <summary>
-    /// Modified base database object class.
-    /// </summary>
-    public abstract class MySqlDatabaseObjectModel : MySqlDatabaseObject, ICodeItem
-    {
-
-        //////////////////////
-        // Properties.
-        //////////////////////
-
-        /// <summary>
-        /// Model code.
-        /// </summary>
-        public virtual IUIDFormat Code
-        {
-            get { return new MySqlID(this.GetValue("code")); }
-            protected set { this.SetValue("code", value.SQLValue); }
-        }
-
-        /// <summary>
-        /// Model name.
-        /// </summary>
-        public virtual string Name
-        {
-            get { return this.GetValue("name"); }
-            protected set { this.SetValue("name", value); }
-        }
-
-        /// <summary>
-        /// Model description.
-        /// </summary>
-        public virtual string Description
-        {
-            get { return this.GetValue("description"); }
-            protected set { this.SetValue("description", value); }
-        }
-
-        //////////////////////
-        // Constructor(s).
-        //////////////////////
-
-        /// <summary>
-        /// Code item constructor.
-        /// </summary>
-        /// <param name="code">Code.</param>
-        protected MySqlDatabaseObjectModel(IUIDFormat code)
-            : this(code, null, null)
-        {}
-
-        /// <summary>
-        /// Code item constructor.
-        /// </summary>
-        /// <param name="name">Name.</param>
-        protected MySqlDatabaseObjectModel(string name)
-            : this(null, name)
-        {}
-
-        /// <summary>
-        /// Code item constructor.
-        /// </summary>
-        /// <param name="code">Code.</param>
-        /// <param name="name">Name.</param>
-        /// <param name="description">Description.</param>
-        protected MySqlDatabaseObjectModel(IUIDFormat code, string name, string description)
-            : this(code.SQLValue, name, description)
-        {}
-
-        /// <summary>
-        /// Code item constructor.
-        /// </summary>
-        /// <param name="code">Code.</param>
-        /// <param name="name">Name.</param>
-        /// <param name="description">Description.</param>
-        protected MySqlDatabaseObjectModel(string code, string name, string description = null)
-        {
-            // Add the entries.
-            this.Model.Add(new MySqlEntry("code", code));
-            this.Model.Add(new MySqlEntry("name", name));
-            this.Model.Add(new MySqlEntry("description", description));
-        }
-
-        //////////////////////
-        // Method(s).
-        //////////////////////
-
-        //////////////////////
-        // Mutator method(s).
-        
-        /// <summary>
-        /// Return the appropriate query to use.
-        /// </summary>
-        /// <returns>Return query string.</returns>
+        /// <returns>Returns SQL query string.</returns>
         protected abstract string GetQuery();
 
         /// <summary>
-        /// Return the appropriate parameters to use.
+        /// Return the parameters to be used with the fetch request.
         /// </summary>
-        /// <returns>Return parameters object.</returns>
+        /// <returns>Returns SQL parameters.</returns>
         protected abstract MySqlParameters GetParameters(string query);
+
+        /// <summary>
+        /// Save current snapshot.
+        /// </summary>
+        /// <returns>Return reference to the saved memento.</returns>
+        public IDatabaseObjectMemento Save()
+        { 
+            // Create new snapshot.
+            IDatabaseObjectMemento memento
+                = new MySqlDatabaseObjectMemento(this.Model, this.PrimaryKeys, this.History);
+
+            // Push onto the history.
+            this.History.Push(memento);
+
+            // Return snapshot.
+            return memento;
+        }
+
+        //////////////////////
+        // Mutator method(s).
+
+        /// <summary>
+        /// Assign a composite primary key made up of separate keys.
+        /// </summary>
+        /// <param name="compositeKey">Primary keys of model.</param>
+        public void SetCompositeKey(IList<IPrimaryKey> compositeKey)
+        {
+            if (compositeKey != null && compositeKey.Count > 0)
+            {
+                PrimaryKeys.Clear();
+                foreach (IPrimaryKey key in compositeKey)
+                {
+                    this.PrimaryKeys.Add(key);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Assign a single primary key.
+        /// </summary>
+        /// <param name="key">Primary key of model.</param>
+        public void SetPrimaryKey(IPrimaryKey key)
+        {
+            if (key != null)
+            {
+                this.PrimaryKeys.Clear();
+                this.PrimaryKeys.Add(key);
+            }
+        }
+
+        /// <summary>
+        /// Restore the top-most memento data in the stack.
+        /// </summary>
+        /// <returns>Returns reference to the memento.</returns>
+        public IDatabaseObjectMemento Restore()
+        {
+            IDatabaseObjectMemento memento = this.Snapshot;
+            if (this.History.Count > 1)
+            {
+                memento = this.History.Pop();
+                this.Load(memento);
+            }
+            return memento;
+        }
+
+        /// <summary>
+        /// Load the data from the input memento. Overwrites the stack history.
+        /// </summary>
+        /// <param name="memento">Memento data to load.</param>
+        /// <returns>Returns reference to self.</returns>
+        public IDatabaseObjectModel Load(IDatabaseObjectMemento memento)
+        {
+            if (memento != null)
+            {
+                this.internalKeys = (memento.PrimaryKeys as List<IPrimaryKey>);
+                this.internalModel = memento.Data as MySqlRow;
+                this.internalHistory = memento.History;
+            }
+            return this;
+        }
 
         /// <summary>
         /// Fetch all relevant codes from the database.
@@ -514,11 +474,17 @@ namespace ISTE.DAL.Models.Implementations
             results.Error(); // Set to error state by default.
             errorCode = DatabaseError.NONE;
 
-            // If there is neither code nor name, we cannot fetch.
-            if (String.IsNullOrWhiteSpace(this.Code.SQLValue) && String.IsNullOrWhiteSpace(this.Name))
+            // Check primary keys
+            foreach (IPrimaryKey key in this.PrimaryKeys)
             {
-                errorCode = DatabaseError.MISSING_DATA;
-                throw new DatabaseOperationException(errorCode, "Cannot fetch data - no unique identifiers present.");
+                if (key.PrimaryKey)
+                {
+                    if (key.IsNull || String.IsNullOrWhiteSpace(key.Value))
+                    {
+                        errorCode = DatabaseError.MISSING_DATA;
+                        throw new DatabaseOperationException(errorCode, $"Cannot fetch data - unique identifier {key.Value} is missing.");
+                    }
+                }
             }
 
             // Determine the query.
@@ -558,9 +524,24 @@ namespace ISTE.DAL.Models.Implementations
         /// <param name="results">Results to set.</param>
         protected virtual void SetResults(IResultSet results)
         {
-            this.Code = (MySqlID)results[0, "code"].Value;
-            this.Name = results[0, "name"].Value;
-            this.Description = results[0, "description"].Value;
+            foreach (IEntry entry in this.Model.Entries)
+            {
+                if (entry is IPrimaryKey primaryKey && primaryKey.PrimaryKey)
+                {
+                    // Do NOT overwrite values for primary key!
+                    continue;
+                }
+                else
+                {
+                    if(results.TryGetRow(0, out IRow row))
+                    {
+                        if (row.TryGetEntry(entry.Field, out IEntry resultEntry))
+                        {
+                            this.Model[entry.Field].SetValue(resultEntry.Value);
+                        }
+                    }
+                }
+            }
         }
 
         /// <summary>
@@ -601,6 +582,288 @@ namespace ISTE.DAL.Models.Implementations
                 return false;
             }
         }
+
+        /// <summary>
+        /// Compare individual entries in the models.
+        /// </summary>
+        /// <param name="left">Left model.</param>
+        /// <param name="right">Right model.</param>
+        /// <returns>Returns comparison value</returns>
+        public abstract int CompareModels(IDatabaseObjectModel left, IDatabaseObjectModel right);
+
+        /// <summary>
+        /// Compare values.
+        /// </summary>
+        /// <param name="other">object to compare.</param>
+        /// <returns>Returns comparison value.</returns>
+        public int Compare(IDatabaseObjectModel other)
+        {
+            return this.CompareValue(this, other);
+        }
+
+        /// <summary>
+        /// Compare for equality.
+        /// </summary>
+        /// <param name="other">object to compare.</param>
+        /// <returns>Returns comparison value.</returns>
+        public bool IsEqual(IDatabaseObjectModel other)
+        {
+            return (this.Compare(other) == 0);
+        }
+
+        /// <summary>
+        /// Comparison of values.
+        /// </summary>
+        /// <param name="left">Left model.</param>
+        /// <param name="right">Right model.</param>
+        /// <returns>Returns comparison value</returns>
+        public virtual int CompareValue(IDatabaseObjectModel left, IDatabaseObjectModel right)
+        {
+            if (left == null && right == null) { return 0; }
+            if (left == null) { return -1; }
+            if (right == null) { return 1; }
+            if (left.Model.IsEmpty && right.Model.IsEmpty) { return 0; }
+            if (left.Model.IsEmpty) { return -1; }
+            if (right.Model.IsEmpty) { return 1; }
+            if (left == right) { return 0; }
+            return CompareModels(left, right);
+        }
+
+        /// <summary>
+        /// Find equality value.
+        /// </summary>
+        /// <typeparam name="T">Data to compare.</typeparam>
+        /// <param name="left">Left model.</param>
+        /// <param name="right">Right model.</param>
+        /// <returns>Returns comparison value</returns>
+        public bool IsEqualValue(IDatabaseObjectModel left, IDatabaseObjectModel right)
+        {
+            return (this.CompareValue(left, right) == 0);
+        }
+
+        /// <summary>
+        /// Find greater than value.
+        /// </summary>
+        /// <typeparam name="T">Data to compare.</typeparam>
+        /// <param name="left">Left model.</param>
+        /// <param name="right">Right model.</param>
+        /// <returns>Returns comparison value</returns>
+        public bool IsGreaterThanValue(IDatabaseObjectModel left, IDatabaseObjectModel right)
+        {
+            return (this.CompareValue(left, right) >= 1);
+        }
+
+        /// <summary>
+        /// Find less than value.
+        /// </summary>
+        /// <typeparam name="T">Data to compare.</typeparam>
+        /// <param name="left">Left model.</param>
+        /// <param name="right">Right model.</param>
+        /// <returns>Returns comparison value</returns>
+        public bool IsLessThanValue(IDatabaseObjectModel left, IDatabaseObjectModel right)
+        {
+            return (this.CompareValue(left, right) <= -1);
+        }
+
+        /// <summary>
+        /// Find comparison value.
+        /// </summary>
+        /// <typeparam name="T">Data to compare.</typeparam>
+        /// <param name="left">Left model.</param>
+        /// <param name="right">Right model.</param>
+        /// <returns>Returns comparison value</returns>
+        public int CompareValue<T>(T left, T right) where T : IComparable
+        {
+            return left.CompareTo(right);
+        }
+
+        /// <summary>
+        /// Find if equal than value.
+        /// </summary>
+        /// <typeparam name="T">Data to compare.</typeparam>
+        /// <param name="left">Left model.</param>
+        /// <param name="right">Right model.</param>
+        /// <returns>Returns comparison value</returns>
+        public bool IsEqualValue<T>(T left, T right) where T : IComparable
+        {
+            return (this.CompareValue<T>(left, right) == 0);
+        }
+
+        /// <summary>
+        /// Find greater than value.
+        /// </summary>
+        /// <typeparam name="T">Data to compare.</typeparam>
+        /// <param name="left">Left model.</param>
+        /// <param name="right">Right model.</param>
+        /// <returns>Returns comparison value</returns>
+        public bool IsGreaterThanValue<T>(T left, T right) where T : IComparable
+        {
+            return (this.CompareValue<T>(left, right) >= 1);
+        }
+
+        /// <summary>
+        /// Find less than value.
+        /// </summary>
+        /// <typeparam name="T">Data to compare.</typeparam>
+        /// <param name="left">Left model.</param>
+        /// <param name="right">Right model.</param>
+        /// <returns>Returns comparison value</returns>
+        public bool IsLessThanValue<T>(T left, T right) where T : IComparable
+        {
+            return (this.CompareValue<T>(left, right) <= 1);
+        }
+
+        /// <summary>
+        /// Comparison.
+        /// </summary>
+        /// <param name="obj">Other object.</param>
+        /// <returns>Returns value.</returns>
+        public int CompareTo(object obj)
+        {
+            if (obj is IDatabaseObjectModel model)
+            {
+                this.Compare(model);
+            }
+            return 1;
+        }
+    }
+
+    /// <summary>
+    /// Base code model database class.
+    /// </summary>
+    public abstract class MySqlDatabaseCodeModel : MySqlDatabaseObjectModel
+    {
+        
+        //////////////////////
+        // Properties.
+        //////////////////////
+
+        /// <summary>
+        /// Code.
+        /// </summary>
+        public IUIDFormat Code
+        {
+            get { return new MySqlID(this["code"].Value); }
+            set { this["code"].SetValue(value.SQLValue); }
+        }
+
+        /// <summary>
+        /// Code name.
+        /// </summary>
+        public string Name
+        {
+            get { return this["name"].Value; }
+            set { this["name"].SetValue(value); }
+        }
+
+        /// <summary>
+        /// Code description.
+        /// </summary>
+        public string Description
+        {
+            get { return this["description"].Value; }
+            set { this["description"].SetValue(value); }
+        }
+
+        //////////////////////
+        // Constructor(s).
+        //////////////////////
+
+        /// <summary>
+        /// Empty constructor.
+        /// </summary>
+        protected MySqlDatabaseCodeModel() { }
+
+        /// <summary>
+        /// Construct model.
+        /// </summary>
+        /// <param name="code">Code.</param>
+        /// <param name="name">Name.</param>
+        /// <param name="description">Description.</param>
+        protected MySqlDatabaseCodeModel(IUIDFormat code, string name, string description)
+            : base()
+        {
+            // Add entries to the data model.
+            this.Model.AddEntry(new MySqlPrimaryKeyEntry(true, "code", code.SQLValue));
+            this.Model.AddEntry(new MySqlPrimaryKeyEntry(false, "name", name));
+            this.Model.AddEntry(new MySqlEntry("description", description));
+
+            // Set the primary key.
+            this.SetCompositeKey(new List<IPrimaryKey>() { this["code"] as IPrimaryKey, this["name"] as IPrimaryKey });
+
+            // Save the model's snapshot.
+            this.Save();
+        }
+
+        //////////////////////
+        // Method(s).
+        //////////////////////
+
+        /// <summary>
+        /// Compare the term values.
+        /// </summary>
+        /// <param name="left"></param>
+        /// <param name="right"></param>
+        /// <returns></returns>
+        public override int CompareModels(IDatabaseObjectModel left, IDatabaseObjectModel right)
+        {
+            if (left == null && right == null) { return 0; }
+            if (left == null) { return -1; }
+            if (right == null) { return 1; }
+            if (left == right) { return 0; }
+            if (left.Model == right.Model) { return 0; }
+
+            string leftValues = "";
+            string rightValues = "";
+
+            if (left is MySqlDatabaseCodeModel leftTerm && right is MySqlDatabaseCodeModel rightTerm)
+            {
+                leftValues += leftTerm.Code.SQLValue;
+                leftValues += leftTerm.Name;
+                leftValues += leftTerm.Description;
+
+                rightValues += rightTerm.Code.SQLValue;
+                rightValues += rightTerm.Name;
+                rightValues += rightTerm.Description;
+
+                return leftValues.CompareTo(rightValues);
+            }
+
+            if (left is MySqlDatabaseCodeModel) { return 1; }
+            if (right is MySqlDatabaseCodeModel) { return -1; }
+            return left.Model.CompareTo(right.Model);
+        }
+
+        /// <summary>
+        /// Returns query to execute.
+        /// </summary>
+        /// <returns></returns>
+        protected override string GetQuery()
+        {
+            if ((this["code"] as IPrimaryKey).PrimaryKey)
+            {
+                return GetCodeQuery();
+            }
+
+            if ((this["name"] as IPrimaryKey).PrimaryKey)
+            {
+                return GetNameQuery();
+            }
+
+            return "";
+        }
+        
+        /// <summary>
+        /// Find data using code.
+        /// </summary>
+        /// <returns>Returns SQL query string.</returns>
+        protected abstract string GetCodeQuery();
+
+        /// <summary>
+        /// Find data using name.
+        /// </summary>
+        /// <returns>Returns SQL query string.</returns>
+        protected abstract string GetNameQuery();
     }
 
 }

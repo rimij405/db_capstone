@@ -10,9 +10,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Globalization;
 
 // additional using statements.
-using System.Globalization;
+using Services.Interfaces;
 using ISTE.DAL.Database.Interfaces;
 
 
@@ -476,7 +477,7 @@ namespace ISTE.DAL.Database.Implementations
         /// <returns>Return the value.</returns>
         public virtual string GetSQL()
         {
-            return this.ConvertToSQL(this.Value);
+            return this.ConvertToSQL(this.internalValue);
         }
 
         //////////////////////
@@ -498,6 +499,70 @@ namespace ISTE.DAL.Database.Implementations
         public virtual void SetSQL(string value)
         {
             this.internalValue = this.Parse(value);
+        }
+
+        /// <summary>
+        /// Compare.
+        /// </summary>
+        /// <param name="other"></param>
+        /// <returns></returns>
+        public int Compare(TData other)
+        {
+            return CompareTo(other);
+        }
+
+        /// <summary>
+        /// Check instances for equality.
+        /// </summary>
+        /// <param name="other">Other instance.</param>
+        /// <returns>Return comparison result.</returns>
+        public bool IsEqual(TData other)
+        {
+            return IsEqualValue(other);
+        }
+
+        /// <summary>
+        /// Return a 1, 0, or -1 representing the inequality (or equality) between the left and right value.
+        /// </summary>
+        /// <param name="left">Left value.</param>
+        /// <param name="right">Right value.</param>
+        /// <returns>Return comparison sort index.</returns>
+        public int CompareValue<T>(T left, T right) where T : IComparable
+        {
+            return left.CompareTo(right);
+        }
+
+        /// <summary>
+        /// Compare two values.
+        /// </summary>
+        /// <param name="left">Left value.</param>
+        /// <param name="right">Right value.</param>
+        /// <returns>Returns true if both values are equal.</returns>
+        public bool IsEqualValue<T>(T left, T right) where T : IComparable
+        {
+            return (this.CompareValue<T>(left, right) == 0);
+        }
+
+        /// <summary>
+        /// Returns true if the left value is greater than the right value.
+        /// </summary>
+        /// <param name="left">Left value.</param>
+        /// <param name="right">Right value.</param>
+        /// <returns>Returns true if the left value is greater than the right value.</returns>
+        public bool IsGreaterThanValue<T>(T left, T right) where T : IComparable
+        {
+            return (this.CompareValue<T>(left, right) >= 1);
+        }
+        
+        /// <summary>
+        /// Returns true if the left value is less than the right value.
+        /// </summary>
+        /// <param name="left">Left value.</param>
+        /// <param name="right">Right value.</param>
+        /// <returns>Returns true if the left value is less than the right value.</returns>
+        public bool IsLessThanValue<T>(T left, T right) where T : IComparable
+        {
+            return (this.CompareValue<T>(left, right) <= -1);
         }
     }
 

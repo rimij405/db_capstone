@@ -11,6 +11,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 // using statements.
+using Services.Interfaces;
 using MySql.Data.MySqlClient;
 
 namespace ISTE.DAL.Database.Interfaces

@@ -178,8 +178,10 @@ namespace Services
         /// Checks to see if the user input matches a single expected output.
         /// </summary>
         /// <param name="query">Query to ask the user.</param>
-        /// <param name="expectedOutput">Expected output of the user input.</param>
-        /// <returns></returns>
+        /// <param name="answer">Expected answer.</param>
+        /// <param name="sameLength">Check if it has to be exactly the same length.</param>
+        /// <param name="caseSensitive">Check if the answer is case sensitive.</param>
+        /// <returns>Returns true if there was a match.</returns>
         public bool Input(string query, string answer, bool sameLength = false, bool caseSensitive = false)
         {            
             this.Write(query);

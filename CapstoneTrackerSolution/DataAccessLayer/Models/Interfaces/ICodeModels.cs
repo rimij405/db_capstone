@@ -11,6 +11,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 // additional using statements.
+using Services.Interfaces;
 using ISTE.DAL.Database.Implementations;
 using ISTE.DAL.Database.Interfaces;
 
@@ -125,7 +126,7 @@ namespace ISTE.DAL.Models.Interfaces
     /// <summary>
     /// Represents a key/value code in the database.
     /// </summary>
-    public interface ICodeModel : IDatabaseObject, IDatabaseObjectReader
+    public interface ICodeModel : IDatabaseObjectModel, IDatabaseObjectReader, IComparison<IDatabaseObjectModel>
     {
         //////////////////////
         // Properties.

@@ -79,47 +79,52 @@ namespace TestDataAccessLayer
             TestMethods += Test_MySqlDatabase_Connect;
 
             // Data type (.NET <==> SQL) tests.
-            TestMethods += Test_Format_MySqlID;
-            TestMethods += Test_Format_MySqlDateTime;
-            TestMethods += Test_Format_MySqlFlag;
+            // TestMethods += Test_Format_MySqlID;
+            // TestMethods += Test_Format_MySqlDateTime;
+            // TestMethods += Test_Format_MySqlFlag;
 
-            // Model tests.
+            // Code model tests.
             TestMethods += Test_Model_MySqlTerm;
+            TestMethods += Test_Model_MySqlStatus;
+            TestMethods += Test_Model_MySqlEmailType;
+            TestMethods += Test_Model_MySqlPhoneType;
+            TestMethods += Test_Model_MySqlRoleType;
 
-            /***
+            // Code glossary model tests.
+            TestMethods += Test_Model_MySqlTerms;
+            TestMethods += Test_Model_MySqlStatuses;
+            TestMethods += Test_Model_MySqlPhoneTypes;
+            TestMethods += Test_Model_MySqlEmailTypes;
+            TestMethods += Test_Model_MySqlRoleTypes;
+
+            /*
             TestMethods += Test_MySqlDatabase_Select;
             TestMethods += Test_MySqlDatabase_PreparedSelect;
             TestMethods += Test_MySqlDatabase_PreparedInsert;
             TestMethods += Test_MySqlDatabase_PreparedUpdate;
             TestMethods += Test_MySqlDatabase_PreparedDelete;
-            */
-
-            /*
+                       
             TestMethods += Test_MySqlEntry_SingleField;
             TestMethods += Test_MySqlEntry_FieldValue;
             TestMethods += Test_MySqlEntry_KeyValuePair;
             TestMethods += Test_MySqlEntry_Clone;
             TestMethods += Test_MySqlEntry_Equality;
-            */
-
-            /*
+                        
             TestMethods += Test_MySqlRow_Empty;
             TestMethods += Test_MySqlRow_Fields;
             TestMethods += Test_MySqlRow_Mutators;
-            */
-
-            /*
+                        
             TestMethods += Test_MySqlResultSet_Empty;
             TestMethods += Test_MySqlResultSet_Mutators;
-            */
-
-            /*
+                        
             TestMethods += Test_Logger_Empty;
             */
 
             Logger testLogger = new Logger("", "test", "log");
             testLogger.Clear();
-                        
+
+            #region Test logging.
+
             try
             {
                 r.Log("", "------------------------", $"Trace of {r.Title}");
@@ -216,6 +221,8 @@ namespace TestDataAccessLayer
                 // Wait for user input.
                 console.Pause("Press any key to exit the program...");
             }
+
+            #endregion
         }
 
         #region Test Method Template.
@@ -718,8 +725,7 @@ namespace TestDataAccessLayer
             // Return the test results.
             return results;
         }
-
-
+        
         /// <summary>
         /// Test the MySqlFlag format.
         /// </summary>
@@ -934,12 +940,10 @@ namespace TestDataAccessLayer
             // Return the test results.
             return results;
         }
-
-
-
+        
         #endregion
 
-        #region Model Tests
+        #region Code Model Tests
 
         private static TestResults Test_Model_MySqlTerm()
         {
@@ -972,8 +976,8 @@ namespace TestDataAccessLayer
                     throw new DataAccessLayerException("Couldn't connect to the database.");
                 }
 
-                // Create an MySqlTerm object.
-                results.Log("Creating the MySqlTerm object to fetch data for.");
+                // Create an object.
+                results.Log($"Creating the {subject} object to fetch data for.");
                 ITermModel term = MySqlTerm.Create("02171", "", "", "", "");
                 results.Log("Initial: " + term.ToString());
                 
@@ -990,7 +994,7 @@ namespace TestDataAccessLayer
                 // Validate term object item.
                 ITermModel answerKey = MySqlTerm.Create("2171", "2017-08-19", "2018-01-01", "2017-12-21", "2017-09-05");
                 results.Log("Answer Key: " + answerKey);
-                bool validation = term.Equals(answerKey);
+                bool validation = (term.IsEqual(answerKey));
 
                 if (validation)
                 {
@@ -1010,8 +1014,591 @@ namespace TestDataAccessLayer
             return results;
         }
 
+        private static TestResults Test_Model_MySqlStatus()
+        {
+            // Set values and dependencies here.
+            string subject = "Testing Model: MySqlStatus";
+
+            // Create the results object for this test.
+            TestResults results = TestResults.Create($"Testing {subject}");
+
+            try
+            {
+                // Make divisor and log the title for the test.
+                results.Log($"-- -- -- -- -- -- --\n-- -- -- {results.Title}");
+            }
+            catch (Exception e)
+            {
+                // Wraps exception for the results.
+                throw results.Throw($"{e.Message}", e);
+            }
+
+            // << REPEAT FOR EVERY OPERATION >>
+            string exceptionMessage = $"Failed to validate {subject}.";
+            try
+            {
+
+                // Perform the correct operations.
+                results.Log("Checking if items are valid.");
+                if (!PrepareTestResults(results))
+                {
+                    throw new DataAccessLayerException("Couldn't connect to the database.");
+                }
+
+                // Create an object.
+                results.Log($"Creating the {subject} object to fetch data for.");
+                IStatusModel status = MySqlStatus.Create("100", "", "");
+                results.Log("Initial: " + status.ToString());
+
+                // Fetch term data.
+                IResultSet set = status.Fetch(database as IReadable, out DatabaseError error);
+                results.Log(printer.FormatResultSet(set));
+                results.Log("Fetched: " + status.ToString());
+
+                if (set.IsFailure)
+                {
+                    results.Fail("Fetch of item failed.");
+                    return results;
+                }
+
+                // Validate term object item.
+                IStatusModel answerKey = MySqlStatus.Create("100", "DEFAULT", "Default (null) status.");
+                results.Log("Answer Key: " + answerKey);
+                bool validation = (status.IsEqual(answerKey));
+
+                if (validation)
+                {
+                    results.Pass($"{subject} successfully passed.");
+                    return results;
+                }
+
+                results.Fail($"{subject} is missing information.");
+            }
+            catch (Exception e)
+            {
+                // Wraps exception for the results.
+                throw results.Throw($"{exceptionMessage} {e.Message}", e);
+            }
+
+            // Return the test results.
+            return results;
+        }
+
+        private static TestResults Test_Model_MySqlPhoneType()
+        {
+            // Set values and dependencies here.
+            string subject = "Testing Model: MySqlPhoneType";
+
+            // Create the results object for this test.
+            TestResults results = TestResults.Create($"Testing {subject}");
+
+            try
+            {
+                // Make divisor and log the title for the test.
+                results.Log($"-- -- -- -- -- -- --\n-- -- -- {results.Title}");
+            }
+            catch (Exception e)
+            {
+                // Wraps exception for the results.
+                throw results.Throw($"{e.Message}", e);
+            }
+
+            // << REPEAT FOR EVERY OPERATION >>
+            string exceptionMessage = $"Failed to validate {subject}.";
+            try
+            {
+
+                // Perform the correct operations.
+                results.Log("Checking if items are valid.");
+                if (!PrepareTestResults(results))
+                {
+                    throw new DataAccessLayerException("Couldn't connect to the database.");
+                }
+
+                // Create an object.
+                results.Log($"Creating the {subject} object to fetch data for.");
+                IPhoneTypeModel status = MySqlPhoneType.Create("1", "", "");
+                results.Log("Initial: " + status.ToString());
+
+                // Fetch term data.
+                IResultSet set = status.Fetch(database as IReadable, out DatabaseError error);
+                results.Log(printer.FormatResultSet(set));
+                results.Log("Fetched: " + status.ToString());
+
+                if (set.IsFailure)
+                {
+                    results.Fail("Fetch of item failed.");
+                    return results;
+                }
+
+                // Validate term object item.
+                IPhoneTypeModel answerKey = MySqlPhoneType.Create("1", "PRIMARY", "Primary number.");
+                results.Log("Answer Key: " + answerKey);
+                bool validation = (status.IsEqual(answerKey));
+
+                if (validation)
+                {
+                    results.Pass($"{subject} successfully passed.");
+                    return results;
+                }
+
+                results.Fail($"{subject} is missing information.");
+            }
+            catch (Exception e)
+            {
+                // Wraps exception for the results.
+                throw results.Throw($"{exceptionMessage} {e.Message}", e);
+            }
+
+            // Return the test results.
+            return results;
+        }
+
+        private static TestResults Test_Model_MySqlEmailType()
+        {
+            // Set values and dependencies here.
+            string subject = "Testing Model: MySqlEmailType";
+
+            // Create the results object for this test.
+            TestResults results = TestResults.Create($"Testing {subject}");
+
+            try
+            {
+                // Make divisor and log the title for the test.
+                results.Log($"-- -- -- -- -- -- --\n-- -- -- {results.Title}");
+            }
+            catch (Exception e)
+            {
+                // Wraps exception for the results.
+                throw results.Throw($"{e.Message}", e);
+            }
+
+            // << REPEAT FOR EVERY OPERATION >>
+            string exceptionMessage = $"Failed to validate {subject}.";
+            try
+            {
+
+                // Perform the correct operations.
+                results.Log("Checking if items are valid.");
+                if (!PrepareTestResults(results))
+                {
+                    throw new DataAccessLayerException("Couldn't connect to the database.");
+                }
+
+                // Create an object.
+                results.Log($"Creating the {subject} object to fetch data for.");
+                IEmailTypeModel status = MySqlEmailType.Create("1", "", "");
+                results.Log("Initial: " + status.ToString());
+
+                // Fetch term data.
+                IResultSet set = status.Fetch(database as IReadable, out DatabaseError error);
+                results.Log(printer.FormatResultSet(set));
+                results.Log("Fetched: " + status.ToString());
+
+                if (set.IsFailure)
+                {
+                    results.Fail("Fetch of item failed.");
+                    return results;
+                }
+
+                // Validate term object item.
+                IEmailTypeModel answerKey = MySqlEmailType.Create("1", "SCHOOL", "School email.");
+                results.Log("Answer Key: " + answerKey);
+                bool validation = (status.IsEqual(answerKey));
+
+                if (validation)
+                {
+                    results.Pass($"{subject} successfully passed.");
+                    return results;
+                }
+
+                results.Fail($"{subject} is missing information.");
+            }
+            catch (Exception e)
+            {
+                // Wraps exception for the results.
+                throw results.Throw($"{exceptionMessage} {e.Message}", e);
+            }
+
+            // Return the test results.
+            return results;
+        }
+
+        private static TestResults Test_Model_MySqlRoleType()
+        {
+            // Set values and dependencies here.
+            string subject = "Testing Model: MySqlRoleType";
+
+            // Create the results object for this test.
+            TestResults results = TestResults.Create($"Testing {subject}");
+
+            try
+            {
+                // Make divisor and log the title for the test.
+                results.Log($"-- -- -- -- -- -- --\n-- -- -- {results.Title}");
+            }
+            catch (Exception e)
+            {
+                // Wraps exception for the results.
+                throw results.Throw($"{e.Message}", e);
+            }
+
+            // << REPEAT FOR EVERY OPERATION >>
+            string exceptionMessage = $"Failed to validate {subject}.";
+            try
+            {
+
+                // Perform the correct operations.
+                results.Log("Checking if items are valid.");
+                if (!PrepareTestResults(results))
+                {
+                    throw new DataAccessLayerException("Couldn't connect to the database.");
+                }
+
+                // Create an object.
+                results.Log($"Creating the {subject} object to fetch data for.");
+                IRoleTypeModel status = MySqlRoleType.Create("1", "", "");
+                results.Log("Initial: " + status.ToString());
+
+                // Fetch term data.
+                IResultSet set = status.Fetch(database as IReadable, out DatabaseError error);
+                results.Log(printer.FormatResultSet(set));
+                results.Log("Fetched: " + status.ToString());
+
+                if (set.IsFailure)
+                {
+                    results.Fail("Fetch of item failed.");
+                    return results;
+                }
+
+                // Validate term object item.
+                IRoleTypeModel answerKey = MySqlRoleType.Create("1", "STUDENT", "Student role.");
+                results.Log("Answer Key: " + answerKey);
+                bool validation = (status.IsEqual(answerKey));
+
+                if (validation)
+                {
+                    results.Pass($"{subject} successfully passed.");
+                    return results;
+                }
+
+                results.Fail($"{subject} is missing information.");
+            }
+            catch (Exception e)
+            {
+                // Wraps exception for the results.
+                throw results.Throw($"{exceptionMessage} {e.Message}", e);
+            }
+
+            // Return the test results.
+            return results;
+        }
+
         #endregion
 
+        #region Code Glossary Tests
+        
+        private static TestResults Test_Model_MySqlTerms()
+        {
+            // Set values and dependencies here.
+            string subject = "Testing Model: MySqlTerms";
+
+            // Create the results object for this test.
+            TestResults results = TestResults.Create($"Testing {subject}");
+
+            try
+            {
+                // Make divisor and log the title for the test.
+                results.Log($"-- -- -- -- -- -- --\n-- -- -- {results.Title}");
+            }
+            catch (Exception e)
+            {
+                // Wraps exception for the results.
+                throw results.Throw($"{e.Message}", e);
+            }
+
+            // << REPEAT FOR EVERY OPERATION >>
+            string exceptionMessage = $"Failed to validate {subject}.";
+            try
+            {
+
+                // Perform the correct operations.
+                results.Log("Checking if items are valid.");
+                if (!PrepareTestResults(results))
+                {
+                    throw new DataAccessLayerException("Couldn't connect to the database.");
+                }
+
+                // Create an object.
+                results.Log($"Creating the {subject} object to fetch data for.");
+                ITerms terms = MySqlTerms.GetInstance(database as IReadable);
+                results.Log("Initial: " + terms.ToString());
+
+                // Validate term object item.
+                ITermModel answerKey = MySqlTerm.Create("02171", "2017-08-19","2018-01-01","2017-12-21","2017-09-05");
+                results.Log("Answer Key: " + answerKey);
+                bool validation = (terms.Find("2171").IsEqual(answerKey));
+
+                if (validation)
+                {
+                    results.Pass($"{subject} successfully passed.");
+                    return results;
+                }
+
+                results.Fail($"{subject} is missing information.");
+            }
+            catch (Exception e)
+            {
+                // Wraps exception for the results.
+                throw results.Throw($"{exceptionMessage} {e.Message}", e);
+            }
+
+            // Return the test results.
+            return results;
+        }
+
+        private static TestResults Test_Model_MySqlStatuses()
+        {
+            // Set values and dependencies here.
+            string subject = "Testing Model: MySqlStatuses";
+
+            // Create the results object for this test.
+            TestResults results = TestResults.Create($"Testing {subject}");
+
+            try
+            {
+                // Make divisor and log the title for the test.
+                results.Log($"-- -- -- -- -- -- --\n-- -- -- {results.Title}");
+            }
+            catch (Exception e)
+            {
+                // Wraps exception for the results.
+                throw results.Throw($"{e.Message}", e);
+            }
+
+            // << REPEAT FOR EVERY OPERATION >>
+            string exceptionMessage = $"Failed to validate {subject}.";
+            try
+            {
+
+                // Perform the correct operations.
+                results.Log("Checking if items are valid.");
+                if (!PrepareTestResults(results))
+                {
+                    throw new DataAccessLayerException("Couldn't connect to the database.");
+                }
+
+                // Create an object.
+                results.Log($"Creating the {subject} object to fetch data for.");
+                IStatuses statuses = MySqlStatuses.GetInstance(database as IReadable);
+                results.Log("Initial: " + statuses.ToString());
+                results.Log(printer.FormatResultSet(statuses.Fetch(database as IReadable, out DatabaseError err)));
+
+                // Validate term object item.
+                IStatusModel answerKey = MySqlStatus.Create("200", "CAPSTONE CREATED", "Student made capstone.");
+                results.Log("Answer Key: " + answerKey);
+                bool validation = (statuses["200"].IsEqual(answerKey));
+
+                if (validation)
+                {
+                    results.Pass($"{subject} successfully passed.");
+                    return results;
+                }
+
+                results.Fail($"{subject} is missing information.");
+            }
+            catch (Exception e)
+            {
+                // Wraps exception for the results.
+                throw results.Throw($"{exceptionMessage} {e.Message}", e);
+            }
+
+            // Return the test results.
+            return results;
+        }
+
+        private static TestResults Test_Model_MySqlPhoneTypes()
+        {
+            // Set values and dependencies here.
+            string subject = "Testing Model: MySqlPhoneTypes";
+
+            // Create the results object for this test.
+            TestResults results = TestResults.Create($"Testing {subject}");
+
+            try
+            {
+                // Make divisor and log the title for the test.
+                results.Log($"-- -- -- -- -- -- --\n-- -- -- {results.Title}");
+            }
+            catch (Exception e)
+            {
+                // Wraps exception for the results.
+                throw results.Throw($"{e.Message}", e);
+            }
+
+            // << REPEAT FOR EVERY OPERATION >>
+            string exceptionMessage = $"Failed to validate {subject}.";
+            try
+            {
+
+                // Perform the correct operations.
+                results.Log("Checking if items are valid.");
+                if (!PrepareTestResults(results))
+                {
+                    throw new DataAccessLayerException("Couldn't connect to the database.");
+                }
+
+                // Create an object.
+                results.Log($"Creating the {subject} object to fetch data for.");
+                IPhoneTypes phonetypes = MySqlPhoneTypes.GetInstance(database as IReadable);
+                results.Log("Initial: " + phonetypes.ToString());
+                results.Log(printer.FormatResultSet(phonetypes.Fetch(database as IReadable, out DatabaseError err)));
+
+                // Validate term object item.
+                IPhoneTypeModel answerKey = MySqlPhoneType.Create("2", "HOME", "Home number.");
+                results.Log("Answer Key: " + answerKey);
+                bool validation = (phonetypes["2"].IsEqual(answerKey));
+
+                if (validation)
+                {
+                    results.Pass($"{subject} successfully passed.");
+                    return results;
+                }
+
+                results.Fail($"{subject} is missing information.");
+            }
+            catch (Exception e)
+            {
+                // Wraps exception for the results.
+                throw results.Throw($"{exceptionMessage} {e.Message}", e);
+            }
+
+            // Return the test results.
+            return results;
+        }
+
+        private static TestResults Test_Model_MySqlEmailTypes()
+        {
+            // Set values and dependencies here.
+            string subject = "Testing Model: MySqlEmailTypes";
+
+            // Create the results object for this test.
+            TestResults results = TestResults.Create($"Testing {subject}");
+
+            try
+            {
+                // Make divisor and log the title for the test.
+                results.Log($"-- -- -- -- -- -- --\n-- -- -- {results.Title}");
+            }
+            catch (Exception e)
+            {
+                // Wraps exception for the results.
+                throw results.Throw($"{e.Message}", e);
+            }
+
+            // << REPEAT FOR EVERY OPERATION >>
+            string exceptionMessage = $"Failed to validate {subject}.";
+            try
+            {
+
+                // Perform the correct operations.
+                results.Log("Checking if items are valid.");
+                if (!PrepareTestResults(results))
+                {
+                    throw new DataAccessLayerException("Couldn't connect to the database.");
+                }
+
+                // Create an object.
+                results.Log($"Creating the {subject} object to fetch data for.");
+                IEmailTypes emails = MySqlEmailTypes.GetInstance(database as IReadable);
+                results.Log("Initial: " + emails.ToString());
+                results.Log(printer.FormatResultSet(emails.Fetch(database as IReadable, out DatabaseError err)));
+
+                // Validate term object item.
+                IEmailTypeModel answerKey = MySqlEmailType.Create("3", "WORK", "Work email.");
+                results.Log("Answer Key: " + answerKey);
+                bool validation = (emails["3"].IsEqual(answerKey));
+
+                if (validation)
+                {
+                    results.Pass($"{subject} successfully passed.");
+                    return results;
+                }
+
+                results.Fail($"{subject} is missing information.");
+            }
+            catch (Exception e)
+            {
+                // Wraps exception for the results.
+                throw results.Throw($"{exceptionMessage} {e.Message}", e);
+            }
+
+            // Return the test results.
+            return results;
+        }
+
+        private static TestResults Test_Model_MySqlRoleTypes()
+        {
+            // Set values and dependencies here.
+            string subject = "Testing Model: MySqlRoleTypes";
+
+            // Create the results object for this test.
+            TestResults results = TestResults.Create($"Testing {subject}");
+
+            try
+            {
+                // Make divisor and log the title for the test.
+                results.Log($"-- -- -- -- -- -- --\n-- -- -- {results.Title}");
+            }
+            catch (Exception e)
+            {
+                // Wraps exception for the results.
+                throw results.Throw($"{e.Message}", e);
+            }
+
+            // << REPEAT FOR EVERY OPERATION >>
+            string exceptionMessage = $"Failed to validate {subject}.";
+            try
+            {
+
+                // Perform the correct operations.
+                results.Log("Checking if items are valid.");
+                if (!PrepareTestResults(results))
+                {
+                    throw new DataAccessLayerException("Couldn't connect to the database.");
+                }
+
+                // Create an object.
+                results.Log($"Creating the {subject} object to fetch data for.");
+                IRoleTypes roles = MySqlRoleTypes.GetInstance(database as IReadable);
+                results.Log("Initial: " + roles.ToString());
+                results.Log(printer.FormatResultSet(roles.Fetch(database as IReadable, out DatabaseError err)));
+
+                // Validate term object item.
+                IRoleTypeModel answerKey = MySqlRoleType.Create("1", "STUDENT", "Student role.");
+                results.Log("Answer Key: " + answerKey);
+                bool validation = (roles["1"].IsEqual(answerKey));
+
+                if (validation)
+                {
+                    results.Pass($"{subject} successfully passed.");
+                    return results;
+                }
+
+                results.Fail($"{subject} is missing information.");
+            }
+            catch (Exception e)
+            {
+                // Wraps exception for the results.
+                throw results.Throw($"{exceptionMessage} {e.Message}", e);
+            }
+
+            // Return the test results.
+            return results;
+        }
+
+
+        #endregion
 
         #region Database Tests
 
@@ -2450,8 +3037,8 @@ namespace TestDataAccessLayer
                 assertions[AssertKey.IsEmpty] = row.IsEmpty;
                 results.Log($"-- Is this row empty? { assertions[AssertKey.IsEmpty] }");
                 results.Log($"-- row.Count? {row.Count}");
-                results.Log($"-- row.FieldCount? {row.FieldCount}");
-                results.Log($"-- row.EntryCount? {row.EntryCount}");
+                results.Log($"-- row.FieldCount? {row.Fields.Count}");
+                results.Log($"-- row.EntryCount? {row.Entries.Count}");
 
                 assertions[AssertKey.HasField] = row.HasField("Field");
                 results.Log($"-- Does any entry inside this row match 'Field'? {assertions[AssertKey.HasField]}");
@@ -2539,8 +3126,8 @@ namespace TestDataAccessLayer
                 assertions[AssertKey.IsEmpty] = row.IsEmpty;
                 results.Log($"-- Is this row empty? { assertions[AssertKey.IsEmpty] }");
                 results.Log($"-- row.Count? {row.Count}");
-                results.Log($"-- row.FieldCount? {row.FieldCount}");
-                results.Log($"-- row.EntryCount? {row.EntryCount}");
+                results.Log($"-- row.FieldCount? {row.Fields.Count}");
+                results.Log($"-- row.EntryCount? {row.Entries.Count}");
 
                 assertions[AssertKey.HasField] = row.HasField("Field");
                 results.Log($"-- Does any field inside this row match 'Field'? {assertions[AssertKey.HasField]}");
@@ -2636,8 +3223,8 @@ namespace TestDataAccessLayer
                 assertions[AssertKey.IsEmpty] = row.IsEmpty;
                 results.Log($"-- Is this row empty? { assertions[AssertKey.IsEmpty] }");
                 results.Log($"-- row.Count? {row.Count}");
-                results.Log($"-- row.FieldCount? {row.FieldCount}");
-                results.Log($"-- row.EntryCount? {row.EntryCount}");
+                results.Log($"-- row.FieldCount? {row.Fields.Count}");
+                results.Log($"-- row.EntryCount? {row.Entries.Count}");
 
                 assertions[AssertKey.HasField] = row.HasField("Field");
                 results.Log($"-- Does any field inside this row match 'Field'? {assertions[AssertKey.HasField]}");
@@ -2687,7 +3274,7 @@ namespace TestDataAccessLayer
                 // If entry is null, fail the test.
                 results.Log("Checking assertions...");
 
-                assertions[AssertKey.HasEntry] = (row.Contains(removedEntry));
+                assertions[AssertKey.HasEntry] = (row.HasElement(removedEntry));
                 results.Log($"-- Does the row still contain the removed entry? {assertions[AssertKey.HasEntry]}");
                 
                 assertions[AssertKey.IsNullReference] = (removedEntry == null);
@@ -2699,8 +3286,8 @@ namespace TestDataAccessLayer
                 assertions[AssertKey.IsEmpty] = row.IsEmpty;
                 results.Log($"-- Is this row empty? { assertions[AssertKey.IsEmpty] }");
                 results.Log($"-- row.Count? {row.Count}");
-                results.Log($"-- row.FieldCount? {row.FieldCount}");
-                results.Log($"-- row.EntryCount? {row.EntryCount}");
+                results.Log($"-- row.FieldCount? {row.Fields.Count}");
+                results.Log($"-- row.EntryCount? {row.Entries.Count}");
 
                 assertions[AssertKey.HasField] = row.HasField(removedEntry.GetField());
                 results.Log($"-- Does any field inside this row match the removed entry's? {assertions[AssertKey.HasField]}");
@@ -2748,7 +3335,7 @@ namespace TestDataAccessLayer
                 // If entry is null, fail the test.
                 results.Log("Checking assertions...");
 
-                assertions[AssertKey.HasEntry] = (row.Contains(removedEntry));
+                assertions[AssertKey.HasEntry] = (row.HasElement(removedEntry));
                 results.Log($"-- Does the row still contain the removed entry? {assertions[AssertKey.HasEntry]}");
 
                 assertions[AssertKey.IsNullReference] = (removedEntry == null);
@@ -2760,8 +3347,8 @@ namespace TestDataAccessLayer
                 assertions[AssertKey.IsEmpty] = row.IsEmpty;
                 results.Log($"-- Is this row empty? { assertions[AssertKey.IsEmpty] }");
                 results.Log($"-- row.Count? {row.Count}");
-                results.Log($"-- row.FieldCount? {row.FieldCount}");
-                results.Log($"-- row.EntryCount? {row.EntryCount}");
+                results.Log($"-- row.FieldCount? {row.Fields.Count}");
+                results.Log($"-- row.EntryCount? {row.Entries.Count}");
 
                 assertions[AssertKey.HasField] = row.HasField(removedEntry.GetField());
                 results.Log($"-- Does the removed field still show? {assertions[AssertKey.HasField]}");
@@ -2918,7 +3505,7 @@ namespace TestDataAccessLayer
                 // Add 10 rows to the collection.
                 for (int i = 0; i < 10; i++)
                 {
-                    set.Add(new MySqlRow(
+                    set.AddRow(new MySqlRow(
                             new List<IEntry> {
                             new MySqlEntry("First Name", "Ian"),
                             new MySqlEntry("Last Name", "Effendi"),
@@ -2981,8 +3568,8 @@ namespace TestDataAccessLayer
                 results.Log($"{printer.FormatRow(row)}");
 
                 // Remove the item.
-                results.Log("Remove retrieved row from set.");                
-                set.Remove(row);
+                results.Log("Remove retrieved row from set.");     
+                if(set.TryRemoveRow(row, out IRow removed)) { results.Log($"Removed row: {removed}"); }
                 // Print the result set.
                 results.Log($"{printer.FormatResultSet(set)}");
                 

@@ -42,8 +42,14 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ErrorHandling\CustomException.cs" />
+    <Compile Include="Interfaces\IListWrapper.cs" />
+    <Compile Include="Interfaces\IComparison.cs" />
+    <Compile Include="Interfaces\IEmpty.cs" />
     <Compile Include="Interfaces\ILoggable.cs" />
+    <Compile Include="Interfaces\INullable.cs" />
     <Compile Include="Interfaces\IOperationStatus.cs" />
+    <Compile Include="Interfaces\IReadOnly.cs" />
+    <Compile Include="Interfaces\IReplicate.cs" />
     <Compile Include="IO\Logger.cs" />
     <Compile Include="IO\Printer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

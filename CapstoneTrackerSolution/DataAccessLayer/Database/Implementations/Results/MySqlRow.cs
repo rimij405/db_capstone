@@ -6,99 +6,284 @@
  *  an ICollection<IEntry> interface.
  ****************************************/
 
+ // using statements.
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+
+// additional using statements.
+using Services.Interfaces;
 using ISTE.DAL.Database.Interfaces;
 
 namespace ISTE.DAL.Database.Implementations
 {
 
+    /*********************************************************
+     * Developer's Note:
+     * 
+     * The entry collection stores entry objects. You may
+     * be wondering why we store the field name twice.
+     * 
+     * We trade off a slight count against performance,
+     * for the sake of convienience. This enables us to
+     * handle record data by passing a MySqlEntry object
+     * without sacrificing the context that a field gives us.
+     * 
+     * We then wrap them in an IRow object, because 
+     * it enables us more flexibility over when and where
+     * we construct our tabular data structures.
+     * *******************************************************/
+
+    /*********************************************************
+     * Developer's Note:
+     * 
+     * Fields stored are trimmed of whitespace and set to
+     * uppercase. Input checked against the collection should
+     * also be trimmed and set to uppercase as the collection
+     * is both whitespace and case insensitive.
+     * *******************************************************/
+
     /// <summary>
     /// Represents a row of data returned by MySql.
     /// </summary>
-    public class MySqlRow : IRow
+    public class MySqlRow : FieldHandler, IRow
     {
+
+        //////////////////////
+        // Static Member(s).
+        //////////////////////
+
+        #region Static Members.
+
+        //////////////////////
+        // Static method(s).
+
+        /// <summary>
+        /// Create and return a row.
+        /// </summary>
+        /// <param name="entries">Entries to make row from.</param>
+        /// <returns>Returns a new row.</returns>
+        public static IRow CreateRow(List<IEntry> entries)
+        {
+            return new MySqlRow((IList<IEntry>) entries);
+        }
+        
+        /// <summary>
+        /// Create and return a row.
+        /// </summary>
+        /// <param name="entries">Entries to make row from.</param>
+        /// <returns>Returns a new row.</returns>
+        public static IRow CreateRow(params IEntry[] entries) { return MySqlRow.CreateRow(entries.ToList<IEntry>()); }
+
+        /// <summary>
+        /// Create set of rows.
+        /// </summary>
+        /// <param name="data">Data collection.</param>
+        /// <returns>Return collection of entries.</returns>
+        public static List<IRow> CreateRows(List<IDictionary<string, string>> data)
+        {
+            List<IRow> rows = new List<IRow>();
+            foreach (Dictionary<string, string> rowData in data)
+            {
+                rows.Add(new MySqlRow((IDictionary<string, string>) rowData));
+            }
+            return rows;
+        }
+
+        //////////////////////
+        // Conversion operators.
+
+        /// <summary>
+        /// Cast into a MySqlRow object.
+        /// </summary>
+        /// <param name="entries">Entries to cast.</param>
+        public static explicit operator MySqlRow(List<IEntry> entries)
+        {
+            return new MySqlRow((IList<IEntry>) entries);
+        }
+
+        /// <summary>
+        /// Cast into a MySqlRow object.
+        /// </summary>
+        /// <param name="fields">Fieldnames to cast.</param>
+        public static explicit operator MySqlRow(List<string> fields)
+        {
+            return new MySqlRow(fields);
+        }
+        
+        /// <summary>
+        /// Cast into a MySqlRow object.
+        /// </summary>
+        /// <param name="data">Dataset to cast.</param>
+        public static implicit operator MySqlRow(Dictionary<string, string> data)
+        {
+            return new MySqlRow((IDictionary<string, string>) data);
+        }
+
+        /// <summary>
+        /// Cast into a collection of entries.
+        /// </summary>
+        /// <param name="row">Row to cast.</param>
+        public static explicit operator List<IEntry>(MySqlRow row)
+        {
+            return row.Entries as List<IEntry>;
+        }
+        
+        /// <summary>
+        /// Cast into a collection of fields.
+        /// </summary>
+        /// <param name="row">Row to cast.</param>
+        public static explicit operator List<string>(MySqlRow row)
+        {
+            return row.Fields as List<string>;
+        }
+
+        /// <summary>
+        /// Cast into a collection of key/value pairs.
+        /// </summary>
+        /// <param name="row">Row to cast.</param>
+        public static explicit operator Dictionary<string, string>(MySqlRow row)
+        {
+            return row.Data as Dictionary<string, string>;
+        }
+
+        #endregion
 
         //////////////////////
         // Field(s).
         //////////////////////
 
-        /*********************************************************
-         * Developer's Note:
-         * 
-         * The entry collection stores entry objects. You may
-         * be wondering why we store the field name twice.
-         * 
-         * We trade off a slight count against performance,
-         * for the sake of convienience. This enables us to
-         * handle record data by passing a MySqlEntry object
-         * without sacrificing the context that a field gives us.
-         * 
-         * We then wrap them in an IRow object, because 
-         * it enables us more flexibility over when and where
-         * we construct our tabular data structures.
-         * *******************************************************/
-
         /// <summary>
         /// Represents a collection of <see cref="MySqlEntry"/> entries.
         /// </summary>
-        private List<IEntry> entryCollection;
-
-        /*********************************************************
-         * Developer's Note:
-         * 
-         * Fields stored are trimmed of whitespace and set to
-         * uppercase. Input checked against the collection should
-         * also be trimmed and set to uppercase as the collection
-         * is both whitespace and case insensitive.
-         * *******************************************************/
-
-        /// <summary>
-        /// Represents a collection of <see cref="string"/> field names/aliases associated with <see cref="MySqlEntry"/> entries.
-        /// </summary>
-        private List<string> fieldCollection;
+        private IList<IEntry> entryCollection;
 
         //////////////////////
         // Properties.
         //////////////////////
-                
-        //////
-        // ICollection
+
+        #region Properties
+
+        #region IRow
+
+        /// <summary>
+        /// Return the field collection.
+        /// </summary>
+        public IList<string> Fields
+        {
+            get
+            {
+                List<string> fields = new List<string>();
+                foreach (IEntry entry in this)
+                {
+                    fields.Add(entry.Field);
+                }
+                return fields;
+            }
+        }
+
+        /// <summary>
+        /// Return the entry collection.
+        /// </summary>
+        public IList<IEntry> Entries
+        {
+            get
+            {
+                return this.entryCollection ?? (this.entryCollection = new List<IEntry>());
+            }
+        }
+
+        /// <summary>
+        /// All the data in a MySqlRow.
+        /// </summary>
+        public IDictionary<string, string> Data
+        {
+            get
+            {
+                Dictionary<string, string> dataSet = new Dictionary<string, string>();
+                foreach (IEntry entry in this)
+                {
+                    dataSet.Add(entry.Field, entry.Value);
+                }
+                return dataSet;
+            }
+        }
+
+        #endregion
+
+        #region IListWrapper
+
+        /// <summary>
+        /// Reference to the collection in question.
+        /// </summary>
+        public IList<IEntry> List
+        {
+            get { return this.Entries; }
+        }
 
         /// <summary>
         /// Returns the number of fields in the row.
         /// </summary>
         public int Count
         {
-            get { return this.FieldCount; }
+            get { return this.List.Count; }
         }
 
-        /// <summary>
-        /// Returns the number of entries in the row.
-        /// </summary>
-        int ICollection<IEntry>.Count { get { return this.EntryCount; } }
+        #endregion
+
+        #region IReadOnly
 
         /// <summary>
         /// Flag determines whether or not collections are mutable.
         /// </summary>
-        public bool IsReadOnly { get; set; }
-        
-        //////
-        // INullable
-        
+        public bool IsReadOnly
+        {
+            get
+            {
+                if (this.IsEmpty) { return false; }
+                foreach (IEntry entry in this)
+                {
+                    if (!entry.IsReadOnly) { return false; }
+                }
+                return true;
+            }
+            set
+            {
+                foreach (IEntry entry in this)
+                {
+                    entry.IsReadOnly = value;
+                }
+            }
+        }
+
+        #endregion
+
+        #region IEmpty
+
         /// <summary>
-        /// Check if every entry in the row is null.
+        /// Check if this can be empty.
+        /// </summary>
+        public bool IsEmpty
+        {
+            get
+            {
+                return (this.Count == 0);
+            }
+        }
+
+        #endregion
+
+        #region INullable
+
+        /// <summary>
+        /// Check if the instance is a custom version of null.
         /// </summary>
         public bool IsNull
         {
             get
             {
-                // If any entry is not null, return false.
-                foreach (IEntry entry in this.Entries)
+                if (this.IsEmpty) { return true; }
+                foreach (IEntry entry in this)
                 {
                     if (!entry.IsNull) { return false; }
                 }
@@ -106,400 +291,610 @@ namespace ISTE.DAL.Database.Implementations
             }
         }
 
-        //////
-        // IEmpty
+        #endregion
+        
+        //////////////////////
+        // Indexer(s).
+
+        #region Indexer(s).
 
         /// <summary>
-        /// Check if this row simply has no fields (and therefore no entries).
+        /// Return an element from the collection.
         /// </summary>
-        public bool IsEmpty
+        /// <param name="index">Index of the element to get.</param>
+        /// <returns>Returns object at specific index.</returns>
+        public IEntry this[int index]
         {
             get
             {
-                return this.HasExactlyThisMany(0);
+                return this.GetEntry(index);
+            }
+            set
+            {
+                this.SetEntry(index, value);
             }
         }
 
-        //////
-        // IRow
-
         /// <summary>
-        /// Check if this collection contains any non-zero amount of fields.
+        /// Returns index of input element, if it exists in the collection.
         /// </summary>
-        public bool HasFields
-        {
-            get { return this.HasAtLeastThisMany(1); }
-        }
-
-        /// <summary>
-        /// Represents a collection of <see cref="MySqlEntry"/> entries.
-        /// </summary>
-        public List<IEntry> Entries
+        /// <param name="element">Element to find index of.</param>
+        /// <returns>Returns index of specific object.</returns>
+        public int this[IEntry element]
         {
             get
             {
-                if (this.entryCollection == null) { this.entryCollection = new List<IEntry>(); }
-                return this.entryCollection;
+                return this.GetIndex(element);
             }
         }
 
         /// <summary>
-        /// Represents a collection of <see cref="string"/> field names/aliases associated with <see cref="MySqlEntry"/> entries.
+        /// Return entry with a given field. Returns null if it doesn't exist.
         /// </summary>
-        public List<string> Fields
+        /// <param name="field">Field for entry to retrieve.</param>
+        /// <returns>Return entry at field.</returns>
+        public IEntry this[string field]
         {
             get
             {
-                if (this.fieldCollection == null) { this.fieldCollection = new List<string>(); }
-                return this.fieldCollection;
+                return this.GetEntry(field);
             }
         }
 
-        /// <summary>
-        /// Return the field count.
-        /// </summary>
-        /// <returns>Return the field count.</returns>
-        public int FieldCount
-        {
-            get { return this.Fields.Count; }
-        }
+        #endregion
 
-        /// <summary>
-        /// Return the entry count.
-        /// </summary>
-        /// <returns>Return the entry count.</returns>
-        public int EntryCount
-        {
-            get { return this.Entries.Count; }
-        }
-
-        /// <summary>
-        /// Accessor and mutator for fieldname references at particular indices.
-        /// </summary>
-        /// <param name="index">Index to retrieve field name from.</param>
-        /// <returns>Returns fieldname. Returns an empty string if it can't be found.</returns>
-        public string this[int index]
-        {
-            get {
-                return (HasFields && HasIndex(index)) ? this.Fields[index] : "";
-            }
-        }
-
-        /// <summary>
-        /// Accessor and mutator for <see cref="MySqlEntry"/> entries based on field name.
-        /// </summary>
-        /// <param name="key">Field name to retrieve entry for.</param>
-        /// <returns>Returns entry. Returns null if it can't be found.</returns>
-        public IEntry this[string key]
-        {
-            get
-            {
-                int fieldIndex = (key.Length == 0) ? -1 : this.GetIndex(key);
-                return (fieldIndex == -1) ? null : this.Entries[fieldIndex];
-            }
-        }
+        #endregion
 
         //////////////////////
         // Constructor(s).
         //////////////////////
 
-        /// <summary>
-        /// Empty constructor.
-        /// </summary>
-        public MySqlRow() { }
+        #region Constructors
 
         /// <summary>
-        /// Construct a row with a predetermined set of fields.
+        /// Empty constructor. A row with no entries.
         /// </summary>
-        /// <param name="fields">Fields to construct object with.</param>
-        public MySqlRow(List<string> fields)
+        public MySqlRow() {
+            this.IsReadOnly = false;
+        }
+
+        /// <summary>
+        /// Row created from a single field.
+        /// </summary>
+        /// <param name="fieldname">Fields.</param>
+        public MySqlRow(string fieldname) : this()
         {
-            // Validate input.
-            if (fields == null || fields.Count <= 0) { return; }
-            
-            foreach(string field in fields)
+            if (!String.IsNullOrWhiteSpace(fieldname))
             {
-                this.AddField(field);
+                this.AddField(fieldname);
             }
         }
 
         /// <summary>
-        /// Construct a row with a predetermined set of fields.
+        /// Row created from a collection of fields.
         /// </summary>
-        /// <param name="fields">Fields to construct object with.</param>
-        public MySqlRow(params string[] fields)
-            : this(fields.ToList<string>())
+        /// <param name="fieldnames">Fields.</param>
+        public MySqlRow(IList<string> fieldnames) : this()
         {
-            // Call other constructor.
+            if (fieldnames != null && fieldnames.Count > 0)
+            {
+                this.AddFields(fieldnames);
+            }
         }
 
         /// <summary>
-        /// Construct a row from a collection of <see cref="MySqlEntry"/> entries.
+        /// Row created from a collection of fields.
         /// </summary>
-        /// <param name="entries">Entries inhabiting the row.</param>
-        public MySqlRow(List<IEntry> entries)
+        /// <param name="fieldnames">Fields.</param>
+        public MySqlRow(params string[] fieldnames) : this()
         {
-            // Validate input.
-            if (entries == null || entries.Count <= 0) { return; }
+            if (fieldnames != null && fieldnames.Length > 0)
+            {
+                this.AddFields(fieldnames);
+            }
+        }
 
-            foreach (MySqlEntry entry in entries)
+        /// <summary>
+        /// Row created from a single entry.
+        /// </summary>
+        /// <param name="entry">Entry.</param>
+        public MySqlRow(IEntry entry) : this()
+        {
+            if (entry != null)
             {
                 this.AddEntry(entry);
             }
         }
 
         /// <summary>
-        /// Construct a row from a collection of <see cref="MySqlEntry"/> entries.
+        /// Row created from a collection of entries.
         /// </summary>
-        /// <param name="entries">Entries inhabiting the row.</param>
-        public MySqlRow(params IEntry[] entries)
-            : this(entries.ToList<IEntry>())
+        /// <param name="entries">Entries.</param>
+        public MySqlRow(IList<IEntry> entries) : this()
         {
-            // Call other constructor.
+            if (entries != null && entries.Count > 0)
+            {
+                this.AddEntries(entries);
+            }
+        }
+
+        /// <summary>
+        /// Row created from a collection of entries.
+        /// </summary>
+        /// <param name="entries">Entries.</param>
+        public MySqlRow(params IEntry[] entries) : this()
+        {
+            if (entries != null && entries.Length > 0)
+            {
+                this.AddEntries(entries);
+            }
+        }
+
+        /// <summary>
+        /// Construct a row from a dictionary.
+        /// </summary>
+        /// <param name="entries">Data describing entries.</param>
+        public MySqlRow(IDictionary<string, string> entries) : this()
+        {
+            if (entries != null && entries.Count > 0)
+            {
+                this.AddEntries(MySqlEntry.CreateEntries(entries));
+            }
         }
 
         /// <summary>
         /// Copy constructor.
         /// </summary>
-        /// <param name="row">Other row to clone.</param>
-        public MySqlRow(MySqlRow row)
+        /// <param name="other">Row to clone.</param>
+        public MySqlRow(IRow other) : this()
         {
-            // Clone.
-            if (row != null) {
-                foreach(string field in row.Fields)
+            if (other != null && this != other && !this.IsEqual(other))
+            {
+                // Clone the collection of entries.
+                foreach (IEntry entry in other.Entries)
                 {
-                    this.Fields.Add(field);
+                    this.entryCollection.Add(entry.Clone());
                 }
-
-                foreach(MySqlEntry entry in row.Entries)
-                {
-                    this.Entries.Add((MySqlEntry)entry.Clone());
-                }
-
-                this.IsReadOnly = row.IsReadOnly;
             }
         }
+
+        /// <summary>
+        /// Copy constructor.
+        /// </summary>
+        /// <param name="other">Row to clone.</param>
+        public MySqlRow(MySqlRow other) : this()
+        {
+            if (other != null && this != other && !this.IsEqual(other))
+            {
+                // Clone the collection of entries.
+                foreach (IEntry entry in other)
+                {
+                    this.entryCollection.Add(entry.Clone());
+                }
+            }
+        }
+
+        #endregion
 
         //////////////////////
         // Method(s).
         //////////////////////
 
+        #region Methods
+
         //////////////////////
-        // Service(s).
+        // Service method(s).
+
+        #region Service methods.
+
+        #region General Methods.
 
         /// <summary>
-        /// Format the row as a string.
+        /// Return a formatted string describing a single entry.
         /// </summary>
-        /// <returns>Return information as a formatted string.</returns>
+        /// <returns>Returns formatted string.</returns>
         public override string ToString()
         {
-            string format = $"  MySqlRow: {((this.Count > 0) ? "{" : "{}")}";
+            string body = "";
+            body += $"{{MySqlRow: Entries: {{";
 
-            for (int index = 0; index < this.Count; index++)
+            if (this.IsEmpty) { body += " No entries to print. "; }
+            else
             {
-                format += "\n    " + $"{{ Field: {this.Fields[index]}, Entry: ({this.Entries[index]}) }}{(((index + 1) < this.Count && this.Count > 1) ? "," : "\n  }")}";
+                foreach (IEntry entry in this)
+                {
+                    body += $"\n{entry.ToString()}\n";
+                }
             }
 
-            return format;
+            body += $"}}, IsNull: {this.IsNull}}}.";
+            return body;
         }
 
-        //////
-        // IComparable
+        #endregion
+
+        #region FieldHandler - HasField(string)
 
         /// <summary>
-        /// Check if reference is the same, or if all entries match.
+        /// Check if a field exists.
         /// </summary>
-        /// <param name="obj">IRow to be compared.</param>
-        /// <returns>Returns true if equal. False, if otherwise.</returns>
-        public override bool Equals(object obj)
+        /// <param name="key">Key to check.</param>
+        /// <returns>Returns true if found.</returns>
+        public override bool HasField(string key)
         {
-            if (obj is IRow row)
+            foreach (IEntry entry in this)
             {
-                if (row.FieldCount == this.FieldCount && row.EntryCount == this.FieldCount)
+                if (entry.HasField(key)) { return true; }
+            }
+            return false;
+        }
+
+        #endregion
+        
+        #region IRowComparison - Size, Field, Value<T>, Value, and Total comparisons.
+
+        #region Total Comparisons - Compare(object), Compare(IRow), IsEqual(IRow)
+
+        /// <summary>
+        /// Compare to current instance.
+        /// </summary>
+        /// <param name="obj">Object to compare.</param>
+        /// <returns></returns>
+        public int CompareTo(object obj)
+        {
+            if(obj == null) { return 1; }
+            if(this == obj) { return 0; }
+            if (obj is IRow that)
+            {
+                return this.Compare(that);
+            }
+            return 1;
+        }
+        
+        /// <summary>
+        /// Check instances.
+        /// </summary>
+        /// <param name="other">Other instance.</param>
+        /// <returns>Return comparison result.</returns>
+        public int Compare(IRow other)
+        {
+            if (other == null) { return 1; }
+            if (this == other) { return 0; }
+            return this.CompareValue(this, other);
+        }
+
+        /// <summary>
+        /// Check instances for equality.
+        /// </summary>
+        /// <param name="other">Other instance.</param>
+        /// <returns>Return comparison result.</returns>
+        public bool IsEqual(IRow other)
+        {
+            if (other == null) { return false; }
+            if (this == other) { return true; }
+            return (this.IsEqualValue(this, other));
+        }
+
+        #endregion
+
+        #region Size Comparisons. - CompareSize(IRow, IRow), IsEqualSize(IRow, IRow), IsGreaterThanSize(IRow, IRow), IsLessThanSize(IRow, IRow)
+
+        /// <summary>
+        /// Return a 1, 0, or -1 representing the inequality (or equality) between the left and right value.
+        /// </summary>
+        /// <param name="left">Left value.</param>
+        /// <param name="right">Right value.</param>
+        /// <returns>Return comparison sort index.</returns>
+        public int CompareSize(IRow left, IRow right)
+        {
+            return left.List.Count.CompareTo(right.List.Count);
+        }
+
+        /// <summary>
+        /// Compare two collection sizes.
+        /// </summary>
+        /// <param name="left">Left value.</param>
+        /// <param name="right">Right value.</param>
+        /// <returns>Returns true if both values are equal.</returns>
+       public bool IsEqualSize(IRow left, IRow right) { return (this.CompareSize(left, right) == 0); }
+
+        /// <summary>
+        /// Returns true if the left value is greater than the right value.
+        /// </summary>
+        /// <param name="left">Left value.</param>
+        /// <param name="right">Right value.</param>
+        /// <returns>Returns true if the left value is greater than the right value.</returns>
+       public bool IsGreaterThanSize(IRow left, IRow right) { return (this.CompareSize(left, right) >= 1); }
+
+        /// <summary>
+        /// Returns true if the left value is less than the right value.
+        /// </summary>
+        /// <param name="left">Left value.</param>
+        /// <param name="right">Right value.</param>
+        /// <returns>Returns true if the left value is less than the right value.</returns>
+       public bool IsLessThanSize(IRow left, IRow right) { return (this.CompareSize(left, right) <= -1); }
+
+        #endregion
+
+        #region Field comparisons. - CompareFields(IRow, IRow), IsEqualFields(IRow, IRow), IsGreaterThanFields(IRow, IRow), IsLessThanFields(IRow, IRow)
+
+        /// <summary>
+        /// Return a 1, 0, or -1 representing the inequality (or equality) between the left and right value.
+        /// </summary>
+        /// <param name="left">Left value.</param>
+        /// <param name="right">Right value.</param>
+        /// <returns>Return comparison sort index.</returns>
+        public int CompareFields(IRow left, IRow right)
+        {
+            int comparison = this.CompareSize(left, right);
+            if (comparison != 0) { return comparison; }
+
+            // Same size of fields.
+            IList<string> leftfields = left.Fields;
+            IList<string> rightfields = right.Fields;
+
+            // Sort the fields.
+            (leftfields as List<string>).Sort();
+            (rightfields as List<string>).Sort();
+
+            // Compare each field, and, return first difference found when comparing.
+            for (int i = 0; i < leftfields.Count; i++)
+            {
+                int fieldComparison = leftfields[i].CompareTo(rightfields[i]);
+                if (fieldComparison != 0) { return fieldComparison; }
+            }
+
+            return comparison;
+        }
+
+        /// <summary>
+        /// Compare two fields.
+        /// </summary>
+        /// <param name="left">Left value.</param>
+        /// <param name="right">Right value.</param>
+        /// <returns>Returns true if both values are equal.</returns>
+        public bool IsEqualFields(IRow left, IRow right) { return (this.CompareFields(left, right) == 0); }
+
+        /// <summary>
+        /// Returns true if the left value is greater than the right value.
+        /// </summary>
+        /// <param name="left">Left value.</param>
+        /// <param name="right">Right value.</param>
+        /// <returns>Returns true if the left value is greater than the right value.</returns>
+        public bool IsGreaterThanField(IRow left, IRow right) { return (this.CompareFields(left, right) >= 1); }
+
+        /// <summary>
+        /// Returns true if the left value is less than the right value.
+        /// </summary>
+        /// <param name="left">Left value.</param>
+        /// <param name="right">Right value.</param>
+        /// <returns>Returns true if the left value is less than the right value.</returns>
+        public bool IsLessThanField(IRow left, IRow right) { return (this.CompareFields(left, right) <= -1); }
+
+        #endregion
+
+        #region Value<T> comparisons.
+
+        /// <summary>
+        /// Return a 1, 0, or -1 representing the inequality (or equality) between the left and right value.
+        /// </summary>
+        /// <param name="left">Left value.</param>
+        /// <param name="right">Right value.</param>
+        /// <returns>Return comparison sort index.</returns>
+        public int CompareValue<T>(T left, T right) where T : IComparable
+        {
+            if (left == null && right == null) { return 0; }
+            if (left == null) { return -1; }
+            if (right == null) { return 1; }
+
+            if(left is IRow leftRow && right is IRow rightRow)
+            {
+                return this.CompareValue(leftRow, rightRow);
+            }
+
+            if(left is IRow) { return 1; }
+            if(right is IRow) { return -1; }
+
+            return left.CompareTo(right);
+        }
+
+        /// <summary>
+        /// Compare two values.
+        /// </summary>
+        /// <param name="left">Left value.</param>
+        /// <param name="right">Right value.</param>
+        /// <returns>Returns true if both values are equal.</returns>
+        public bool IsEqualValue<T>(T left, T right) where T : IComparable { return (this.CompareValue<T>(left, right) == 0); }
+
+        /// <summary>
+        /// Returns true if the left value is greater than the right value.
+        /// </summary>
+        /// <param name="left">Left value.</param>
+        /// <param name="right">Right value.</param>
+        /// <returns>Returns true if the left value is greater than the right value.</returns>
+        public bool IsGreaterThanValue<T>(T left, T right) where T : IComparable { return (this.CompareValue<T>(left, right) >= 1); }
+
+        /// <summary>
+        /// Returns true if the left value is less than the right value.
+        /// </summary>
+        /// <param name="left">Left value.</param>
+        /// <param name="right">Right value.</param>
+        /// <returns>Returns true if the left value is less than the right value.</returns>
+        public bool IsLessThanValue<T>(T left, T right) where T : IComparable { return (this.CompareValue<T>(left, right) <= -1); }
+
+        #endregion
+
+        #region Value comparisons.
+
+        /// <summary>
+        /// Return a 1, 0, or -1 representing the inequality (or equality) between the left and right value.
+        /// </summary>
+        /// <param name="left">Left value.</param>
+        /// <param name="right">Right value.</param>
+        /// <returns>Return comparison sort index.</returns>
+        public int CompareValue(IRow left, IRow right)
+        {
+            int comparison = 1;
+            comparison = (this.IsGreaterThanValue(left, right)) ? 1 : comparison;
+            comparison = (this.IsLessThanValue(left, right)) ? -1 : comparison;
+            comparison = (this.IsEqualValue(left, right)) ? 0 : comparison;
+            return comparison;
+        }
+
+        /// <summary>
+        /// Compare two values.
+        /// </summary>
+        /// <param name="left">Left value.</param>
+        /// <param name="right">Right value.</param>
+        /// <returns>Returns true if both values are equal.</returns>
+        public bool IsEqualValue(IRow left, IRow right)
+        {
+            if(this.CompareFields(left, right) != 0) { return false; }
+            
+            IList<IEntry> leftEntries = left.Entries;
+            IList<IEntry> rightEntries = right.Entries;
+
+            (leftEntries as List<IEntry>).Sort();
+            (rightEntries as List<IEntry>).Sort();
+
+            for (int i = 0; i < leftEntries.Count; i++)
+            {
+                if (!leftEntries[i].IsEqual(rightEntries[i])) { return false; }
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// Returns true if the left value is greater than the right value.
+        /// </summary>
+        /// <param name="left">Left value.</param>
+        /// <param name="right">Right value.</param>
+        /// <returns>Returns true if the left value is greater than the right value.</returns>
+        public bool IsGreaterThanValue(IRow left, IRow right)
+        {
+            if (this.CompareFields(left, right) >= 1) { return true; }
+
+            IList<IEntry> leftEntries = left.Entries;
+            IList<IEntry> rightEntries = right.Entries;
+
+            (leftEntries as List<IEntry>).Sort();
+            (rightEntries as List<IEntry>).Sort();
+
+            for (int i = 0; i < leftEntries.Count; i++)
+            {
+                int comparison = leftEntries[i].Compare(rightEntries[i]);
+                if (leftEntries[i].Compare(rightEntries[i]) != 0)
                 {
-                    for (int index = 0; index < this.FieldCount; index++)
-                    {
-                        IEntry entryA = this.Entries[index];
-                        IEntry entryB = row.Entries[index];
-                        if (!entryA.Equals(entryB)) { return false; }
-                    }
-                    return true;
+                    return (comparison >= 1);
                 }
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Returns true if the left value is less than the right value.
+        /// </summary>
+        /// <param name="left">Left value.</param>
+        /// <param name="right">Right value.</param>
+        /// <returns>Returns true if the left value is less than the right value.</returns>
+        public bool IsLessThanValue(IRow left, IRow right)
+        {
+            if (this.CompareFields(left, right) <= -1) { return true; }
+
+            IList<IEntry> leftEntries = left.Entries;
+            IList<IEntry> rightEntries = right.Entries;
+
+            (leftEntries as List<IEntry>).Sort();
+            (rightEntries as List<IEntry>).Sort();
+
+            for (int i = 0; i < leftEntries.Count; i++)
+            {
+                int comparison = leftEntries[i].Compare(rightEntries[i]);
+                if (leftEntries[i].Compare(rightEntries[i]) != 0)
+                {
+                    return (comparison <= -1);
+                }
+            }
+
+            return false;
+        }
+
+        #endregion
+
+        #endregion
+
+        #region IListWrapper<IEntry> - HasElement(IEntry), HasElements(IList<IEntry>), HasElements(params IEntry[]), HasAnyElements(IList<IEntry>), HasAnyElements(params IEntry[])
+
+        /// <summary>
+        /// Checks if the element is contained within the collection.
+        /// </summary>
+        /// <param name="element">Element to check.</param>
+        /// <returns>Returns true if element is found.</returns>
+        public bool HasElement(IEntry element)
+        {
+            if (element == null) { return false; }
+            return this.List.Contains(element);
+        }
+
+        /// <summary>
+        /// Check if all elements are present within the collection. Returns false if a single one is missing.
+        /// </summary>
+        /// <param name="elements">Collection of elements to check.</param>
+        /// <returns>Returns true if elements are found.</returns>
+        public bool HasElements(IList<IEntry> elements)
+        {
+            foreach (IEntry entry in elements)
+            {
+                if (!this.HasElement(entry)) { return false; }
+            }
+            return true;
+        }
+
+        /// <summary>
+        /// Check if all elements are present within the collection. Returns false if a single one is missing.
+        /// </summary>
+        /// <param name="elements">Collection of elements to check.</param>
+        /// <returns>Returns true if elements are found.</returns>
+        public bool HasElements(params IEntry[] elements) { return this.HasElements(elements.ToList<IEntry>()); }
+
+        /// <summary>
+        /// Check if any of the elements are present within the collection. Returns false if all are missing.
+        /// </summary>
+        /// <param name="elements">Collection of elements to check.</param>
+        /// <returns>Returns true if elements are found.</returns>
+        public bool HasAnyElements(IList<IEntry> elements)
+        {
+            foreach (IEntry entry in elements)
+            {
+                if (this.HasElement(entry)) { return true; }
             }
             return false;
         }
 
         /// <summary>
-        /// Returns the hashcode of all the internal entries.
+        /// Check if any of the elements are present within the collection. Returns false if all are missing.
         /// </summary>
-        /// <returns>Returns hashcode compilation of all entries.</returns>
-        public override int GetHashCode()
-        {
-            return this.Fields.GetHashCode() ^ this.Entries.GetHashCode();
-        }
+        /// <param name="elements">Collection of elements to check.</param>
+        /// <returns>Returns true if elements are found.</returns>
+        public bool HasAnyElements(params IEntry[] elements) { return this.HasElements(elements.ToList<IEntry>()); }
 
-        /// <summary>
-        /// Compare two rows. Matches based on row-to-row comparison.
-        /// </summary>
-        /// <param name="obj">IRow to be compared.</param>
-        /// <returns>Returns zero if equal. Returns greater value if more entries and unequal. Returns smaller value if less entries.</returns>
-        public int CompareTo(object obj)
-        {
-            if (obj != null && obj is IRow row)
-            {
-                // If the same, return 0.
-                if (this.Equals(obj)) { return 0; }
+        #endregion
 
-                // If not the same, find difference.
-                // If field count is the same, check if fields are different.
-                if (this.FieldCount == row.FieldCount)
-                {
-                    // If difference, return the compare between them.
-                    for(int index = 0; index < this.FieldCount; index++)
-                    {
-                        string fieldA = this[index];
-                        string fieldB = row.GetFieldName(index);
-                        int comparison = fieldA.CompareTo(fieldB);
-                        if(comparison != 0) { return comparison; }
-                    }
-
-                    // If no difference in fields, compare entries.
-                    for (int index = 0; index < this.EntryCount; index++)
-                    {
-                        IEntry entryA = this.GetEntry(index);
-                        IEntry entryB = row.GetEntry(index);
-                        int comparison = entryA.CompareTo(entryB);
-                        if(comparison != 0) { return comparison; }
-                    }
-
-                    // If there is no difference in both fields and in entries, it is the same row.
-                    return 0;
-                }
-                else
-                {
-                    // Sort based on size of fields, if sizes are different.
-                    return this.FieldCount.CompareTo(row.FieldCount);
-                }
-            }
-
-            // If not of a compatible type, return nothing.
-            throw new ArgumentException("Input object is not of type IRow.");
-        }
-
-        ///////
-        // ICollectionWrapper
-
-        /// <summary>
-        /// Check if the collection has at least this many items.
-        /// </summary>
-        /// <param name="count">Amount of rows to check if collection has.</param>
-        /// <returns>Returns true if count is greater than or equal to input value.</returns>
-        public bool HasAtLeastThisMany(int count)
-        {
-            return (this.Count >= count);
-        }
-
-        /// <summary>
-        /// Check if the collection has exactly this many items.
-        /// </summary>
-        /// <param name="count">Amount of rows to check if collection has.</param>
-        /// <returns>Returns true if count is equal to input value.</returns>
-        public bool HasExactlyThisMany(int count)
-        {
-            return (this.Count == count);
-        }
-
-        /// <summary>
-        /// Check if row contains the input index.
-        /// </summary>
-        /// <param name="fieldIndex">Index to accomodate.</param>
-        /// <returns>Returns true if not empty and index is within bounds.</returns>
-        public bool HasIndex(int fieldIndex)
-        {
-            if (this.IsEmpty || fieldIndex < 0 || fieldIndex >= this.Count) { return false; }
-            return true;
-        }
-
-        ///////
-        // IFieldNameValidator.
-
-        /// <summary>
-        /// Check if row contains a particular field. If input is invalid, it will return false.
-        /// </summary>
-        /// <param name="field">Field to check for.</param>
-        /// <returns>Returns true if field exists.</returns>
-        public bool HasField(string field)
-        {
-            string alias = this.FormatField(field);
-            return (this.IsValidField(alias) && this.Contains(alias));
-        }
-
-        /// <summary>
-        /// Returns a trimmed, all caps string, based off of input.
-        /// </summary>
-        /// <param name="input">Input to capitalize and trim of whitespace.</param>
-        /// <returns>Returns formatted string.</returns>
-        public string FormatField(string input)
-        {
-            if (input.Length <= 0) { return ""; }
-            return input.Trim().ToUpper();
-        }
-
-        /// <summary>
-        /// Checks if input is not empty.
-        /// </summary>
-        /// <param name="input">Input to check.</param>
-        /// <returns>Returns true if valid.</returns>
-        public bool IsValidField(string input)
-        {
-            if (input.Length <= 0) { return false; }
-            return true;
-        }
-
-        ///////
-        // ICollection<string>
-        
-        /// <summary>
-        /// Check if fieldname is in collection.
-        /// </summary>
-        /// <param name="fieldname">Field to search for.</param>
-        /// <returns>Returns true if found.</returns>
-        public bool Contains(string fieldname)
-        {
-            string alias = this.FormatField(fieldname);
-            return ((this.IsValidField(alias)) ? this.Fields.Contains(alias) : false);
-        }
-
-        ///////
-        // ICollection<IEntry>
-
-        /// <summary>
-        /// Check if entry is in collection.
-        /// </summary>
-        /// <param name="entry">Entry to search for.</param>
-        /// <returns>Returns true if found.</returns>
-        public bool Contains(IEntry entry)
-        {
-            return this.Entries.Contains(entry);
-        }
-
-        ///////
-        // IRow
+        #region IRow - HasFields(List<string>), HasFields(params string[])
 
         /// <summary>
         /// Check if all fields are present in a row.
         /// </summary>
         /// <param name="fieldnames">Collection of field names to look for.</param>
         /// <returns>Returns true if ALL names are found.</returns>
-        public bool Contains(List<string> fieldnames)
+        public bool HasFields(IList<string> fieldnames)
         {
-            if(fieldnames.Count <= 0) { return false; }
-
-            foreach(string field in fieldnames)
+            foreach (string field in fieldnames)
             {
-                if (!this.Contains(field)) { return false; }
+                if (!this.HasField(field)) { return false; }
             }
-
             return true;
         }
 
@@ -508,216 +903,221 @@ namespace ISTE.DAL.Database.Implementations
         /// </summary>
         /// <param name="fieldnames">Collection of field names to look for.</param>
         /// <returns>Returns true if ALL names are found.</returns>
-        public bool Contains(params string[] fieldnames)
-        {
-            if (fieldnames.Length <= 0) { return false; }
-            return this.Contains(fieldnames.ToList<string>());
-        }
+        public bool HasFields(params string[] fieldnames) { return this.HasFields(fieldnames.ToList<string>()); }
+
+        #endregion
+
+        #region IEmpty - MakeEmpty(void)
 
         /// <summary>
-        /// Check if all entries are present, with matching fields AND matching values.
+        /// When called, turns the instance into its 'empty' form.
         /// </summary>
-        /// <param name="entries">Collection of entries to compare.</param>
-        /// <returns>Returns true if ALL entries and fields are found.</returns>
-        public bool Contains(List<IEntry> entries)
+        /// <returns>Returns reference to self.</returns>
+        public IRow MakeEmpty()
         {
-            if (entries.Count <= 0) { return false; }
+            this.List.Clear();
+            return this;
+        }
 
-            foreach (IEntry entry in entries)
+        #endregion
+
+        #region INullable - MakeNull(void)
+
+        /// <summary>
+        /// Make all entries in the row, null.
+        /// </summary>
+        /// <returns>Returns reference to self.</returns>
+        public IRow MakeNull()
+        {
+            foreach (IEntry entry in this)
             {
-                if (!this.Contains((MySqlEntry) entry)) { return false; }
-            }
-
-            return true;
-        }
-
-        /// <summary>
-        /// Check if all entries are present, with matching fields AND matching values.
-        /// </summary>
-        /// <param name="entries">Collection of entries to compare.</param>
-        /// <returns>Returns true if ALL entries and fields are found.</returns>
-        public bool Contains(params IEntry[] entries)
-        {
-            if (entries.Length <= 0) { return false; }
-            return this.Contains(entries.ToList<IEntry>());
-        }
-
-        ///////
-        // IReplicate
-
-        /// <summary>
-        /// Return a clone of this row.
-        /// </summary>
-        /// <returns>Returns reference to this row's clone.</returns>
-        public IReplicate Clone() {
-            return new MySqlRow(this);
-        }
-        
-        ///////
-        // INullable
-
-        /// <summary>
-        /// Set all field entries to null entries.
-        /// </summary>
-        /// <returns>Makes all entries null.</returns>
-        public INullable MakeNull()
-        {
-            foreach (IEntry e in this.Entries)
-            {
-                e.MakeNull();
+                entry.MakeNull();
             }
             return this;
         }
 
-        ///////
-        // ICollection
+        #endregion
+
+        #region IReplicate - IRow Clone()
 
         /// <summary>
-        /// Remove all items from both collections.
+        /// Clone an object.
         /// </summary>
-        public void Clear() {
-            this.Fields.Clear();
-            this.Entries.Clear();
-        }
-                        
-        /// <summary>
-        /// Copies elements from <see cref="Entries"/> into the supplied array, starting at a particular array index.
-        /// </summary>
-        /// <param name="entryArray">Array to copy into.</param>
-        /// <param name="arrayIndex">Starting index.</param>
-        public void CopyTo(IEntry[] entryArray, int arrayIndex = 0) {
-            List<IEntry> entries = new List<IEntry>();
-            foreach (IEntry e in this.Entries) {
-                entries.Add(e);
+        /// <param name="obj">Object to clone.</param>
+        /// <returns>Create a clone.</returns>
+        public object Clone(object obj)
+        {
+            if (obj is IRow row)
+            {
+                return row.Clone();
             }
-            entries.CopyTo(entryArray, arrayIndex);
+            if (obj is IReplicate copy)
+            {
+                return copy.Clone(copy);
+            }
+            return null;
         }
 
         /// <summary>
-        /// Copies elements from <see cref="Fields"/> into the supplied array, starting at a particular array index.
+        /// Create a deep-copy of this row.
         /// </summary>
-        /// <param name="fieldArray">Array to copy into.</param>
-        /// <param name="arrayIndex">Starting index.</param>
-        public void CopyTo(string[] fieldArray, int arrayIndex = 0) {
-            this.Fields.CopyTo(fieldArray, arrayIndex);
+        /// <returns>Returns a row, cloned from this row.</returns>
+        public IRow Clone()
+        {
+            return new MySqlRow(this);
         }
+
+        #endregion
+
+        #endregion
 
         //////////////////////
-        // Accessor(s).
+        // Helper method(s).
 
-        ///////
-        // ICollectionWrapper<IEntry>
+        #region Helper methods.
+
+        #region IListWrapper - IsValidIndex(int)
 
         /// <summary>
-        /// Return the field index of the item stored in a particular collection.
+        /// Check if index is valid.
         /// </summary>
-        /// <param name="item">Item to search for.</param>
-        /// <returns>Returns field index of item in the collection. Returns -1 if not found.</returns>
-        public int GetIndex(IEntry item)
+        /// <param name="index">Index to check.</param>
+        /// <returns>Returns true if in bounds.</returns>
+        public bool IsValidIndex(int index)
         {
-            // Validate input.
-            if (item == null || !this.Contains(item.GetField())) { return -1; }
-            return this.Fields.IndexOf(item.GetField());
+            return (index < this.List.Count && index >= 0);
+        }
+
+        #endregion
+
+        #endregion
+
+        //////////////////////
+        // Accessor method(s).
+
+        #region Accessor methods.
+
+        #region IListWrapper
+
+        /// <summary>
+        /// Returns an enumerator that iterates through the collection.
+        /// </summary>
+        /// <returns>Returns an enumerator that iterates through the collection.</returns>
+        public IEnumerator<IEntry> GetEnumerator()
+        {
+            return this.Entries.GetEnumerator();
+        }
+        
+        #region int GetIndex(IEntry), IEntry GetElement(int), bool TryGetElement(int, out IEntry)
+
+        /// <summary>
+        /// Return index of input element. Returns -1 if element doesn't exist in collection.
+        /// </summary>
+        /// <param name="element">Element to affect.</param>
+        /// <returns>Returns null if element doesn't exist.</returns>
+        public int GetIndex(IEntry element)
+        {
+            if (this.IsEmpty || element == null || !this.HasElement(element)) { return -1; }
+            return this.List.IndexOf(element);
         }
 
         /// <summary>
-        /// Return the entry at the specified index.
+        /// Return element at specified index. Returns null if element doesn't exist.
         /// </summary>
-        /// <param name="index">Index to retrieve item from.</param>
-        /// <param name="item">Item to be output.</param>
-        /// <returns>Returns true if successfully obtained item. Returns item if index is in bounds.</returns>
-        public bool GetItem(int index, out IEntry item)
+        /// <param name="index">Index of element reference.</param>
+        /// <returns>Returns null if element doesn't exist.</returns>
+        public IEntry GetElement(int index)
         {
-            // Validate input.
-            item = (this.IsEmpty || !this.HasIndex(index)) ? null : this.Entries[index];
-            return (item != null); // Returns true if item is not null.
-        }
-
-        ///////
-        // ICollectionWrapper<string>
-
-        /// <summary>
-        /// Return the index of the item stored in a particular collection.
-        /// </summary>
-        /// <param name="item">Item to search for.</param>
-        /// <returns>Returns index of item in the collection. Returns -1 if not found.</returns>
-        public int GetIndex(string item)
-        {
-            // Validate input.
-            string alias = this.FormatField(item);
-            if(!this.HasField(alias)) { return -1; }
-            return this.Fields.IndexOf(alias);
+            if (!this.IsValidIndex(index)) { return null; }
+            return this.List[index];
         }
 
         /// <summary>
-        /// Return the fieldname at the specified index.
+        /// Return element at specified index via out parameter. Returns false if element doesn't exist.
         /// </summary>
-        /// <param name="index">Index to retrieve item from.</param>
-        /// <param name="item">Item to be output.</param>
-        /// <returns>Returns true if successfully obtained item. Returns item if index is in bounds.</returns>
-        public bool GetItem(int index, out string item)
+        /// <param name="index">Index of element reference.</param>
+        /// <param name="result">Element to affect.</param>
+        /// <returns>Returns null if element doesn't exist.</returns>
+        public bool TryGetElement(int index, out IEntry result)
         {
-            // Validate input.
-            item = (this.IsEmpty || !this.HasIndex(index)) ? null : this[index];
-            return (item != null); // Returns true if item is not null.
+            result = this.GetElement(index);
+            return (result != null);
         }
 
-        ///////
-        // IRow
+        #endregion
+        
+        #endregion
+
+        #region IRow
+
+        #region int GetIndex(string), string GetFieldName(int), bool TryGetFieldName(int, out string)
 
         /// <summary>
-        /// Get tabular data linking a fieldname to a value.
+        /// Return index of specified fieldname. Returns -1 if it doesn't exist.
         /// </summary>
-        /// <param name="index">Field index to get data from.</param>
-        /// <returns>Returns key/value pair if field exists at index. Returns empty pair on error.</returns>
-        public KeyValuePair<string, string> GetData(int index)
+        /// <param name="fieldname">Fieldname to access.</param>
+        /// <returns>Returns index.</returns>
+        public int GetIndex(string fieldname)
         {
-            KeyValuePair<string, string> data = new KeyValuePair<string, string>("", "");
-            if(this.GetItem(index, out IEntry item))
+            int index = -1;
+            if (this.HasField(fieldname))
             {
-                data = item.GetData();
+                foreach (IEntry entry in this)
+                {
+                    index++;
+                    if (entry.HasField(fieldname)) { return index; }
+                }
             }
-            return data;
-        }
-
-        /// <summary>
-        /// Get tabular data linking a fieldname to a value.
-        /// </summary>
-        /// <param name="fieldname">Fieldname to search data from.</param>
-        /// <returns>Returns key/value pair if field exists at index. Returns null if fieldname doesn't exist.</returns>
-        public KeyValuePair<string, string> GetData(string fieldname)
-        {
-            KeyValuePair<string, string> data = new KeyValuePair<string, string>();
-            IEntry item = this[fieldname];
-            if (item != null)
-            {
-                data = item.GetData();
-            }
-            return data;
+            return index;
         }
 
         /// <summary>
         /// Return the fieldname at the specified index.
         /// </summary>
         /// <param name="index">Field index to access.</param>
-        /// <returns>Returns formatted fieldname. Returns empty string on error.</returns>
+        /// <returns>Returns formatted fieldname. Throws exception if index out of bounds.</returns>
         public string GetFieldName(int index)
         {
-            if(this.GetItem(index, out string fieldname))
-            {
-                return fieldname;
-            }
-            return "";
+            if (!IsValidIndex(index)) { return null; }
+            return this.Fields[index];
+        }
+
+        /// <summary>
+        /// Return the fieldname at the specified index.
+        /// </summary>
+        /// <param name="index">Field index to access.</param>
+        /// <param name="fieldname">Fieldname to return.</param>
+        /// <returns>Returns formatted fieldname. Throws exception if index out of bounds.</returns>
+        public bool TryGetFieldName(int index, out string fieldname)
+        {
+            fieldname = this.GetFieldName(index);
+            return (!String.IsNullOrEmpty(fieldname));
+        }
+
+        #endregion
+
+        #region IEntry GetEntry(int), bool TryGetEntry(int, out IEntry), IEntry GetEntry(string), bool TryGetEntry(string, out IEntry)
+
+        /// <summary>
+        /// Return entry at field index.
+        /// </summary>
+        /// <param name="index">Field index to access.</param>
+        /// <returns>Returns entry. Throws exception if index out of bounds.</returns>
+        public IEntry GetEntry(int index)
+        {
+            return this.GetElement(index);
         }
 
         /// <summary>
         /// Return entry at field index.
         /// </summary>
         /// <param name="index">Field index to access.</param>
-        /// <returns>Returns entry. Returns null if index doesn't exist.</returns>
-        public IEntry GetEntry(int index)
+        /// <param name="entry">Entry to retrieve.</param>
+        /// <returns>Returns entry. Throws exception if index out of bounds.</returns>
+        public bool TryGetEntry(int index, out IEntry entry)
         {
-            return this[this[index]];
+            entry = this.GetEntry(index);
+            return (entry != null);
         }
 
         /// <summary>
@@ -727,31 +1127,194 @@ namespace ISTE.DAL.Database.Implementations
         /// <returns>Returns entry. Returns null if field doesn't exist.</returns>
         public IEntry GetEntry(string fieldname)
         {
-            return this[fieldname];
+            if (!this.IsValidField(fieldname) || !this.HasField(fieldname)) { return null; }
+            foreach (IEntry entry in this)
+            {
+                if (entry.HasField(fieldname)) { return entry; }
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// Return entry associated with the field.
+        /// </summary>
+        /// <param name="fieldname">Field to access.</param>
+        /// <param name="entry">Entry to retrieve.</param>
+        /// <returns>Returns entry. Returns null if field doesn't exist.</returns>
+        public bool TryGetEntry(string fieldname, out IEntry entry)
+        {
+            entry = this.GetEntry(fieldname);
+            return (entry != null);
+        }
+
+        #endregion
+
+        #region KeyValuePair<string, string> GetData(int), bool TryGetData(int, KeyValuePair<string, string>),  KeyValuePair<string, string> GetData(string), bool TryGetData(string, KeyValuePair<string, string>)  
+
+        /// <summary>
+        /// Get tabular data linking a fieldname to a value.
+        /// </summary>
+        /// <param name="index">Field index to get data from.</param>
+        /// <returns>Returns key/value pair if field exists at index. Throws exception if index out of bounds.</returns>
+        public KeyValuePair<string, string> GetData(int index)
+        {
+            if (!this.TryGetEntry(index, out IEntry entry)) { return new KeyValuePair<string, string>("", ""); }
+            return entry.Data;
+        }
+
+        /// <summary>
+        /// Get tabular data linking a fieldname to a value.
+        /// </summary>
+        /// <param name="index">Field index to get data from.</param>
+        /// <param name="data">Data to retrieve.</param>
+        /// <returns>Returns key/value pair if field exists at index. Throws exception if index out of bounds.</returns>
+        public bool TryGetData(int index, out KeyValuePair<string, string> data)
+        {
+            data = this.GetData(index);
+            return (!String.IsNullOrWhiteSpace(data.Key));
+        }
+
+        /// <summary>
+        /// Get tabular data linking a fieldname to a value.
+        /// </summary>
+        /// <param name="fieldname">Fieldname to search data from.</param>
+        /// <returns>Returns key/value pair if field exists at index. Returns null if fieldname doesn't exist.</returns>
+        public KeyValuePair<string, string> GetData(string fieldname)
+        {
+            if (!this.TryGetEntry(fieldname, out IEntry entry)) { return new KeyValuePair<string, string>("", ""); }
+            return entry.Data;
+        }
+
+        /// <summary>
+        /// Get tabular data linking a fieldname to a value.
+        /// </summary>
+        /// <param name="fieldname">Fieldname to search data from.</param>
+        /// <param name="data">Data to retrieve.</param>
+        /// <returns>Returns key/value pair if field exists at index. Returns null if fieldname doesn't exist.</returns>
+        public bool TryGetData(string fieldname, out KeyValuePair<string, string> data)
+        {
+            data = this.GetData(fieldname);
+            return (!String.IsNullOrWhiteSpace(data.Key));
+        }
+
+        #endregion
+
+        #region string GetValue(int), bool TryGetValue(int, out string), string GetValue(string), bool TryGetValue(string, out string)
+
+        /// <summary>
+        /// Return entry value from the specified index.
+        /// </summary>
+        /// <param name="index">Field index to access.</param>
+        /// <returns>Returns stored value. Throws exception if index out of bounds.</returns>
+        public string GetValue(int index)
+        {
+            if (!this.TryGetEntry(index, out IEntry entry)) { return null; }
+            return entry.Value;
         }
 
         /// <summary>
         /// Return entry value from the specified index.
         /// </summary>
         /// <param name="index">Field index to access.</param>
-        /// <returns>Returns stored value. Throws exception if entry doesn't exist.</returns>
-        public string GetValue(int index)
+        /// <param name="value">Value to retrieve.</param>
+        /// <returns>Returns stored value. Throws exception if index out of bounds.</returns>
+        public bool TryGetValue(int index, out string value)
         {
-            IEntry entry = this.GetEntry(index);
-            if(entry != null) { return entry.GetValue(); }
-            else { throw new InvalidOperationException("Cannot find value for undefined entry."); }
+            value = this.GetValue(index);
+            return (value == null); // (Note: Value can be an 'empty' string.
         }
 
         /// <summary>
         /// Return entry value from the specified field.
         /// </summary>
         /// <param name="fieldname">Field to access.</param>
-        /// <returns>Returns stored value. Throws exception if entry doesn't exist.</returns>
+        /// <returns>Returns stored value. Returns a "NULL" if the field doesn't exist.</returns>
         public string GetValue(string fieldname)
         {
-            IEntry entry = this.GetEntry(fieldname);
-            if (entry != null) { return entry.GetValue(); }
-            else { throw new InvalidOperationException("Cannot find value for undefined entry."); }
+            if (!this.TryGetEntry(fieldname, out IEntry entry)) { return null; }
+            return entry.Value;
+        }
+
+        /// <summary>
+        /// Return entry value from the specified index.
+        /// </summary>
+        /// <param name="fieldname">Field to access.</param>
+        /// <param name="value">Value to retrieve.</param>
+        /// <returns>Returns stored value. Throws exception if index out of bounds.</returns>
+        public bool TryGetValue(string fieldname, out string value)
+        {
+            value = this.GetValue(fieldname);
+            return (value == null); // (Note: Value can be an 'empty' string.
+        }
+
+        #endregion
+
+        #region List<IEntry> - GetRange(int), GetRange(int, int), GetRange(List<string>), GetRange(params string[])
+
+        /// <summary>
+        /// Returns a subset of this row, as a list of entries, using the input values.
+        /// </summary>
+        /// <param name="start">Starting index to begin subset parsing.</param>
+        /// <returns>Returns a new collection of entries.</returns>
+        public IList<IEntry> GetRange(int start = 0)
+        {
+            if (start == 0) { return this.Entries; }
+            if (!this.IsValidIndex(start)) { return new List<IEntry>(); }
+            return (this.Entries as List<IEntry>).GetRange(start, this.Count);
+        }
+
+        /// <summary>
+        /// Returns a subset of this row, as a list of entries, using the input values.
+        /// </summary>
+        /// <param name="start">Starting index to begin subset parsing.</param>
+        /// <param name="length">Length of subset parsing.</param>
+        /// <returns>Returns a new collection of entries.</returns>
+        public IList<IEntry> GetRange(int start = 0, int length = -1)
+        {
+            if (length <= -1 || length >= this.Count) { return this.GetRange(start); }
+            if (length == 0 || !this.IsValidIndex(start)) { return new List<IEntry>(); }
+            return (this.Entries as List<IEntry>).GetRange(start, length);
+        }
+
+        /// <summary>
+        /// Returns a subset of this row, as a list of entries, containing all the input fieldnames.
+        /// <para>Fieldnames that don't exist in the current row will be ignored.</para>
+        /// </summary>
+        /// <param name="fieldnames">Collection of fieldnames that should be in the new collection.</param>
+        /// <returns>Returns a new collection of entries.</returns>
+        public IList<IEntry> GetRange(IList<string> fieldnames)
+        {
+            List<IEntry> range = new List<IEntry>();
+            foreach (string field in fieldnames)
+            {
+                if (this.HasField(field))
+                {
+                    range.Add(this.GetEntry(field));
+                }
+            }
+            return range;
+        }
+
+        /// <summary>
+        /// Returns a subset of this row, as a list of entries, containing all the input fieldnames.
+        /// <para>Fieldnames that don't exist in the current row will be ignored.</para>
+        /// </summary>
+        /// <param name="fieldnames">Collection of fieldnames that should be in the new collection.</param>
+        /// <returns>Returns a new collection of entries.</returns>
+        public IList<IEntry> GetRange(params string[] fieldnames) { return this.GetRange(fieldnames.ToList<string>()); }
+
+        #endregion
+
+        #region IRow - GetRowRange(int), GetRowRange(int, int), GetRowRange(List<string>), GetRowRange(params string[])
+
+        /// <summary>
+        /// Returns a subset of this row, as a new row, using the input values.
+        /// </summary>
+        /// <param name="start">Starting index to begin subset parsing.</param>
+        /// <returns>Returns a new row.</returns>
+        public IRow GetRowRange(int start = 0)
+        {
+            return new MySqlRow(this.GetRange(start));
         }
 
         /// <summary>
@@ -762,39 +1325,7 @@ namespace ISTE.DAL.Database.Implementations
         /// <returns>Returns a new row.</returns>
         public IRow GetRowRange(int start = 0, int length = -1)
         {
-            IRow subset = new MySqlRow();
-
-            if (start > 0 && start < this.Count)
-            {
-                foreach (IEntry entry in this.Entries)
-                {
-                    if(length == -1 || subset.FieldCount < length)
-                    {
-                        // Add entry (and its associated field).
-                        subset.AddEntry(entry.Clone() as IEntry);
-                    }
-                }
-            }
-
-            return subset;
-        }
-
-        /// <summary>
-        /// Returns a subset of this row, as a new row, containing all the input fieldnames. Duplicate fieldnames are ignored.
-        /// <para>Fieldnames that don't exist in the current row will have null entries in the returned value.</para>
-        /// </summary>
-        /// <param name="fieldnames">Collection of fieldnames that should be in the new row.</param>
-        /// <returns>Returns a new row.</returns>
-        public IRow GetRowRange(List<string> fieldnames)
-        {
-            IRow subset = new MySqlRow();
-            foreach (string field in fieldnames)
-            {
-                IEntry entry = this.GetEntry(field);
-                if (entry != null) { subset.AddEntry(entry.Clone() as IEntry); }
-                else { subset.AddField(field); }
-            }
-            return subset;
+            return new MySqlRow(this.GetRange(start, length));
         }
 
         /// <summary>
@@ -803,251 +1334,183 @@ namespace ISTE.DAL.Database.Implementations
         /// </summary>
         /// <param name="fieldnames">Collection of fieldnames that should be in the new row.</param>
         /// <returns>Returns a new row.</returns>
-        public IRow GetRowRange(params string[] fieldnames)
+        public IRow GetRowRange(IList<string> fieldnames)
         {
-            return this.GetRowRange(fieldnames.ToList<string>());
+            return new MySqlRow(this.GetRange(fieldnames));
         }
 
         /// <summary>
-        /// Returns a subset of this row's entries, as a list of entries, using the input values.
+        /// Returns a subset of this row, as a new row, containing all the input fieldnames.
+        /// <para>Fieldnames that don't exist in the current row will have null entries in the returned value.</para>
         /// </summary>
-        /// <param name="start">Starting index to begin subset parsing.</param>
-        /// <param name="length">Length of subset parsing.</param>
-        /// <returns>Returns a new collection of entries.</returns>
-        public List<IEntry> GetRange(int start = 0, int length = -1)
-        {
-            List<IEntry> subset = new List<IEntry>();
+        /// <param name="fieldnames">Collection of fieldnames that should be in the new row.</param>
+        /// <returns>Returns a new row.</returns>
+        public IRow GetRowRange(params string[] fieldnames) { return this.GetRowRange(fieldnames.ToList<string>()); }
 
-            if (start > 0 && start < this.Count)
-            {
-                foreach (IEntry entry in this.Entries)
-                {
-                    if (length == -1 || subset.Count < length)
-                    {
-                        // Add entry (and its associated field).
-                        subset.Add(entry.Clone() as IEntry);
-                    }
-                }
-            }
+        #endregion
 
-            return subset;
-        }
+        #endregion
 
-        /// <summary>
-        /// Returns a subset of this row, as a list of entries, containing all the input fieldnames.
-        /// <para>Fieldnames that don't exist in the current row will be ignored.</para>
-        /// </summary>
-        /// <param name="fieldnames">Collection of fieldnames that should be in the new collection.</param>
-        /// <returns>Returns a new collection of entries.</returns>
-        public List<IEntry> GetRange(List<string> fieldnames)
-        {
-            List<IEntry> subset = new List<IEntry>();
-            foreach (string field in fieldnames)
-            {
-                IEntry entry = this.GetEntry(field);
-                if (entry != null) { subset.Add(entry.Clone() as IEntry); }
-            }
-            return subset;
-        }
-
-        /// <summary>
-        /// Returns a subset of this row, as a list of entries, containing all the input fieldnames.
-        /// <para>Fieldnames that don't exist in the current row will be ignored.</para>
-        /// </summary>
-        /// <param name="fieldnames">Collection of fieldnames that should be in the new collection.</param>
-        /// <returns>Returns a new collection of entries.</returns>
-        public List<IEntry> GetRange(params string[] fieldnames)
-        {
-            return this.GetRange(fieldnames.ToList<string>());
-        }
-        
-        ///////
-        // ICollection<IEntry>
-
-        /// <summary>
-        /// Returns the entry collection's enumerator. Default enumerator.
-        /// </summary>
-        /// <returns>Returns enumerator for the entries.</returns>
-        public IEnumerator<IEntry> GetEnumerator()
-        {
-            return this.Entries.GetEnumerator();
-        }
-
-        ///////
-        // ICollection<string>
-
-        /// <summary>
-        /// Returns the field name collection's enumerator. Explicit enumerator.
-        /// </summary>
-        /// <returns>Returns enumerator for the entries.</returns>
-        IEnumerator<string> IEnumerable<string>.GetEnumerator()
-        {
-            return this.Fields.GetEnumerator();
-        }
-
-        ///////
-        // ICollection
-
-        /// <summary>
-        /// Returns the entry collection's enumerator. Explicit enumerator.
-        /// </summary>
-        /// <returns>Returns enumerator for the entries.</returns>
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return this.GetEnumerator();
-        }
+        #endregion
 
         //////////////////////
-        // Mutator(s).
+        // Mutator method(s).
 
-        ///////
-        // ICollectionWrapper<IEntry>
+        #region Mutator methods.
+
+        #region IListWrapper
+
+        #region IEntry AddElement(IEntry), bool TryAddElement(IEntry, out IEntry), bool AddElements(IList<IEntry>), bool AddElements(params IEntry[] elements)
 
         /// <summary>
-        /// Replace item at specified index, if index is in bounds. Will return null if it index doesn't exist.
+        /// Add element to the collection if it doesn't already exist.
         /// </summary>
-        /// <param name="index">Index to replace item at.</param>
-        /// <param name="item">Item to be set.</param>
-        /// <returns>Return reference to item.</returns>
-        public IEntry SetItem(int index, IEntry item)
+        /// <param name="element">Element to affect.</param>
+        /// <returns>Returns operation success.</returns>
+        public IEntry AddElement(IEntry element)
         {
-            // Wrap implementation.
-            return (this.SetEntry(index, item) == null) ? null : item;
+            if (this.HasElement(element)) { return null; }
+            if (element == null) { return null; }
+            this.List.Add(element);
+            return element;
         }
 
         /// <summary>
-        /// Add a item to the collection.
+        /// Add element to the collection if it doesn't already exist.
         /// </summary>
-        /// <param name="item">Item to add.</param>
-        /// <returns>Return reference to item.</returns>
-        public IEntry AddItem(IEntry item)
+        /// <param name="element">Element to affect.</param>
+        /// <param name="result">Resulting element.</param>
+        /// <returns>Returns operation success.</returns>
+        public bool TryAddElement(IEntry element, out IEntry result)
         {
-            // Wrap implementation.
-            return (this.AddEntry(item) == null) ? null : item;
+            result = this.AddElement(element);
+            return (result != null);
         }
 
         /// <summary>
-        /// Add a collection of items to the collection.
+        /// Add a collection of elements to the current collection. Returns false if any elements already exist in the set.
         /// </summary>
-        /// <param name="items">Items to add.</param>
-        /// <returns>Return reference to item.</returns>
-        public List<IEntry> AddItems(List<IEntry> items)
+        /// <param name="elements">Elements to add.</param>
+        /// <returns>Returns operation success.</returns>
+        public bool AddElements(IList<IEntry> elements)
         {
-            // Wrap implementation.
-            return (this.AddEntries(items) == null) ? new List<IEntry>() : items;
+            if (this.HasAnyElements(elements))
+            {
+                return false;
+            }
+
+            // Validate all entries.
+            foreach (IEntry entry in elements)
+            {
+                if (entry == null) { return false; }
+            }
+
+            // Add the elements.
+            (this.Entries as List<IEntry>).AddRange(elements);
+            return true;
         }
 
         /// <summary>
-        /// Add a collection of items to the collection.
+        /// Add a collection of elements to the current collection.
         /// </summary>
-        /// <param name="items">Items to add.</param>
-        /// <returns>Return reference to item.</returns>
-        public List<IEntry> AddItems(params IEntry[] items)
+        /// <param name="elements">Elements to add.</param>
+        /// <returns>Returns operation success.</returns>
+        public bool AddElements(params IEntry[] elements) { return this.AddElements(elements.ToList<IEntry>()); }
+
+        #endregion
+
+        #region IEntry SetElement(int, IEntry), bool TrySetElement(int, IEntry, out IEntry)
+
+        /// <summary>
+        /// Set existing index to reference the input element.
+        /// </summary>
+        /// <param name="index">Index of element reference.</param>
+        /// <param name="element">Element to affect.</param>
+        /// <returns>Returns operation success.</returns>
+        public IEntry SetElement(int index, IEntry element)
         {
-            return this.AddItems(items.ToList<IEntry>());
+            if (!this.IsValidIndex(index)) { return null; }
+            if (element == null) { return null; }
+            this.List[index] = element;
+            return this.List[index];
         }
 
         /// <summary>
-        /// Remove item from the collection.
+        /// Set existing index to reference the input element.
         /// </summary>
-        /// <param name="index">Index of the item to remove.</param>
-        /// <param name="item">Item to remove.</param>
-        /// <returns>Returns false if no item found.</returns>
-        public bool RemoveItem(int index, out IEntry item)
+        /// <param name="index">Index of element reference.</param>
+        /// <param name="element">Element to affect.</param>
+        /// <param name="result">Resulting element.</param>
+        /// <returns>Returns operation success.</returns>
+        public bool TrySetElement(int index, IEntry element, out IEntry result)
         {
-            // Wrap implementation.
-            item = this.RemoveEntry(index);
-            return (item == null) ? false : true;
+            result = this.SetElement(index, element);
+            return (result != null);
+        }
+
+        #endregion
+
+        #region IEntry RemoveElement(IEntry), bool TryRemoveElement(IEntry, out IEntry), IEntry RemoveAt(int), bool TryRemoveAt(int, out IEntry)
+
+        /// <summary>
+        /// Remove element from the collection if it exists. Returns null if element was not found or could not be removed.
+        /// </summary>
+        /// <param name="element">Element to affect.</param>
+        /// <returns>Returns removed element.</returns>
+        public IEntry RemoveElement(IEntry element)
+        {
+            if (!this.HasElement(element)) { return null; }
+            this.List.Remove(element);
+            return element;
         }
 
         /// <summary>
-        /// Remove item if it exists in the collection.
+        /// Remove element from the collection if it exists. Returns null if element was not found or could not be removed via out parameter. Returns false if element doesn't exist.
         /// </summary>
-        /// <param name="item">Item to remove.</param>
-        /// <returns>Return removed item. Returns null if no item found.</returns>
-        public IEntry RemoveItem(IEntry item)
+        /// <param name="element">Element to affect.</param>
+        /// <param name="result">Element to return.</param>
+        /// <returns>Returns operation success.</returns>
+        public bool TryRemoveElement(IEntry element, out IEntry result)
         {
-            // Wrap implementation.
-            return this.RemoveEntry(item);
-        }
-
-        ///////
-        // ICollectionWrapper<string>
-
-        /// <summary>
-        /// Replace item at specified index, if index is in bounds.  Will return empty string if it index doesn't exist.
-        /// </summary>
-        /// <param name="index">Index to replace item at.</param>
-        /// <param name="item">Item to be set.</param>
-        /// <returns>Return reference to item.</returns>
-        public string SetItem(int index, string item)
-        {
-            // Wrap implementation.
-            return (this.SetFieldName(index, item) == null) ? "" : item;
+            result = this.RemoveElement(element);
+            return (result != null);
         }
 
         /// <summary>
-        /// Add a item to the collection.
+        /// Remove element from the collection if it exists, by index. Returns null if element was not found or could not be removed.
         /// </summary>
-        /// <param name="item">Item to add.</param>
-        /// <returns>Return reference to item.</returns>
-        public string AddItem(string item)
+        /// <param name="index">Index of element reference.</param>
+        /// <returns>Returns removed element.</returns>
+        public IEntry RemoveAt(int index)
         {
-            // Wrap implementation.
-            IEntry entry = this.AddField(item);
-            return (entry == null) ? "" : entry.GetField();
+            if (!this.IsValidIndex(index)) { return null; }
+            IEntry result = this.GetElement(index);
+            if (result != null) { this.List.RemoveAt(index); }
+            return result;
         }
 
         /// <summary>
-        /// Add a collection of items to the collection.
+        /// Remove element from the collection if it exists, by index. Returns null if element was not found or could not be removed via out parameter. Returns false if element doesn't exist.
         /// </summary>
-        /// <param name="items">Items to add.</param>
-        /// <returns>Return reference to item.</returns>
-        public List<string> AddItems(List<string> items)
+        /// <param name="index">Index of element reference.</param>
+        /// <param name="result">Element to return.</param>
+        /// <returns>Returns operation success.</returns>
+        public bool TryRemoveAt(int index, out IEntry result)
         {
-            // Wrap implementation.
-            return (this.AddFields(items) == null) ? new List<string>() : items;
+            result = this.RemoveAt(index);
+            return (result != null);
         }
 
-        /// <summary>
-        /// Add a collection of items to the collection.
-        /// </summary>
-        /// <param name="items">Items to add.</param>
-        /// <returns>Return reference to item.</returns>
-        public List<string> AddItems(params string[] items)
-        {
-            // Wrap implementation.
-            return this.AddItems(items.ToList<string>());
-        }
+        #endregion
 
-        /// <summary>
-        /// Remove item from the collection.
-        /// </summary>
-        /// <param name="index">Index of the item to remove.</param>
-        /// <param name="item">Item to remove.</param>
-        /// <returns>Returns false if no item found.</returns>
-        public bool RemoveItem(int index, out string item)
-        {
-            // Wrap implementation.
-            IEntry entry = this.RemoveField(index);
-            item = (entry == null) ? "" : entry.GetField();
-            return (item.Length == 0) ? false : true;
-        }
+        #endregion
 
-        /// <summary>
-        /// Remove item if it exists in the collection.
-        /// </summary>
-        /// <param name="item">Item to remove.</param>
-        /// <returns>Return removed item. Returns empty string if no item found.</returns>
-        public string RemoveItem(string item)
-        {
-            // Wrap implementation.
-            IEntry entry = this.RemoveField(item);            
-            return (entry == null) ? "" : entry.GetField();
-        }
+        #region IRow
+    
+        ////////////////
+        // SetFieldName
 
-        ///////
-        // IRow
+        #region IRow SetFieldName(int, string), bool TrySetFieldName(int, string)
 
         /// <summary>
         /// Set the fieldname at a particular index, formatting the input, renaming the entry associated with the index.
@@ -1057,13 +1520,35 @@ namespace ISTE.DAL.Database.Implementations
         /// <returns>Returns reference to self.</returns>
         public IRow SetFieldName(int index, string fieldname)
         {
-            string alias = this.FormatField(fieldname);
-            if (!this.HasIndex(index) || !this.IsValidField(alias) || this.HasField(alias)) { return null; }
-            this.Fields[index] = alias;
-            IEntry e = this.Entries[index];
-            if(e != null) { e.SetData(alias, e.GetValue()); }
-            return this;
+            if (this.IsReadOnly) { return null; }
+            if (this.TryGetEntry(index, out IEntry entry))
+            {
+                if (entry.TrySetField(fieldname))
+                {
+                    return this;
+                }
+            }
+            return null;
         }
+
+        /// <summary>
+        /// Set the fieldname at a particular index, formatting the input, renaming the entry associated with the index.
+        /// </summary>
+        /// <param name="index">Field index to access.</param>
+        /// <param name="fieldname">Field to set.</param>
+        /// <returns>Returns reference to self.</returns>
+        public bool TrySetFieldName(int index, string fieldname)
+        {
+            IRow result = this.SetFieldName(index, fieldname);
+            return (result != null);
+        }
+
+        #endregion
+        
+        ////////////////
+        // SetEntry
+
+        #region IRow SetEntry(int, IEntry), bool TrySetEntry(int, IEntry), IRow SetEntry(string, IEntry), bool TrySetEntry(string, IEntry), IRow SetEntry(string, string), bool TrySetEntry(string, string)
 
         /// <summary>
         /// Set entry at field index to the input entry reference.
@@ -1073,12 +1558,19 @@ namespace ISTE.DAL.Database.Implementations
         /// <returns>Returns reference to self.</returns>
         public IRow SetEntry(int index, IEntry entry)
         {
-            // Validate input.
-            if (entry == null || !this.HasIndex(index)) { return null; }
-            // Overwrite the fieldname on the input entry.
-            entry.SetData(this.GetFieldName(index), entry.GetValue());
-            this.Entries[index] = entry;
-            return this;
+            if (this.IsReadOnly) { return null; }
+            return (this.TrySetElement(index, entry.Clone(), out IEntry result)) ? this : null;
+        }
+
+        /// <summary>
+        /// Set entry at field index to the input entry reference.
+        /// </summary>
+        /// <param name="index">Field index to access.</param>
+        /// <param name="entry">Entry to set.</param>
+        /// <returns>Returns reference to self.</returns>
+        public bool TrySetEntry(int index, IEntry entry)
+        {
+            return (this.SetEntry(index, entry) != null);
         }
 
         /// <summary>
@@ -1089,7 +1581,19 @@ namespace ISTE.DAL.Database.Implementations
         /// <returns>Returns reference to self.</returns>
         public IRow SetEntry(string fieldname, IEntry entry)
         {
-            return this.SetEntry(fieldname, entry.GetValue());
+            if (this.IsReadOnly) { return null; }
+            return this.SetEntry(this.GetIndex(fieldname), entry);
+        }
+
+        /// <summary>
+        /// Set entry with matching fieldname to the input entry clone. Will overwrite fieldname on cloned entry.
+        /// </summary>
+        /// <param name="fieldname">Field to access.</param>
+        /// <param name="entry">Entry to set.</param>
+        /// <returns>Returns reference to self.</returns>
+        public bool TrySetEntry(string fieldname, IEntry entry)
+        {
+            return (this.SetEntry(fieldname, entry) != null);
         }
 
         /// <summary>
@@ -1100,7 +1604,42 @@ namespace ISTE.DAL.Database.Implementations
         /// <returns>Returns reference to self.</returns>
         public IRow SetEntry(string fieldname, string value)
         {
-            return this.SetEntry(this.GetIndex(fieldname), new MySqlEntry(fieldname, value));
+            if (this.IsReadOnly) { return null; }
+            return this.SetEntry(fieldname, new MySqlEntry(fieldname, value));
+        }
+
+        /// <summary>
+        /// Set entry with matching fieldname to the input entry clone. Will overwrite fieldname on cloned entry.
+        /// </summary>
+        /// <param name="fieldname">Field to access.</param>
+        /// <param name="value">Entry value to set.</param>
+        /// <returns>Returns reference to self.</returns>
+        public bool TrySetEntry(string fieldname, string value)
+        {
+            return (this.SetEntry(fieldname, value) != null);
+        }
+
+        #endregion
+        
+        ////////////////
+        // SetValue
+
+        #region IRow SetValue(IEntry), bool TrySetValue(IEntry), IRow SetValue(int, string), bool TrySetValue(int, string), IRow SetValue(string, string), bool TrySetValue(string, string)
+
+        /// <summary>
+        /// Set entry with matching fieldname to the input entry reference. Will only add if the entry's field exists in the row.
+        /// </summary>
+        /// <param name="entry">Entry to set.</param>
+        /// <returns>Returns reference to self.</returns>
+        public IRow SetValue(IEntry entry)
+        {
+            if (this.IsReadOnly) { return null; }
+            if (this.TryGetEntry(entry.Field, out IEntry set))
+            {
+                set.SetValue(entry.Value);
+                return this;
+            }
+            return null;
         }
 
         /// <summary>
@@ -1108,10 +1647,9 @@ namespace ISTE.DAL.Database.Implementations
         /// </summary>
         /// <param name="entry">Entry to set.</param>
         /// <returns>Returns reference to self.</returns>
-        public IRow SetEntry(IEntry entry)
+        public bool TrySetValue(IEntry entry)
         {
-            // Find matching entry and replace it with this entry.
-            return this.SetEntry(this.GetIndex(entry), entry);
+            return (this.SetValue(entry) != null);
         }
 
         /// <summary>
@@ -1122,12 +1660,24 @@ namespace ISTE.DAL.Database.Implementations
         /// <returns>Returns reference to self. Throws exception if index out of bounds.</returns>
         public IRow SetValue(int index, string value)
         {
-            IEntry entry = this.GetEntry(index);
-            if(entry != null)
+            if (this.IsReadOnly) { return null; }
+            if (this.TryGetEntry(index, out IEntry set))
             {
-                entry.SetData(entry.GetField(), entry.GetValue());
+                set.SetValue(value);
+                return this;
             }
-            return this;
+            return null;
+        }
+
+        /// <summary>
+        /// Set entry value at a particular field index.
+        /// </summary>
+        /// <param name="index">Field index to access.</param>
+        /// <param name="value">Value to set on entry.</param>
+        /// <returns>Returns reference to self. Throws exception if index out of bounds.</returns>
+        public bool TrySetValue(int index, string value)
+        {
+            return (this.SetValue(index, value) != null);
         }
 
         /// <summary>
@@ -1138,90 +1688,32 @@ namespace ISTE.DAL.Database.Implementations
         /// <returns>Returns reference to self. Returns null if field doesn't exist.</returns>
         public IRow SetValue(string fieldname, string value)
         {
-            IEntry entry = this[fieldname];
-            if (entry != null)
+            if (this.IsReadOnly) { return null; }
+            if (this.TryGetEntry(fieldname, out IEntry set))
             {
-                entry.SetData(entry.GetField(), entry.GetValue());
+                set.SetValue(value);
+                return this;
             }
-            return this;
+            return null;
         }
 
         /// <summary>
-        /// Insert field (and corresponding null entry) at specified index.
-        /// <para>All elements from the matching index onwards are shifted to the right.</para>
-        /// <para>This operation will return null if the field already exists.</para>
+        /// Set entry value at a particular field.
         /// </summary>
-        /// <param name="index">Field index to access.</param>
-        /// <param name="fieldname">Fieldname to create field with.</param>
-        /// <returns>Returns null entry.</returns>
-        public IEntry InsertField(int index, string fieldname)
+        /// <param name="fieldname">Field to access.</param>
+        /// <param name="value">Value to set on entry.</param>
+        /// <returns>Returns reference to self. Returns null if field doesn't exist.</returns>
+        public bool TrySetValue(string fieldname, string value)
         {
-            // Validate inputs.
-            string alias = this.FormatField(fieldname);
-            if(!this.HasIndex(index) || this.HasField(fieldname)) { return null; }
-
-            // Create null entry.
-            IEntry entry = new MySqlEntry(alias);
-
-            // Create field in inserted area.
-            this.Fields.Insert(index, alias);
-            this.Entries.Insert(index, entry);
-            return entry;
+            return (this.SetValue(fieldname, value) != null);
         }
 
-        /// <summary>
-        /// Insert entry at specified index, using the entry's fieldname.
-        /// <para>This operation will return null if the field already exists.</para>
-        /// </summary>
-        /// <param name="index">Field index to access.</param>
-        /// <param name="entry">Entry to create field and entry with.</param>
-        /// <returns>Returns reference to inserted entry.</returns>
-        public IEntry InsertEntry(int index, IEntry entry)
-        {
-            // Validate inputs.
-            if (entry == null || !this.HasIndex(index) || this.HasField(entry.GetField())) { return null; }
+        #endregion
 
-            // Insert the field.
-            this.InsertField(index, entry.GetField());
-            this.SetEntry(entry);
-            return entry;
-        }
+        ////////////////
+        // AddFields
 
-        /// <summary>
-        /// Insert entry at specified index, using the input fieldname.
-        /// <para>Entry is cloned and fieldname on entry's clone is overwritten with input.</para>
-        /// <para>This operation will return null if the field already exists.</para>
-        /// </summary>
-        /// <param name="index">Field index to access.</param>
-        /// <param name="fieldname">Fieldname to create field with.</param>
-        /// <param name="entry">Entry to create field and entry with.</param>
-        /// <returns>Returns reference to inserted entry.</returns>
-        public IEntry InsertEntry(int index, string fieldname, IEntry entry)
-        {
-            // Validate inputs.
-            if (entry == null) { return null; }
-
-            // Make clone.
-            return this.InsertEntry(index, fieldname, entry.GetValue());
-        }
-
-        /// <summary>
-        /// Insert new entry at specified index, using the input fieldname and input value.
-        /// <para>This operation will return null if the field already exists.</para>
-        /// </summary>
-        /// <param name="index">Field index to access.</param>
-        /// <param name="fieldname">Fieldname to create field with.</param>
-        /// <param name="value">Value to create entry with.</param>
-        /// <returns>Returns reference to inserted entry.</returns>
-        public IEntry InsertEntry(int index, string fieldname, string value)
-        {
-            // Validate inputs.
-            string alias = this.FormatField(fieldname);
-            if (!this.HasIndex(index) || this.HasField(alias)) { return null; }
-
-            // Make clone.
-            return this.InsertEntry(index, new MySqlEntry(alias, value));
-        }
+        #region bool AddField(string), bool AddFields(List<string>), bool AddFields(params string[])
 
         /// <summary>
         /// Add a unqiue fieldname, formatting the input and creating a null entry to go along with it.
@@ -1229,21 +1721,11 @@ namespace ISTE.DAL.Database.Implementations
         /// </summary>
         /// <param name="fieldname">Unique field to add.</param>
         /// <returns>Return null entry that has been associated with the field.</returns>
-        public IEntry AddField(string fieldname)
+        public bool AddField(string fieldname)
         {
-            // Validate input.
-            string alias = this.FormatField(fieldname);
-            if (!this.IsValidField(alias) || this.HasField(alias)) { return null; }
-
-            // Create the null entry.
-            IEntry entry = new MySqlEntry(alias);
-
-            // Add the field with a new null entry.
-            this.Fields.Add(alias);
-            this.Entries.Add(entry);
-
-            // Return added entry.
-            return entry;
+            if (this.IsReadOnly) { return false; }
+            if (String.IsNullOrWhiteSpace(fieldname) || this.HasField(fieldname)) { return false; }
+            return this.AddEntry(new MySqlEntry(fieldname));
         }
 
         /// <summary>
@@ -1251,19 +1733,18 @@ namespace ISTE.DAL.Database.Implementations
         /// </summary>
         /// <param name="fieldnames">Fieldnames to add.</param>
         /// <returns>Return reference to added entries.</returns>
-        public List<IEntry> AddFields(List<string> fieldnames)
+        public bool AddFields(IList<string> fieldnames)
         {
-            // Validate input.
-            if(fieldnames == null || fieldnames.Count <= 0) { return null; }
-
-            List<IEntry> entries = new List<IEntry>();
+            if (this.IsReadOnly) { return false; }
             foreach (string field in fieldnames)
             {
-                IEntry entry = this.AddField(field);
-                if(entry != null) { entries.Add(entry); }
+                if (String.IsNullOrWhiteSpace(field) || this.HasField(field)) { return false; }
             }
-
-            return entries;
+            foreach (string field in fieldnames)
+            {
+                this.AddField(field);
+            }
+            return true;
         }
 
         /// <summary>
@@ -1271,10 +1752,14 @@ namespace ISTE.DAL.Database.Implementations
         /// </summary>
         /// <param name="fieldnames">Fieldnames to add.</param>
         /// <returns>Return reference to added entries.</returns>
-        public List<IEntry> AddFields(params string[] fieldnames)
-        {
-            return this.AddFields(fieldnames.ToList<string>());
-        }
+        public bool AddFields(params string[] fieldnames) { return this.AddFields(fieldnames.ToList<string>()); }
+
+        #endregion
+
+        ////////////////
+        // AddEntries
+
+        #region IEntry AddEntry(IEntry), bool AddEntry(string, IEntry), bool AddEntry(string, string), bool AddEntries(List<IEntry>), bool AddEntries(params IEntry[]), bool AddEntries(IRow row)
 
         /// <summary>
         /// Add entry, if and only if, it has a unique fieldname.
@@ -1282,15 +1767,11 @@ namespace ISTE.DAL.Database.Implementations
         /// </summary>
         /// <param name="entry">Entry to add to the collection.</param>
         /// <returns>Returns reference to added entry.</returns>
-        public IEntry AddEntry(IEntry entry)
+        public bool AddEntry(IEntry entry)
         {
-            // Validate input.
-            if(entry == null || this.HasField(entry.GetField())) { return null; }
-
-            // If entry isn't null and field doesn't already exist, create a null entry in the new field and set the value.
-            this.AddField(entry.GetField());
-            this.SetEntry(entry);
-            return entry;
+            // Check if field already exists.
+            if (this.IsReadOnly || entry == null || this.HasField(entry.Field)) { return false; }
+            return (this.TryAddElement(entry, out IEntry result));
         }
 
         /// <summary>
@@ -1300,14 +1781,10 @@ namespace ISTE.DAL.Database.Implementations
         /// <param name="fieldname">Unique field to add.</param>
         /// <param name="entry">Entry to add to the collection.</param>
         /// <returns>Returns reference to added entry.</returns>
-        public IEntry AddEntry(string fieldname, IEntry entry)
+        public bool AddEntry(string fieldname, IEntry entry)
         {
-            // Validate input.
-            string alias = this.FormatField(fieldname);
-            if (entry == null || !this.IsValidField(alias) || this.HasField(alias)) { return null; }
-
-            // Set entry using new field.
-            return this.AddEntry(((IEntry) entry.Clone()).SetData(alias, entry.GetValue()));
+            if (this.IsReadOnly || entry == null || this.HasField(fieldname)) { return false; }
+            return this.AddEntry(fieldname, entry.Value);
         }
 
         /// <summary>
@@ -1316,63 +1793,81 @@ namespace ISTE.DAL.Database.Implementations
         /// <param name="fieldname">Unique field to add.</param>
         /// <param name="value">Value to create new entry with.</param>
         /// <returns>Returns reference to newly created entry.</returns>
-        public IEntry AddEntry(string fieldname, string value)
+        public bool AddEntry(string fieldname, string value)
         {
-            // Validate input.
-            string alias = this.FormatField(fieldname);
-            if (!this.IsValidField(alias) || this.HasField(alias)) { return null; }
-
-            // Set entry using new field.
-            return this.AddEntry(new MySqlEntry(alias, value));
+            if (this.IsReadOnly || this.HasField(fieldname)) { return false; }
+            return (this.TryAddElement(new MySqlEntry(fieldname, value), out IEntry result));
         }
 
         /// <summary>
-        /// Add entries. Duplicate fields will be ignored.
+        /// Add entries.
         /// </summary>
         /// <param name="entries">Entries to add.</param>
         /// <returns>Return reference to added entries.</returns>
-        public List<IEntry> AddEntries(List<IEntry> entries)
+        public bool AddEntries(IList<IEntry> entries)
         {
-            // Validate input.
-            if (entries == null || entries.Count <= 0) { return null; }
+            if (this.IsReadOnly) { return false; }
 
-            List<IEntry> result = new List<IEntry>();
             foreach (IEntry entry in entries)
             {
-                IEntry e = this.AddEntry(entry);
-                if (e != null) { result.Add(e); }
+                if (this.HasField(entry.Field)) { return false; }
             }
 
-            return result;
+            return (this.AddElements(entries));
         }
 
         /// <summary>
-        /// Add entries. Duplicate fields will be ignored.
+        /// Add entries.
         /// </summary>
         /// <param name="entries">Entries to add.</param>
         /// <returns>Return reference to added entries.</returns>
-        public List<IEntry> AddEntries(params IEntry[] entries)
+        public bool AddEntries(params IEntry[] entries)
         {
-            return this.AddEntries(entries.ToList<IEntry>());
+            return (this.AddEntries(entries.ToList<IEntry>()));
+        }
+
+        /// <summary>
+        /// Add entries.
+        /// </summary>
+        /// <param name="row">Entries to add.</param>
+        /// <returns>Return reference to added entries.</returns>
+        public bool AddEntries(IRow row)
+        {
+            return (this.AddEntries(row.Entries));
+        }
+        
+        #endregion
+
+        ////////////////
+        // RemoveFields
+
+        #region IEntry RemoveField(int), bool TryRemoveField(int, out IEntry), IEntry RemoveField(string), bool TryRemoveField(string, out IEntry)
+
+        /// <summary>
+        /// Remove field at input index and associated entry from the collection.
+        /// </summary>
+        /// <param name="index">Field index to access.</param>
+        /// <returns>Returns clone of removed entry. Will throw exception if index out of bounds.</returns>
+        public IEntry RemoveField(int index)
+        {
+            if (this.IsReadOnly) { return null; }
+            if (this.TryGetFieldName(index, out string field))
+            {
+                return this.RemoveField(field);
+            }
+            return null;
         }
 
         /// <summary>
         /// Remove field at input index and associated entry from the collection.
         /// </summary>
         /// <param name="index">Field index to access.</param>
-        /// <returns>Returns clone of removed entry. Returns null if out of bounds.</returns>
-        public IEntry RemoveField(int index)
+        /// <param name="result">Entry to return.</param>
+        /// <returns>Returns clone of removed entry.</returns>
+        public bool TryRemoveField(int index, out IEntry result)
         {
-            // Validate input.
-            if (!this.HasIndex(index)) { return null; }
-
-            // Get entry at index.
-            IEntry entry = this.Entries[index];
-
-            // Remove the field and entry at the associated index.
-            this.Fields.RemoveAt(index);
-            this.Entries.RemoveAt(index);
-            return entry;
+            result = this.RemoveField(index);
+            return (result != null);
         }
 
         /// <summary>
@@ -1382,32 +1877,58 @@ namespace ISTE.DAL.Database.Implementations
         /// <returns>Returns clone of removed entry. Returns null if field does not exist.</returns>
         public IEntry RemoveField(string fieldname)
         {
-            // Validate input.
-            string alias = this.FormatField(fieldname);
-            if (!this.IsValidField(alias) || !this.HasField(alias)) { return null; }
+            if (this.IsReadOnly) { return null; }
+            if (this.TryRemoveEntry(fieldname, out IEntry result))
+            {
+                return result;
+            }
+            return null;
+        }
 
-            // Remove the field and entry at the associated index.
-            return this.RemoveField(this.GetIndex(alias));
+        /// <summary>
+        /// Remove field and associated entry from the collection.
+        /// </summary>
+        /// <param name="fieldname">Field to access.</param>
+        /// <param name="result">Entry to return.</param>
+        /// <returns>Returns clone of removed entry.</returns>
+        public bool TryRemoveField(string fieldname, out IEntry result)
+        {
+            result = this.RemoveField(fieldname);
+            return (result != null);
+        }
+
+        #endregion
+
+        ////////////////
+        // RemoveEntries
+
+        #region IEntry RemoveEntry(int), bool TryRemoveEntry(int, out IEntry), IEntry RemoveField(string), bool TryRemoveField(string, out IEntry), IEntry RemoveEntry(string), bool TryRemoveEntry(string, out IEntry), IEntry RemoveEntry(IEntry), bool TryRemoveEntry(IEntry, out IEntry)
+
+        /// <summary>
+        /// Will make entry associated with the field index null.
+        /// </summary>
+        /// <param name="index">Field index to access.</param>
+        /// <returns>Returns clone of removed entry. Will throw exception if index out of bounds.</returns>
+        public IEntry RemoveEntry(int index)
+        {
+            if (this.IsReadOnly) { return null; }
+            if (this.TryRemoveAt(index, out IEntry result))
+            {
+                return result;
+            }
+            return null;
         }
 
         /// <summary>
         /// Will make entry associated with the field index null.
         /// </summary>
         /// <param name="index">Field index to access.</param>
-        /// <returns>Returns clone of removed entry. Returns null if out of bounds.</returns>
-        public IEntry RemoveEntry(int index)
+        /// <param name="result">Entry to return.</param>
+        /// <returns>Returns clone of removed entry. Will throw exception if index out of bounds.</returns>
+        public bool TryRemoveEntry(int index, out IEntry result)
         {
-            // Validate input.
-            if (!this.HasIndex(index)) { return null; }
-
-            // Get entry clone to return.
-            IEntry entry = this.Entries[index].Clone() as IEntry;
-
-            // Make existing reference null.
-            this.Entries[index].MakeNull();
-
-            // Return clone.
-            return entry;
+            result = this.RemoveEntry(index);
+            return (result != null);
         }
 
         /// <summary>
@@ -1417,11 +1938,26 @@ namespace ISTE.DAL.Database.Implementations
         /// <returns>Returns clone of removed entry. Returns null if field does not exist.</returns>
         public IEntry RemoveEntry(string fieldname)
         {
-            // Validate input.
-            string alias = this.FormatField(fieldname);
-            if (!this.IsValidField(alias) || !this.HasField(alias)) { return null; }
+            if (this.IsReadOnly) { return null; }
+            IEntry entry = this.GetEntry(fieldname);
+            if(entry == null) { return null; }
+            if (this.TryRemoveElement(entry, out IEntry result))
+            {
+                return result;
+            }
+            return null;
+        }
 
-            return this.RemoveEntry(this.GetIndex(alias));
+        /// <summary>
+        /// Will make entry associated with the field null.
+        /// </summary>
+        /// <param name="fieldname">Field to access.</param>
+        /// <param name="result">Entry to return.</param>
+        /// <returns>Returns clone of removed entry. Returns null if field does not exist.</returns>
+        public bool TryRemoveEntry(string fieldname, out IEntry result)
+        {
+            result = this.RemoveEntry(fieldname);
+            return (result != null);
         }
 
         /// <summary>
@@ -1431,59 +1967,33 @@ namespace ISTE.DAL.Database.Implementations
         /// <returns>Returns clone of removed entry. Returns null if field does not exist.</returns>
         public IEntry RemoveEntry(IEntry entry)
         {
-            // Validate input.
-            if (entry == null || !this.HasField(entry.GetField())) { return null; }
-
-            return this.RemoveEntry(entry.GetField());
-        }
-
-        ///////
-        // ICollection<IEntry>
-
-        /// <summary>
-        /// Add entry to the appropriate collection.
-        /// </summary>
-        /// <param name="item">Item to add.</param>
-        public void Add(IEntry item)
-        {
-            // Call the add entry method.
-            this.AddItem(item);
+            if (this.IsReadOnly) { return null; }
+            if (this.TryRemoveElement(entry, out IEntry result))
+            {
+                return result;
+            }
+            return null;
         }
 
         /// <summary>
-        /// Remove entry from the appropriate collection.
+        /// Will make entry associated with the field null.
         /// </summary>
-        /// <param name="item">Item to remove.</param>
-        /// <returns>Returns true if operation successful. Returns false, if otherwise.</returns>
-        public bool Remove(IEntry item)
+        /// <param name="entry">Entry to attempt to remove.</param>
+        /// <param name="result">Entry to return.</param>
+        /// <returns>Returns clone of removed entry. Returns null if field does not exist.</returns>
+        public bool TryRemoveEntry(IEntry entry, out IEntry result)
         {
-            // If RemoveEntry(item) returns a null object, return false. Else, true.
-            return ((this.RemoveEntry(item) == null) ? false : true);            
-        }
-        
-        ///////
-        // ICollection<string>
-        
-        /// <summary>
-        /// Add field name to the appropriate collection.
-        /// </summary>
-        /// <param name="item">Item to add.</param>
-        public void Add(string item)
-        {
-            // Add field call.
-            this.AddField(item);
+            result = this.RemoveEntry(entry);
+            return (result != null);
         }
 
-        /// <summary>
-        /// Remove field name from the appropriate collection.
-        /// </summary>
-        /// <param name="item">Item to remove.</param>
-        /// <returns>Returns true if operation successful. Returns false, if otherwise.</returns>
-        public bool Remove(string item)
-        {
-            // If RemoveEntry(item) returns a null object, return false. Else, true.
-            return ((this.RemoveField(item) == null) ? false : true);
-        }
+        #endregion
+
+        #endregion
+
+        #endregion
+
+        #endregion
         
     }
 

@@ -107,7 +107,7 @@ namespace ISTE.DAL.Models.Interfaces
     /// <summary>
     /// Represents a capstone object.
     /// </summary>
-    public interface ICapstoneModel : IUserProperty, IStudentProperty, IFacultyProperty, IDatabaseObject, IDatabaseObjectReader, IDatabaseObjectInserter, IDatabaseObjectUpdater
+    public interface ICapstoneModel : IUserProperty, IStudentProperty, IFacultyProperty, IDatabaseObjectModel, IDatabaseObjectReader, IDatabaseObjectInserter, IDatabaseObjectUpdater
     {
         //////////////////////
         // Properties.
@@ -386,7 +386,7 @@ namespace ISTE.DAL.Models.Interfaces
     /// <summary>
     /// Represents the data Users will have.
     /// </summary>
-    public interface IUserModel : IDatabaseObject, IDatabaseObjectReader, IDatabaseObjectInserter, IDatabaseObjectUpdater, IDatabaseObjectDeleter
+    public interface IUserModel : IDatabaseObjectModel, IDatabaseObjectReader, IDatabaseObjectInserter, IDatabaseObjectUpdater, IDatabaseObjectDeleter
     {
         //////////////////////
         // Properties.
@@ -611,7 +611,7 @@ namespace ISTE.DAL.Models.Interfaces
     /// <summary>
     /// Represents a user's phone number.
     /// </summary>
-    public interface IPhoneNumberModel : IUserProperty, IDatabaseObject, IDatabaseObjectReader, IDatabaseObjectInserter, IDatabaseObjectUpdater, IDatabaseObjectDeleter
+    public interface IPhoneNumberModel : IUserProperty, IDatabaseObjectModel, IDatabaseObjectReader, IDatabaseObjectInserter, IDatabaseObjectUpdater, IDatabaseObjectDeleter
     {
         //////////////////////
         // Properties.
@@ -638,7 +638,7 @@ namespace ISTE.DAL.Models.Interfaces
     /// <summary>
     /// Represents a user's email.
     /// </summary>
-    public interface IEmailModel : IUserProperty, IDatabaseObject, IDatabaseObjectReader, IDatabaseObjectInserter, IDatabaseObjectUpdater, IDatabaseObjectDeleter
+    public interface IEmailModel : IUserProperty, IDatabaseObjectModel, IDatabaseObjectReader, IDatabaseObjectInserter, IDatabaseObjectUpdater, IDatabaseObjectDeleter
     {
 
         //////////////////////
@@ -667,7 +667,7 @@ namespace ISTE.DAL.Models.Interfaces
     /// <summary>
     /// Represents a user's role.
     /// </summary>
-    public interface IRoleModel : IUserProperty, IDatabaseObject, IDatabaseObjectReader, IDatabaseObjectInserter, IDatabaseObjectUpdater
+    public interface IRoleModel : IUserProperty, IDatabaseObjectModel, IDatabaseObjectReader, IDatabaseObjectInserter, IDatabaseObjectUpdater
     {
         //////////////////////
         // Properties.

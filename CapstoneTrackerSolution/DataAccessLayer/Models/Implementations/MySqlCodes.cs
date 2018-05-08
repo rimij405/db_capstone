@@ -31,7 +31,7 @@ namespace ISTE.DAL.Models.Implementations
         //////////////////////
 
         private List<ICodeItem> items;
-
+        
         //////////////////////
         // Properties.
         //////////////////////
@@ -50,7 +50,7 @@ namespace ISTE.DAL.Models.Implementations
                 return this.items;
             }
         }
-
+        
         //////////////////////
         // Indexer(s).
 
@@ -351,11 +351,11 @@ namespace ISTE.DAL.Models.Implementations
                     // Create a role for every record in the result set.
                     foreach (MySqlRow row in results.Rows)
                     {
-                        string code = row["code"].Value;
-                        string termStart = row["termStart"].Value;
-                        string termEnd = row["termEnd"].Value;
-                        string gradeDeadline = row["gradeDeadline"].Value;
-                        string addDropDeadline = row["addDropDeadline"].Value;
+                        string code = new MySqlID(row["code"].Value).SQLValue;
+                        string termStart = new MySqlDateTime(row["termStart"].Value).SQLValue;
+                        string termEnd = new MySqlDateTime(row["termEnd"].Value).SQLValue;
+                        string gradeDeadline = new MySqlDateTime(row["gradeDeadline"].Value).SQLValue;
+                        string addDropDeadline = new MySqlDateTime(row["addDropDeadline"].Value).SQLValue;
                         this.AddItem(code, termStart, termEnd, gradeDeadline, addDropDeadline);
                     }
                     results.Pass();
@@ -452,7 +452,7 @@ namespace ISTE.DAL.Models.Implementations
     /// <summary>
     /// Representation of the status code-name-description tuple.
     /// </summary>
-    public class MySqlTerm : MySqlDatabaseObjectModel, ITermModel
+    public class MySqlTerm : MySqlDatabaseCodeModel, ITermModel
     {
         //////////////////////
         // Static Member(s).
@@ -518,8 +518,8 @@ namespace ISTE.DAL.Models.Implementations
         /// </summary>
         public IDateTimeFormat TermStart
         {
-            get { return new MySqlDateTime(this.GetValue("termStart")); }
-            set { this.SetValue("termStart", value.SQLValue); }
+            get { return new MySqlDateTime(this["termStart"].Value); }
+            set { this["termStart"].SetValue(value.SQLValue); }
         }
 
         /// <summary>
@@ -527,8 +527,8 @@ namespace ISTE.DAL.Models.Implementations
         /// </summary>
         public IDateTimeFormat TermEnd
         {
-            get { return new MySqlDateTime(this.GetValue("termEnd")); }
-            set { this.SetValue("termEnd", value.SQLValue); }
+            get { return new MySqlDateTime(this["termEnd"].Value); }
+            set { this["termEnd"].SetValue(value.SQLValue); }
         }
 
         /// <summary>
@@ -536,8 +536,8 @@ namespace ISTE.DAL.Models.Implementations
         /// </summary>
         public IDateTimeFormat GradeDeadline
         {
-            get { return new MySqlDateTime(this.GetValue("gradeDeadline")); }
-            set { this.SetValue("gradeDeadline", value.SQLValue); }
+            get { return new MySqlDateTime(this["gradeDeadline"].Value); }
+            set { this["gradeDeadline"].SetValue(value.SQLValue); }
         }
 
         /// <summary>
@@ -545,8 +545,8 @@ namespace ISTE.DAL.Models.Implementations
         /// </summary>
         public IDateTimeFormat AddDropDeadline
         {
-            get { return new MySqlDateTime(this.GetValue("addDropDeadline")); }
-            set { this.SetValue("addDropDeadline", value.SQLValue); }
+            get { return new MySqlDateTime(this["addDropDeadline"].Value); }
+            set { this["addDropDeadline"].SetValue(value.SQLValue); }
         }
 
         //////////////////////
@@ -558,7 +558,7 @@ namespace ISTE.DAL.Models.Implementations
         /// </summary>
         /// <param name="code">Code.</param>
         protected MySqlTerm(IUIDFormat code)
-            : base(code, null, null)
+            : this(code, "", "", "", "")
         { }
 
         /// <summary>
@@ -570,12 +570,25 @@ namespace ISTE.DAL.Models.Implementations
         /// <param name="grade">Deadline</param>
         /// <param name="addDrop">Deadline</param>
         protected MySqlTerm(IUIDFormat code, string start, string end, string grade, string addDrop)
-            : base(code.SQLValue, "Term", "A term.")
+            : base(code, "Term", "A term.")
         {
-            this.Model.Add(new MySqlEntry("termStart", start));
-            this.Model.Add(new MySqlEntry("termEnd", end));
-            this.Model.Add(new MySqlEntry("gradeDeadline", grade));
-            this.Model.Add(new MySqlEntry("addDropDeadline", addDrop));
+            this.Model.AddEntry(new MySqlEntry("termStart", start));
+            this.Model.AddEntry(new MySqlEntry("termEnd", end));
+            this.Model.AddEntry(new MySqlEntry("gradeDeadline", grade));
+            this.Model.AddEntry(new MySqlEntry("addDropDeadline", addDrop));
+        }
+
+        /// <summary>
+        /// Code item constructor.
+        /// </summary>
+        /// <param name="code">Code.</param>
+        /// <param name="start">Start.</param>
+        /// <param name="end">End.</param>
+        /// <param name="grade">Deadline</param>
+        /// <param name="addDrop">Deadline</param>
+        protected MySqlTerm(IUIDFormat code, IDateTimeFormat start, IDateTimeFormat end, IDateTimeFormat grade, IDateTimeFormat addDrop)
+            : this(code, start.SQLValue, end.SQLValue, grade.SQLValue, addDrop.SQLValue)
+        {
         }
 
         //////////////////////
@@ -592,6 +605,15 @@ namespace ISTE.DAL.Models.Implementations
         public override string ToString()
         {
             return $"Term [{this.Code.SQLValue} | {this.TermStart.SQLValue} | {this.TermEnd.SQLValue} | {this.GradeDeadline.SQLValue} | {this.AddDropDeadline.SQLValue}]";
+        }
+
+        /// <summary>
+        /// Clone object.
+        /// </summary>
+        /// <returns>Return clone.</returns>
+        public override IDatabaseObjectModel Clone()
+        {
+            return new MySqlTerm(this.Code, this.TermStart, this.TermEnd, this.GradeDeadline, this.AddDropDeadline);
         }
 
         //////////////////////
@@ -620,18 +642,61 @@ namespace ISTE.DAL.Models.Implementations
         }
 
         /// <summary>
-        /// Set the results from the query.
+        /// Return code.
         /// </summary>
-        /// <param name="results">Results to set.</param>
-        protected override void SetResults(IResultSet results)
+        /// <returns></returns>
+        protected override string GetCodeQuery()
         {
-            this.Code = (MySqlID)results[0, "code"].Value;
-            this.TermStart = new MySqlDateTime(results[0, "termStart"].Value);
-            this.TermEnd = new MySqlDateTime(results[0, "termEnd"].Value);
-            this.GradeDeadline = new MySqlDateTime(results[0, "gradeDeadline"].Value);
-            this.AddDropDeadline = new MySqlDateTime(results[0, "addDropDeadline"].Value);
+            return this.GetQuery();
         }
 
+        /// <summary>
+        /// Return name.
+        /// </summary>
+        /// <returns></returns>
+        protected override string GetNameQuery()
+        {
+            return this.GetQuery();
+        }
+
+        /// <summary>
+        /// Compare the term values.
+        /// </summary>
+        /// <param name="left"></param>
+        /// <param name="right"></param>
+        /// <returns></returns>
+        public override int CompareModels(IDatabaseObjectModel left, IDatabaseObjectModel right)
+        {
+            if (left == null && right == null) { return 0; }
+            if (left == null) { return -1; }
+            if (right == null) { return 1; }
+            if (left == right) { return 0; }
+            if (left.Model == right.Model) { return 0; }
+
+            string leftValues = "";
+            string rightValues = "";
+
+            if (left is MySqlTerm leftTerm && right is MySqlTerm rightTerm)
+            {
+                leftValues += leftTerm.Code.SQLValue;
+                leftValues += leftTerm.TermStart.SQLValue;
+                leftValues += leftTerm.TermEnd.SQLValue;
+                leftValues += leftTerm.GradeDeadline.SQLValue;
+                leftValues += leftTerm.AddDropDeadline.SQLValue;
+
+                rightValues += rightTerm.Code.SQLValue;
+                rightValues += rightTerm.TermStart.SQLValue;
+                rightValues += rightTerm.TermEnd.SQLValue;
+                rightValues += rightTerm.GradeDeadline.SQLValue;
+                rightValues += rightTerm.AddDropDeadline.SQLValue;
+
+                return leftValues.CompareTo(rightValues);
+            }
+
+            if (left is MySqlTerm) { return 1; }
+            if (right is MySqlTerm) { return -1; }
+            return left.Model.CompareTo(right.Model);
+        }
     }
 
     /// <summary>
@@ -718,7 +783,7 @@ namespace ISTE.DAL.Models.Implementations
     /// <summary>
     /// Representation of the status code-name-description tuple.
     /// </summary>
-    public class MySqlStatus : MySqlDatabaseObjectModel, IStatusModel
+    public class MySqlStatus : MySqlDatabaseCodeModel, IStatusModel
     {
         //////////////////////
         // Static Member(s).
@@ -797,7 +862,7 @@ namespace ISTE.DAL.Models.Implementations
         /// </summary>
         /// <param name="code">Code.</param>
         protected MySqlStatus(IUIDFormat code)
-            : base(code, null, null)
+            : base(code, "", "")
         { }
 
         /// <summary>
@@ -805,7 +870,7 @@ namespace ISTE.DAL.Models.Implementations
         /// </summary>
         /// <param name="name">Name.</param>
         protected MySqlStatus(string name)
-            : base(null, name)
+            : base(new MySqlID(-1), name, "")
         { }
 
         /// <summary>
@@ -815,24 +880,24 @@ namespace ISTE.DAL.Models.Implementations
         /// <param name="name">Name.</param>
         /// <param name="description">Description.</param>
         protected MySqlStatus(IUIDFormat code, string name, string description)
-            : base(code.SQLValue, name, description)
+            : base(code, name, description)
         { }
 
         //////////////////////
         // Method(s).
         //////////////////////
 
+        /// <summary>
+        /// Return the term object as a string.
+        /// </summary>
+        /// <returns>Returns string.</returns>
+        public override string ToString()
+        {
+            return $"Status [{this.Code.SQLValue} | {this.Name} | {this.Description}]";
+        }
+
         //////////////////////
         // Accessor method(s).
-
-        /// <summary>
-        /// Returns query to execute.
-        /// </summary>
-        /// <returns></returns>
-        protected override string GetQuery()
-        {
-            return (String.IsNullOrWhiteSpace(this.Code.SQLValue)) ? SELECT_BY_NAME : SELECT_BY_CODE;
-        }
 
         /// <summary>
         /// Get the parameters for the query.
@@ -846,6 +911,34 @@ namespace ISTE.DAL.Models.Implementations
             else { parameters.AddWithValue("@statusName", this.Name); }
             return parameters;
         }
+
+        /// <summary>
+        /// Return code query.
+        /// </summary>
+        /// <returns></returns>
+        protected override string GetCodeQuery()
+        {
+            return SELECT_BY_CODE;
+        }
+
+        /// <summary>
+        /// Return name query.
+        /// </summary>
+        /// <returns></returns>
+        protected override string GetNameQuery()
+        {
+            return SELECT_BY_NAME;
+        }
+
+        /// <summary>
+        /// Clone the object.
+        /// </summary>
+        /// <returns></returns>
+        public override IDatabaseObjectModel Clone()
+        {
+            return new MySqlStatus(this.Code, this.Name, this.Description);
+        }
+        
     }
 
     /// <summary>
@@ -1088,7 +1181,7 @@ namespace ISTE.DAL.Models.Implementations
     /// <summary>
     /// Representation of a single status event.
     /// </summary>
-    public class MySqlStatusEvent : MySqlDatabaseObjectModel, IStatusEventModel
+    public class MySqlStatusEvent : MySqlDatabaseCodeModel, IStatusEventModel
     {
 
         //////////////////////
@@ -1101,7 +1194,12 @@ namespace ISTE.DAL.Models.Implementations
         /// <summary>
         /// Query used to select role type by role code.
         /// </summary>
-        private const string SELECT = "SELECT capstoneID, statusCode, timeStamp FROM capstonedb.statushistoryevent WHERE capstoneID=@capstoneID AND statusCode=@statusCode AND timeStamp=@timeStamp;";
+        private const string SELECT_BY_CODE = "SELECT capstoneID, statusCode, timeStamp FROM capstonedb.statushistoryevent WHERE capstoneID=@capstoneID AND statusCode=@statusCode;";
+        
+        /// <summary>
+        /// Query used to select role type by role code.
+        /// </summary>
+        private const string SELECT_BY_TIMESTAMP = "SELECT capstoneID, statusCode, timeStamp FROM capstonedb.statushistoryevent WHERE capstoneID=@capstoneID AND timeStamp=@timeStamp;";
 
         //////////////////////
         // Static method(s).
@@ -1147,8 +1245,8 @@ namespace ISTE.DAL.Models.Implementations
         /// </summary>
         public IUIDFormat CapstoneID
         {
-            get { return new MySqlID(this.GetValue("capstoneID")); }
-            set { this.SetValue("capstoneID", value.SQLValue); }
+            get { return new MySqlID(this["capstoneID"].Value); }
+            set { this["capstoneID"].SetValue(value.SQLValue); }
         }
 
         /// <summary>
@@ -1156,8 +1254,8 @@ namespace ISTE.DAL.Models.Implementations
         /// </summary>
         public IUIDFormat StatusCode
         {
-            get { return new MySqlID(this.GetValue("statusCode")); }
-            set { this.SetValue("statusCode", value.SQLValue); }
+            get { return new MySqlID(this["statusCode"].Value); }
+            set { this["statusCode"].SetValue(value.SQLValue); }
         }
 
         /// <summary>
@@ -1165,8 +1263,8 @@ namespace ISTE.DAL.Models.Implementations
         /// </summary>
         public IDateTimeFormat Timestamp
         {
-            get { return new MySqlDateTime(this.GetValue("timeStamp")); }
-            set { this.SetValue("timeStamp", value.SQLValue); }
+            get { return new MySqlDateTime(this["timeStamp"].Value); }
+            set { this["timeStamp"].SetValue(value.SQLValue); }
         }
 
         //////////////////////
@@ -1180,11 +1278,13 @@ namespace ISTE.DAL.Models.Implementations
         /// <param name="statusCode">Status code.</param>
         /// <param name="timestamp">Timestamp of event.</param>
         protected MySqlStatusEvent(IUIDFormat capstoneID, IUIDFormat statusCode, IDateTimeFormat timestamp)
-            : base(capstoneID.SQLValue, "Status Event", "A timestampped status event.")
+            : base()
         {
-            this.Model.Add(new MySqlEntry("capstoneID", capstoneID.SQLValue));
-            this.Model.Add(new MySqlEntry("statusCode", statusCode.SQLValue));
-            this.Model.Add(new MySqlEntry("timeStamp", timestamp.SQLValue));
+            this.Model.AddEntry(new MySqlPrimaryKeyEntry(true, "capstoneID", capstoneID.SQLValue));
+            this.Model.AddEntry(new MySqlEntry("statusCode", statusCode.SQLValue));
+            this.Model.AddEntry(new MySqlEntry("timeStamp", timestamp.SQLValue));
+
+            this.SetPrimaryKey(this["capstoneID"] as IPrimaryKey);            
         }
 
         /// <summary>
@@ -1194,16 +1294,21 @@ namespace ISTE.DAL.Models.Implementations
         /// <param name="statusCode">Status code.</param>
         /// <param name="timestamp">Timestamp of event.</param>
         protected MySqlStatusEvent(IUIDFormat capstoneID, IUIDFormat statusCode, string timestamp)
-            : base(capstoneID.SQLValue, "Status Event", "A timestampped status event.")
-        {
-            this.Model.Add(new MySqlEntry("capstoneID", capstoneID.SQLValue));
-            this.Model.Add(new MySqlEntry("statusCode", statusCode.SQLValue));
-            this.Model.Add(new MySqlEntry("timeStamp", timestamp));
-        }
+            : this(capstoneID, statusCode, new MySqlDateTime(timestamp))
+        {}
 
         //////////////////////
         // Method(s).
         //////////////////////
+
+        /// <summary>
+        /// Clone object.
+        /// </summary>
+        /// <returns>Object clone.</returns>
+        public override IDatabaseObjectModel Clone()
+        {
+            return new MySqlStatusEvent(this.CapstoneID, this.StatusCode, this.Timestamp);
+        }
 
         //////////////////////
         // Accessor method(s).
@@ -1214,7 +1319,17 @@ namespace ISTE.DAL.Models.Implementations
         /// <returns></returns>
         protected override string GetQuery()
         {
-            return SELECT;
+            if (!String.IsNullOrWhiteSpace(this["statusCode"].Value))
+            {
+                return SELECT_BY_CODE;
+            }
+
+            if (!String.IsNullOrWhiteSpace(this["timeStamp"].Value))
+            {
+                return SELECT_BY_TIMESTAMP;
+            }
+
+            return "";
         }
 
         /// <summary>
@@ -1225,22 +1340,38 @@ namespace ISTE.DAL.Models.Implementations
         protected override MySqlParameters GetParameters(string query)
         {
             MySqlParameters parameters = new Dictionary<string, string>() {
-                { "@capstoneID", this.CapstoneID.SQLValue },
-                { "@statusCode", this.StatusCode.SQLValue },
-                { "@timeStamp", this.Timestamp.SQLValue }
+                { "@capstoneID", this.CapstoneID.SQLValue }
             };
+
+            if (query == SELECT_BY_CODE)
+            {
+                parameters.AddWithValue("@statusCode", this.StatusCode.SQLValue);
+            }
+
+            if (query == SELECT_BY_TIMESTAMP)
+            {
+                parameters.AddWithValue("@timeStamp", this.Timestamp.SQLValue);
+            }
+            
             return parameters;
         }
 
         /// <summary>
-        /// Set the results from the query.
+        /// Return query.
         /// </summary>
-        /// <param name="results">Results to set.</param>
-        protected override void SetResults(IResultSet results)
+        /// <returns></returns>
+        protected override string GetCodeQuery()
         {
-            this.CapstoneID = (MySqlID)results[0, "capstoneID"].Value;
-            this.StatusCode = (MySqlID)results[0, "statusCode"].Value;
-            this.Timestamp = new MySqlDateTime(results[0, "timeStamp"].Value);
+            return GetQuery();
+        }
+
+        /// <summary>
+        /// Return query.
+        /// </summary>
+        /// <returns></returns>
+        protected override string GetNameQuery()
+        {
+            return GetQuery();
         }
     }
 
@@ -1328,7 +1459,7 @@ namespace ISTE.DAL.Models.Implementations
     /// <summary>
     /// Representation of the status code-name-description tuple.
     /// </summary>
-    public class MySqlEmailType : MySqlDatabaseObjectModel, IEmailTypeModel
+    public class MySqlEmailType : MySqlDatabaseCodeModel, IEmailTypeModel
     {
         //////////////////////
         // Static Member(s).
@@ -1407,16 +1538,24 @@ namespace ISTE.DAL.Models.Implementations
         /// </summary>
         /// <param name="code">Code.</param>
         protected MySqlEmailType(IUIDFormat code)
-            : base(code, null, null)
-        { }
+            : base(code, "", "")
+        {
+            // Assign the primary key values.
+            (this["code"] as IPrimaryKey).PrimaryKey = true;
+            (this["name"] as IPrimaryKey).PrimaryKey = false;
+        }
 
         /// <summary>
         /// Code item constructor.
         /// </summary>
         /// <param name="name">Name.</param>
         protected MySqlEmailType(string name)
-            : base(null, name)
-        { }
+            : base(new MySqlID(-1), name, "")
+        {
+            // Assign the primary key values.
+            (this["code"] as IPrimaryKey).PrimaryKey = false;
+            (this["name"] as IPrimaryKey).PrimaryKey = true;
+        }
 
         /// <summary>
         /// Code item constructor.
@@ -1425,12 +1564,30 @@ namespace ISTE.DAL.Models.Implementations
         /// <param name="name">Name.</param>
         /// <param name="description">Description.</param>
         protected MySqlEmailType(IUIDFormat code, string name, string description)
-            : base(code.SQLValue, name, description)
+            : base(code, name, description)
         { }
 
         //////////////////////
         // Method(s).
         //////////////////////
+        
+        /// <summary>
+        /// Return the term object as a string.
+        /// </summary>
+        /// <returns>Returns string.</returns>
+        public override string ToString()
+        {
+            return $"Email Type [{this.Code.SQLValue} | {this.Name} | {this.Description}]";
+        }
+
+        /// <summary>
+        /// Returns copy.
+        /// </summary>
+        /// <returns>Creates and returns copy.</returns>
+        public override IDatabaseObjectModel Clone()
+        {
+            return new MySqlEmailType(this.Code, this.Name, this.Description);
+        }
 
         //////////////////////
         // Accessor method(s).
@@ -1439,10 +1596,15 @@ namespace ISTE.DAL.Models.Implementations
         /// Returns query to execute.
         /// </summary>
         /// <returns></returns>
-        protected override string GetQuery()
-        {
-            return (String.IsNullOrWhiteSpace(this.Code.SQLValue)) ? SELECT_BY_NAME : SELECT_BY_CODE;
-        }
+        protected override string GetCodeQuery()
+        { return SELECT_BY_CODE; }
+
+        /// <summary>
+        /// Returns query to execute.
+        /// </summary>
+        /// <returns></returns>
+        protected override string GetNameQuery()
+        { return SELECT_BY_NAME; }
 
         /// <summary>
         /// Get the parameters for the query.
@@ -1542,7 +1704,7 @@ namespace ISTE.DAL.Models.Implementations
     /// <summary>
     /// Representation of the status code-name-description tuple.
     /// </summary>
-    public class MySqlPhoneType : MySqlDatabaseObjectModel, IPhoneTypeModel
+    public class MySqlPhoneType : MySqlDatabaseCodeModel, IPhoneTypeModel
     {
         //////////////////////
         // Static Member(s).
@@ -1621,16 +1783,24 @@ namespace ISTE.DAL.Models.Implementations
         /// </summary>
         /// <param name="code">Code.</param>
         protected MySqlPhoneType(IUIDFormat code)
-            : base(code, null, null)
-        { }
+            : base(code, "", "")
+        {
+            // Assign the primary key values.
+            (this["code"] as IPrimaryKey).PrimaryKey = true;
+            (this["name"] as IPrimaryKey).PrimaryKey = false;
+        }
 
         /// <summary>
         /// Code item constructor.
         /// </summary>
         /// <param name="name">Name.</param>
         protected MySqlPhoneType(string name)
-            : base(null, name)
-        { }
+            : base(new MySqlID(-1), name, "")
+        {
+            // Assign the primary key values.
+            (this["code"] as IPrimaryKey).PrimaryKey = false;
+            (this["name"] as IPrimaryKey).PrimaryKey = true;
+        }
 
         /// <summary>
         /// Code item constructor.
@@ -1639,24 +1809,45 @@ namespace ISTE.DAL.Models.Implementations
         /// <param name="name">Name.</param>
         /// <param name="description">Description.</param>
         protected MySqlPhoneType(IUIDFormat code, string name, string description)
-            : base(code.SQLValue, name, description)
+            : base(code, name, description)
         { }
 
         //////////////////////
         // Method(s).
         //////////////////////
 
+        /// <summary>
+        /// Return the term object as a string.
+        /// </summary>
+        /// <returns>Returns string.</returns>
+        public override string ToString()
+        {
+            return $"Phone Type [{this.Code.SQLValue} | {this.Name} | {this.Description}]";
+        }
+
+        /// <summary>
+        /// Copy the phone object.
+        /// </summary>
+        /// <returns>Returns the copy.</returns>
+        public override IDatabaseObjectModel Clone()
+        {
+            return new MySqlPhoneType(this.Code, this.Name, this.Description);
+        }
+
         //////////////////////
         // Accessor method(s).
 
         /// <summary>
-        /// Returns query to execute.
+        /// Find data using code.
         /// </summary>
-        /// <returns></returns>
-        protected override string GetQuery()
-        {
-            return (String.IsNullOrWhiteSpace(this.Code.SQLValue)) ? SELECT_BY_NAME : SELECT_BY_CODE;
-        }
+        /// <returns>Returns SQL query string.</returns>
+        protected override string GetCodeQuery() { return SELECT_BY_CODE; }
+
+        /// <summary>
+        /// Find data using name.
+        /// </summary>
+        /// <returns>Returns SQL query string.</returns>
+        protected override string GetNameQuery() { return SELECT_BY_NAME; }
 
         /// <summary>
         /// Get the parameters for the query.
@@ -1756,7 +1947,7 @@ namespace ISTE.DAL.Models.Implementations
     /// <summary>
     /// Represents a role associated with a code.
     /// </summary>
-    public class MySqlRoleType : MySqlDatabaseObjectModel, IRoleTypeModel
+    public class MySqlRoleType : MySqlDatabaseCodeModel, IRoleTypeModel
     {
         //////////////////////
         // Static Member(s).
@@ -1835,16 +2026,23 @@ namespace ISTE.DAL.Models.Implementations
         /// </summary>
         /// <param name="code">Role code.</param>
         private MySqlRoleType(MySqlID code)
-            : base(code as IUIDFormat)
-        { }
+            : base(code as IUIDFormat, "", "")
+        {
+            (this["code"] as IPrimaryKey).PrimaryKey = true;
+            (this["name"] as IPrimaryKey).PrimaryKey = false;
+        }
 
         /// <summary>
         /// Role type from role name.
         /// </summary>
         /// <param name="roleName">Role name.</param>
         private MySqlRoleType(string roleName)
-            : base(roleName)
-        { }
+            : base(new MySqlID(-1), roleName, "")
+        {
+            // Assign the primary key values.
+            (this["code"] as IPrimaryKey).PrimaryKey = false;
+            (this["name"] as IPrimaryKey).PrimaryKey = true;
+        }
 
         /// <summary>
         /// Creation of a role from all three settings.
@@ -1854,23 +2052,46 @@ namespace ISTE.DAL.Models.Implementations
         /// <param name="description">Role description.</param>
         private MySqlRoleType(MySqlID code, string roleName, string description)
             : base(code as IUIDFormat, roleName, description)
-        { }
+        {
+
+        }
 
         //////////////////////
         // Method(s).
         //////////////////////
 
+        /// <summary>
+        /// Return the term object as a string.
+        /// </summary>
+        /// <returns>Returns string.</returns>
+        public override string ToString()
+        {
+            return $"Role Type [{this.Code.SQLValue} | {this.Name} | {this.Description}]";
+        }
+
+        /// <summary>
+        /// Clone object.
+        /// </summary>
+        /// <returns>Return clone.</returns>
+        public override IDatabaseObjectModel Clone()
+        {
+            return new MySqlRoleType(this.Code as MySqlID, this.Name, this.Description);
+        }
+
         //////////////////////
         // Accessor method(s).
 
         /// <summary>
-        /// Returns query to execute.
+        /// Find data using code.
         /// </summary>
-        /// <returns></returns>
-        protected override string GetQuery()
-        {
-            return (String.IsNullOrWhiteSpace(this.Code.SQLValue)) ? SELECT_BY_NAME : SELECT_BY_CODE;
-        }
+        /// <returns>Returns SQL query string.</returns>
+        protected override string GetCodeQuery() { return SELECT_BY_CODE; }
+
+        /// <summary>
+        /// Find data using name.
+        /// </summary>
+        /// <returns>Returns SQL query string.</returns>
+        protected override string GetNameQuery() { return SELECT_BY_NAME; }
 
         /// <summary>
         /// Get the parameters for the query.

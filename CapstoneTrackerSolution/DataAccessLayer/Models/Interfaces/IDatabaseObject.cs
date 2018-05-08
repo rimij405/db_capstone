@@ -16,7 +16,9 @@ using System.Text;
 using System.Threading.Tasks;
 
 // Custom using statements.
+using Services.Interfaces;
 using ISTE.DAL.Database.Interfaces;
+using ISTE.DAL.Database.Implementations;
 using ISTE.DAL.Models;
 
 // This namespace contains all interfaces
@@ -49,167 +51,142 @@ namespace ISTE.DAL.Models.Interfaces
     }
 
     /// <summary>
-    /// Comparable interface that will allow DBOs to be compared.
-    /// </summary>
-    public interface IDatabaseObjectComparable : IComparable<IDatabaseObject>
-    {
-        /// <summary>
-        /// Check if two database objects have the same primary key.
-        /// </summary>
-        /// <param name="other">Other object to compare.</param>
-        /// <returns>Returns true if the primary key (even composite) is the same.</returns>
-        bool HasSamePrimaryKey(IDatabaseObject other);
-
-        /// <summary>
-        /// Check if primary key matches input.
-        /// </summary>
-        /// <param name="field">Field to check.</param>
-        /// <returns>Primary key match.</returns>
-        bool HasPrimaryKey(string field);
-
-        /// <summary>
-        /// Check if primary key matches input.
-        /// </summary>
-        /// <param name="field">Field to check.</param>
-        /// <returns>Primary key match.</returns>
-        bool HasPrimaryKey(IEntry field);
-
-        /// <summary>
-        /// Check if primary key matches input.
-        /// </summary>
-        /// <param name="fields">Fields to check.</param>
-        /// <returns>Primary key match.</returns>
-        bool HasPrimaryKey(List<string> fields);
-
-        /// <summary>
-        /// Check if primary key matches input.
-        /// </summary>
-        /// <param name="fields">Fields to check.</param>
-        /// <returns>Primary key match.</returns>
-        bool HasPrimaryKey(params string[] fields);
-
-        /// <summary>
-        /// Check if primary key matches input.
-        /// </summary>
-        /// <param name="fields">Fields to check.</param>
-        /// <returns>Primary key match.</returns>
-        bool HasPrimaryKey(List<IEntry> fields);
-
-        /// <summary>
-        /// Check if primary key matches input.
-        /// </summary>
-        /// <param name="fields">Fields to check.</param>
-        /// <returns>Primary key match.</returns>
-        bool HasPrimaryKey(params IEntry[] fields);
-
-        /// <summary>
-        /// Check if the object has the same fields as one another.
-        /// </summary>
-        /// <param name="other">Object to check.</param>
-        /// <returns>Primary key match.</returns>
-        bool HasSameFields(IDatabaseObject other);
-
-        /// <summary>
-        /// Check if the object has the same fields and same values as one another.
-        /// </summary>
-        /// <param name="other">Object to check.</param>
-        /// <returns>Primary key match.</returns>
-        bool HasSameValues(IDatabaseObject other);
-    }
-
-    /// <summary>
     /// Interface representing objects that model data.
     /// </summary>
-    public interface IDatabaseObject : IEmpty, IDatabaseObjectComparable {
+    public interface IDatabaseObjectModel : IReplicate<IDatabaseObjectModel>, IComparable {
 
         //////////////////////
         // Properties.
         //////////////////////
+                
+        /// <summary>
+        /// Peek at the last saved snapshot.
+        /// </summary>
+        IDatabaseObjectMemento Snapshot
+        {
+            get;
+        }
+
+        /// <summary>
+        /// Model's memento stack.
+        /// </summary>
+        Stack<IDatabaseObjectMemento> History
+        {
+            get;
+        }
 
         /// <summary>
         /// Reference to the collection of IEntries that make up a data object.
         /// </summary>
-        List<IEntry> Model {
+        IRow Model {
             get;
-            set;
-        }
-        
-        /// <summary>
-        /// Database object reference to individual fields.
-        /// </summary>
-        /// <param name="field">Fieldname of field to get/set.</param>
-        /// <returns>Returns entry associated with value at the particular field.</returns>
-        IEntry this[string field] {
-            get;
-            set;
         }
 
         /// <summary>
-        /// Storage of entry containing the primary key for the object.
+        /// Reference to primary key fields defining the model identifier.
         /// </summary>
-        List<IEntry> PrimaryKey
+        IList<IPrimaryKey> PrimaryKeys
         {
             get;
-            set;
         }
-        
-        //////////////////////
-        // Method(s).
-        //////////////////////
-
-        //////////////////////
-        // Service method(s).
-
-        /// <summary>
-        /// Determine if database object contains a particular field.
-        /// </summary>
-        /// <param name="field">Fieldname to access.</param>
-        /// <returns>Returns true if this object contains a reference to the field.</returns>
-        bool HasField(string field);
 
         //////////////////////
         // Accessor method(s).
 
         /// <summary>
-        /// Returns a set of key/value pairs containing field parameters and their values.
+        /// Return entry at index reference, if one exists.
         /// </summary>
-        /// <returns>Returns a dictionary containing a set of parameters.</returns>
-        IDictionary<string, string> GetParameters();
-                
+        /// <param name="index">Field index to reference.</param>
+        /// <returns>Return entry at index.</returns>
+        IEntry this[int index] { get; }
+
         /// <summary>
-        /// Return entry at particular field.
+        /// Return entry with matching fieldname, if one exists.
         /// </summary>
-        /// <param name="field">Fieldname to access.</param>
-        /// <returns>Returns entry containing field and value, if possible.</returns>
-        IEntry Get(string field);
-        
-        /// <summary>
-        /// Returns value at a particular field.
-        /// </summary>
-        /// <param name="field">Fieldname to access.</param>
-        /// <returns>Returns value of particular field.</returns>
-        string GetValue(string field);
+        /// <param name="fieldname">Field to reference.</param>
+        /// <returns>Return entry at field.</returns>
+        IEntry this[string fieldname] { get; }
 
         //////////////////////
-        // Mutator method(s).      
+        // Method(s).
+        //////////////////////
+
+        //////////////////////
+        // Accessor method(s).
 
         /// <summary>
-        /// Set an entry at a particular field.
+        /// Save the current version of the model.
         /// </summary>
-        /// <param name="field">Field.</param>
-        /// <param name="value">Value to set.</param>
-        void Set(string field, string value = null);
+        /// <returns>Returns the new momento.</returns>
+        IDatabaseObjectMemento Save();
+        
+        //////////////////////
+        // Mutator method(s).
 
         /// <summary>
-        /// Attempts to set value at a particular entry.
+        /// Sets a primary key using an individual key. Overwrites existing.
         /// </summary>
-        /// <param name="field">Fieldname to access.</param>
-        /// <param name="value">Value to set.</param>
-        /// <returns>Returns value of particular field.</returns>
-        bool SetValue(string field, string value);
+        /// <param name="key">Key to set.</param>
+        void SetPrimaryKey(IPrimaryKey key);
+
+        /// <summary>
+        /// Sets a composite primary key using a set of keys. Overwrites existing.
+        /// </summary>
+        /// <param name="compositeKey">Keys to set.</param>
+        void SetCompositeKey(IList<IPrimaryKey> compositeKey);
+
+        /// <summary>
+        /// Restore the data from the last saved memento from the stack and also return a reference to it.
+        /// </summary>
+        /// <returns>Returns the new momento.</returns>
+        IDatabaseObjectMemento Restore();
+
+        /// <summary>
+        /// Load data from an input memento.
+        /// </summary>
+        /// <param name="memento">Memento to load the data from.</param>
+        /// <returns>Returns reference to the model.</returns>
+        IDatabaseObjectModel Load(IDatabaseObjectMemento memento);
 
     }
 
+    /// <summary>
+    /// A memento is a snapshot of a model.
+    /// </summary>
+    public interface IDatabaseObjectMemento
+    {
+        /// <summary>
+        /// Reference to the collection of IEntries that make up a data object.
+        /// </summary>
+        IRow Data
+        {
+            get;
+        }
+
+        /// <summary>
+        /// Model's memento stack.
+        /// </summary>
+        Stack<IDatabaseObjectMemento> History
+        {
+            get;
+        }
+
+        /// <summary>
+        /// Reference to primary key fields defining the model identifier.
+        /// </summary>
+        IList<IPrimaryKey> PrimaryKeys
+        {
+            get;
+        }
+
+        /// <summary>
+        /// Compare a snapshot to a model, to see if there has been any change.
+        /// </summary>
+        /// <param name="model">Model to compare.</param>
+        /// <returns>Return true if different from the snapshot.</returns>
+        int Compare(IDatabaseObjectModel model);
+    }
+        
     /// <summary>
     /// Fetch data for a particular database object.
     /// </summary>

@@ -664,7 +664,7 @@ namespace ISTE.DAL.Database.Implementations
         public List<int> GetMaximumLengths(IRow row)
         {
             if (row == null) { return new List<int>(); }
-            return this.GetMaximumLengths(row.Entries);
+            return this.GetMaximumLengths(row.Entries as List<IEntry>);
         }
         
         /// <summary>
@@ -727,7 +727,7 @@ namespace ISTE.DAL.Database.Implementations
             List<List<int>> rowCollections = new List<List<int>>();
 
             // Loop through the set.
-            foreach (IRow row in set)
+            foreach (IRow row in set.Rows)
             {
                 rowCollections.Add(this.GetMaximumLengths(row));
             }
@@ -887,7 +887,7 @@ namespace ISTE.DAL.Database.Implementations
         public string FormatHeader(IRow row)
         {
             if (row == null || row.IsEmpty) { return "This row is empty. No fields to print."; }
-            return this.FormatFields(row.Fields);
+            return this.FormatFields(row.Fields as List<string>);
         }
 
         /// <summary>
@@ -901,7 +901,7 @@ namespace ISTE.DAL.Database.Implementations
         public string FormatHeader(IRow row, bool topBorder = true, bool bottomBorder = true, bool extraBorder = false)
         {
             if(row == null || row.IsEmpty) { return "This row is empty. No fields to print."; }
-            return this.FormatFields(row.Fields, topBorder, bottomBorder, extraBorder);
+            return this.FormatFields(row.Fields as List<string>, topBorder, bottomBorder, extraBorder);
         }
 
         /// <summary>
@@ -962,7 +962,7 @@ namespace ISTE.DAL.Database.Implementations
         public string FormatRow(IRow row, bool topBorder = true, bool bottomBorder = true)
         {
             if (row == null || row.IsEmpty) { return "This row is empty. No entries to print."; }
-            return this.FormatRow(row.Entries, topBorder, bottomBorder);
+            return this.FormatRow(row.Entries as List<IEntry>, topBorder, bottomBorder);
         }
 
         /// <summary>
@@ -991,30 +991,30 @@ namespace ISTE.DAL.Database.Implementations
             metadata += " " + ((results.Query.Length == 0) ? "" : $"[\"{results.Query}\"]");
 
             if (results == null || results.IsEmpty) { return $"This result set is empty. No rows to print.{metadata}"; }
-            if (amount == 0) { return $"Amount of requested rows to print has been set to zero. ({results.Count} total rows in set).{metadata}"; }
+            if (amount == 0) { return $"Amount of requested rows to print has been set to zero. ({results.Rows.Count} total rows in set).{metadata}"; }
 
             // Determine starting index.
             int startIndex = Math.Min(offset, 10000); // cap the index offset at 10000.
-            if(startIndex >= results.Count) { return $"Offset is set after end of result set. ({results.Count} total rows in set).{metadata}"; }
+            if(startIndex >= results.Rows.Count) { return $"Offset is set after end of result set. ({results.Rows.Count} total rows in set).{metadata}"; }
             while(startIndex < 0)
             {
-                startIndex = results.Count - startIndex;
+                startIndex = results.Rows.Count - startIndex;
             }
 
             // Determine length of loop.
-            int resultCount = (amount == -1) ? results.Count : Math.Min(amount, 10000); // cap at 10000.
+            int resultCount = (amount == -1) ? results.Rows.Count : Math.Min(amount, 10000); // cap at 10000.
 
             // Get the maximum length.
             List<int> maximumLengths = this.GetMaximumLengths(results);
 
             // Get the header.
             string divisor = $"{this.GenerateDivisorSegment(maximumLengths[0])}";
-            string fields = $"{this.FormatTextSegment(results[0][0], maximumLengths[0])}";
+            string fields = $"{this.FormatTextSegment(results[0, 0].Field, maximumLengths[0])}";
 
             // For every field in the header.
             for(int i = 1; i < maximumLengths.Count; i++)
             {
-                fields += $"{this.FormatTextRight(results[0][i], maximumLengths[i])}";
+                fields += $"{this.FormatTextRight(results[0, i].Field, maximumLengths[i])}";
                 divisor += $"{this.GenerateRightCorner(maximumLengths[i])}";
             }
             

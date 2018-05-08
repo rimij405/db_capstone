@@ -5,11 +5,11 @@
  *  Contains the implementation for IEntry.
  *********************************************/
 
+// using statements.
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+
+// additional using statements.
 using ISTE.DAL.Database.Interfaces;
 
 namespace ISTE.DAL.Database.Implementations
@@ -17,11 +17,79 @@ namespace ISTE.DAL.Database.Implementations
     /// <summary>
     /// Represents a field-value pair to be returned from a MySqlDatabase class via a MySqlResultSet.
     /// </summary>
-    public class MySqlEntry : IEntry
+    public class MySqlEntry : FieldHandler, IEntry
     {
+
+        //////////////////////
+        // Static Member(s).
+        //////////////////////
+
+        #region Static Members.
+
+        //////////////////////
+        // Static method(s).
+
+        /// <summary>
+        /// Create and return an entry.
+        /// </summary>
+        /// <param name="field">Field of new entry.</param>
+        /// <param name="value">Value of new entry.</param>
+        /// <returns>Returns a new entry.</returns>
+        public static IEntry CreateEntry(string field, string value)
+        {
+            return new MySqlEntry(field, value);
+        }
+
+        /// <summary>
+        /// Create and return an entry.
+        /// </summary>
+        /// <param name="data">Field/value of new entry.</param>
+        /// <returns>Returns a new entry.</returns>
+        public static IEntry CreateEntry(KeyValuePair<string, string> data) { return MySqlEntry.CreateEntry(data.Key, data.Value); }
+
+        /// <summary>
+        /// Create set of entries.
+        /// </summary>
+        /// <param name="entryData">Data collection.</param>
+        /// <returns>Return collection of entries.</returns>
+        public static List<IEntry> CreateEntries(IDictionary<string, string> entryData)
+        {
+            List<IEntry> entries = new List<IEntry>();
+            foreach (KeyValuePair<string, string> datum in entryData)
+            {
+                entries.Add(MySqlEntry.CreateEntry(datum));
+            }
+            return entries;
+        }
+        
+        //////////////////////
+        // Conversion operators.
+
+        /// <summary>
+        /// Cast into a MySqlEntry object.
+        /// </summary>
+        /// <param name="data">Data pair to cast.</param>
+        public static implicit operator MySqlEntry(KeyValuePair<string, string> data)
+        {
+            return new MySqlEntry(data);
+        }
+
+        /// <summary>
+        /// Cast into a pair.
+        /// </summary>
+        /// <param name="entry">Entry to cast.</param>
+        public static explicit operator KeyValuePair<string, string>(MySqlEntry entry)
+        {
+            return entry.Data;
+        }
+        
+        #endregion
+
         //////////////////////
         // Field(s).
         //////////////////////
+
+        #region Fields.
 
         /// <summary>
         /// The null value accepted by MySql.
@@ -38,20 +106,33 @@ namespace ISTE.DAL.Database.Implementations
         /// </summary>
         private string value;
 
+        #endregion
+
         //////////////////////
         // Properties.
         //////////////////////
 
+        #region Properties.
+
         //////
         // IEntry
+        
+        /// <summary>
+        /// Field/value pair.
+        /// </summary>
+        public KeyValuePair<string, string> Data
+        {
+            get { return this.GetData(); }
+            set { this.SetData(value); }
+        }
 
         /// <summary>
         /// Relational table field.
         /// </summary>
         public string Field
         {
-            get { return this.field; }
-            set { this.field = value; }
+            get { return this.GetField(); }
+            set { this.SetField(value); }
         }
 
         /// <summary>
@@ -59,16 +140,31 @@ namespace ISTE.DAL.Database.Implementations
         /// </summary>
         public string Value
         {
-            get { return this.value; }
-            private set { this.value = value; }
+            get { return this.GetValue(); }
+            private set { this.SetValue(value); }
         }
 
         /// <summary>
         /// Is this entry readonly?
         /// </summary>
-        public bool IsReadOnly
+        public bool IsReadOnly { get; set; } = false; // Auto-implemented as false.
+
+        //////
+        // Indexer(s).
+
+        /// <summary>
+        /// Return field or value based on input of 0 (field) or 1 (value).
+        /// </summary>
+        /// <param name="index">Accessor.</param>
+        /// <returns>Returns string containing value.</returns>
+        public string this[int index]
         {
-            get; set;
+            get
+            {
+                if(index == 0) { return this.Field; }
+                if(index == 1) { return this.Value; }
+                throw new IndexOutOfRangeException($"Index value of {index} references position that is out of range for entry: (0-1).");
+            }
         }
 
         //////
@@ -82,9 +178,13 @@ namespace ISTE.DAL.Database.Implementations
             get { return this.Field.Length == 0 || this.HasValue(MySqlEntry.NULL_VALUE); }
         }
 
+        #endregion
+
         //////////////////////
         // Constructor(s).
         //////////////////////
+
+        #region Constructors.
 
         /// <summary>
         /// Construct a null entry using just a field value.
@@ -93,6 +193,7 @@ namespace ISTE.DAL.Database.Implementations
         public MySqlEntry(string field)
             : this(field, MySqlEntry.NULL_VALUE)
         {
+            this.IsReadOnly = false;
             // Default set.
         }
 
@@ -105,6 +206,7 @@ namespace ISTE.DAL.Database.Implementations
         {
             // Set the field and value.
             this.SetData(field, value);
+            this.IsReadOnly = false;
         }
 
         /// <summary>
@@ -115,6 +217,7 @@ namespace ISTE.DAL.Database.Implementations
         {
             // Set the field and value.
             this.SetData(data);
+            this.IsReadOnly = false;
         }
 
         /// <summary>
@@ -125,14 +228,21 @@ namespace ISTE.DAL.Database.Implementations
             : this(entry.GetField(), entry.GetValue())
         {
             // Set the field and value based off of the clone.
+            this.IsReadOnly = false;
         }
+
+        #endregion
 
         //////////////////////
         // Method(s).
         //////////////////////
 
+        #region Methods.
+
         //////////////////////
         // Service(s).
+
+        #region IEntry
 
         /// <summary>
         /// Return a formatted string describing a single entry.
@@ -143,104 +253,6 @@ namespace ISTE.DAL.Database.Implementations
             return $"MySqlEntry {{Field: {this.Field}, Value: {this.Value}, IsNull: {this.IsNull}}}";
         }
 
-        //////
-        // IComparable
-                    
-        /// <summary>
-        /// Compare MySqlEntry to another type of <see cref="IEntry"/> by it's value.
-        /// </summary>
-        /// <param name="obj">Entry to compare with.</param>
-        /// <returns>Returns integer declaring sort order in relation to the object passed in.</returns>
-        public int CompareTo(object obj)
-        {
-            if (obj != null && obj is IEntry entry)
-            {
-
-                // If the same, return 0.
-                if (this.Equals(obj)) { return 0; }
-
-                // If not the same, find the difference.
-                // If the fields are the same:
-                if(this.Field == entry.Field)
-                {
-                    // Compare values.
-                    if (this.Value == entry.Value)
-                    {
-                        // Is same.
-                        return 0;
-                    }
-                    else
-                    {
-                        return this.Value.CompareTo(entry.Value);
-                    }
-                }
-                else
-                {
-                    return this.Field.CompareTo(entry.Field);
-                }
-            }
-
-            // If not of a compatible type, return nothing.
-            throw new ArgumentException("Input object is not of type IEntry.");
-        }
-
-        /// <summary>
-        /// Checks equality between entries.
-        /// </summary>
-        /// <param name="obj">Object to check equality with.</param>
-        /// <returns>Returns true if equal and of same IEntry type. Returns false, if otherwise.</returns>
-        public override bool Equals(object obj)
-        {
-            return ((obj is IEntry entry) && (this.Field == entry.Field) && (this.Value == entry.Value));
-        }
-
-        /// <summary>
-        /// Gets the entry hashcode.
-        /// </summary>
-        /// <returns>Returns hashcode.</returns>
-        public override int GetHashCode()
-        {
-            return this.Field.GetHashCode() ^ this.Value.GetHashCode();
-        }
-
-        //////
-        // IFieldNameValidator
-
-        /// <summary>
-        /// Check if this matches the input field. Case insensitive. Whitespace trimmed.
-        /// </summary>
-        /// <param name="key">Field to check against.</param>
-        /// <returns>Returns true if match found.</returns>
-        public bool HasField(string key)
-        {
-            return this.IsValidField(key) && (FormatField(key) == this.Field);
-        }
-
-        /// <summary>
-        /// Returns a trimmed, all caps string, based off of input.
-        /// </summary>
-        /// <param name="input">Input to capitalize and trim of whitespace.</param>
-        /// <returns>Returns formatted string.</returns>
-        public string FormatField(string input)
-        {
-            if (input.Length <= 0) { return ""; }
-            return input.Trim().ToUpper();
-        }
-
-        /// <summary>
-        /// Checks if input is not empty.
-        /// </summary>
-        /// <param name="input">Input to check.</param>
-        /// <returns>Returns true if valid.</returns>
-        public bool IsValidField(string input)
-        {
-            if (input.Length <= 0) { return false; }
-            return true;
-        }
-
-        //////
-        // IEntry
-
         /// <summary>
         /// Check if the entry's value matches the input. Case sensitive. Whitespace not truncated.
         /// </summary>
@@ -250,7 +262,256 @@ namespace ISTE.DAL.Database.Implementations
         {
             return (this.Value == value);
         }
+
+        #endregion
+
+        #region IEntryComparison
+
+        #region Field Comparisons.
+
+        /// <summary>
+        /// Return a 1, 0, or -1 representing the inequality (or equality) between the left and right value.
+        /// </summary>
+        /// <param name="left">Left value.</param>
+        /// <param name="right">Right value.</param>
+        /// <returns>Return comparison sort index.</returns>
+        public int CompareFields(IEntry left, IEntry right)
+        {
+            if(left == null && right == null) { return 0; }
+            if(left == null) { return -1; }
+            if(right == null) { return 1; }
+            if(this.IsEqualFields(left, right)) { return 0; }
+            if(this.IsGreaterThanField(left, right)) { return 1; }
+            if(this.IsLessThanField(left, right)) { return -1; }
+            return 1;
+        }
+
+        /// <summary>
+        /// Compare two fields.
+        /// </summary>
+        /// <param name="left">Left value.</param>
+        /// <param name="right">Right value.</param>
+        /// <returns>Returns true if both values are equal.</returns>
+        public bool IsEqualFields(IEntry left, IEntry right)
+        {
+            return (left.Field.CompareTo(right.Field) == 0);
+        }
+
+        /// <summary>
+        /// Returns true if the left value is greater than the right value.
+        /// </summary>
+        /// <param name="left">Left value.</param>
+        /// <param name="right">Right value.</param>
+        /// <returns>Returns true if the left value is greater than the right value.</returns>
+        public bool IsGreaterThanField(IEntry left, IEntry right)
+        {
+            return (left.Field.CompareTo(right.Field) >= 1);
+        }
+
+        /// <summary>
+        /// Returns true if the left value is less than the right value.
+        /// </summary>
+        /// <param name="left">Left value.</param>
+        /// <param name="right">Right value.</param>
+        /// <returns>Returns true if the left value is less than the right value.</returns>
+        public bool IsLessThanField(IEntry left, IEntry right)
+        {
+            return (left.Field.CompareTo(right.Field) <= -1);
+        }
+
+        #endregion
         
+        #region Value<T> Comparisons.
+
+        /// <summary>
+        /// Compare values of entries.
+        /// </summary>
+        /// <typeparam name="T">Type of entry being passed in. (Could be a derived class).</typeparam>
+        /// <param name="left">Left value.</param>
+        /// <param name="right">Right value.</param>
+        /// <returns>Returns result of comparison.</returns>
+        public int CompareValue<T>(T left, T right) where T : IComparable
+        {
+            if(left == null && right == null) { return 0; }
+            if(left == null) { return -1; }
+            if(right == null) { return 1; }
+
+            if (left is IEntry leftEntry && right is IEntry rightEntry)
+            {
+                return this.CompareValue(leftEntry, rightEntry);
+            }
+
+            if (left is IEntry) { return 1; }
+            if (right is IEntry) { return -1; }
+            return left.CompareTo(right);
+        }
+
+        /// <summary>
+        /// Compare values of entries.
+        /// </summary>
+        /// <typeparam name="T">Type of entry being passed in. (Could be a derived class).</typeparam>
+        /// <param name="left">Left value.</param>
+        /// <param name="right">Right value.</param>
+        /// <returns>Returns result of comparison.</returns>
+        public bool IsEqualValue<T>(T left, T right) where T : IComparable
+        {
+            if (left is IEntry leftEntry && right is IEntry rightEntry)
+            {
+                return this.IsEqualValue(leftEntry, rightEntry);
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Compare values of entries.
+        /// </summary>
+        /// <typeparam name="T">Type of entry being passed in. (Could be a derived class).</typeparam>
+        /// <param name="left">Left value.</param>
+        /// <param name="right">Right value.</param>
+        /// <returns>Returns result of comparison.</returns>
+        public bool IsGreaterThanValue<T>(T left, T right) where T : IComparable
+        {
+            if (left is IEntry leftEntry && right is IEntry rightEntry)
+            {
+                return this.IsGreaterThanValue(leftEntry, rightEntry);
+            }
+            return true;
+        }
+
+        /// <summary>
+        /// Compare values of entries.
+        /// </summary>
+        /// <typeparam name="T">Type of entry being passed in. (Could be a derived class).</typeparam>
+        /// <param name="left">Left value.</param>
+        /// <param name="right">Right value.</param>
+        /// <returns>Returns result of comparison.</returns>
+        public bool IsLessThanValue<T>(T left, T right) where T : IComparable
+        {
+            if (left is IEntry leftEntry && right is IEntry rightEntry)
+            {
+                return this.IsLessThanValue(leftEntry, rightEntry);
+            }
+            return false;
+        }
+
+        #endregion
+
+        #region Value Comparisons.
+
+        /// <summary>
+        /// Return a 1, 0, or -1 representing the inequality (or equality) between the left and right value.
+        /// </summary>
+        /// <param name="left">Left value.</param>
+        /// <param name="right">Right value.</param>
+        /// <returns>Return comparison sort index.</returns>
+        public int CompareValue(IEntry left, IEntry right)
+        {
+            int comparison = 1;
+            comparison = (this.IsGreaterThanValue(left, right)) ? 1 : comparison;
+            comparison = (this.IsLessThanValue(left, right)) ? -1 : comparison;
+            comparison = (this.IsEqualValue(left, right)) ? 0 : comparison;
+            return comparison;
+        }
+
+        /// <summary>
+        /// Compare two values.
+        /// </summary>
+        /// <param name="left">Left value.</param>
+        /// <param name="right">Right value.</param>
+        /// <returns>Returns true if both values are equal.</returns>
+        public bool IsEqualValue(IEntry left, IEntry right)
+        {
+            return (left.Value.CompareTo(right.Value) == 0);
+        }
+
+        /// <summary>
+        /// Returns true if the left value is greater than the right value.
+        /// </summary>
+        /// <param name="left">Left value.</param>
+        /// <param name="right">Right value.</param>
+        /// <returns>Returns true if the left value is greater than the right value.</returns>
+        public bool IsGreaterThanValue(IEntry left, IEntry right)
+        {
+            return (left.Value.CompareTo(right.Value) >= 1);
+        }
+
+        /// <summary>
+        /// Returns true if the left value is less than the right value.
+        /// </summary>
+        /// <param name="left">Left value.</param>
+        /// <param name="right">Right value.</param>
+        /// <returns>Returns true if the left value is less than the right value.</returns>
+        public bool IsLessThanValue(IEntry left, IEntry right)
+        {
+            return (left.Value.CompareTo(right.Value) <= -1);
+        }
+
+        #endregion
+
+        #region Total Comparisons.
+               
+        /// <summary>
+        /// Check instances.
+        /// </summary>
+        /// <param name="obj">Other instance.</param>
+        /// <returns>Return comparison result.</returns>
+        public int CompareTo(object obj)
+        {
+            if(obj == null) { return 1; }
+            if(this == obj) { return 0; }
+            if (obj is IEntry other)
+            {
+                return this.Compare(other);
+            }
+            return 1;
+        }
+
+        /// <summary>
+        /// Check instances.
+        /// </summary>
+        /// <param name="other">Other instance.</param>
+        /// <returns>Return comparison result.</returns>
+        public int Compare(IEntry other)
+        {
+            if (other == null) { return 1; }
+            if (this == other) { return 0; }
+            int fieldComparison = this.CompareFields(this, other);
+            int valueComparison = this.CompareValue(this, other);
+            return (fieldComparison == 0) ? valueComparison : fieldComparison;
+        }
+
+        /// <summary>
+        /// Check instances for equality.
+        /// </summary>
+        /// <param name="other">Other instance.</param>
+        /// <returns>Return comparison result.</returns>
+        public bool IsEqual(IEntry other)
+        {
+            if(other == null) { return false; }
+            if(this == other) { return true; }
+            return (this.IsEqualFields(this, other) && this.IsEqualValue(this, other));
+        }
+
+        #endregion
+
+        #endregion
+
+        #region FieldHandler
+
+        /// <summary>
+        /// Check if this matches the input field. Case insensitive. Whitespace trimmed.
+        /// </summary>
+        /// <param name="key">Field to check against.</param>
+        /// <returns>Returns true if match found.</returns>
+        public override bool HasField(string key)
+        {
+            return this.IsValidField(key) && (this.FormatField(key) == this.Field);
+        }
+
+        #endregion
+                
+        #region IReplicate
+
         //////
         // IReplicate
 
@@ -258,10 +519,28 @@ namespace ISTE.DAL.Database.Implementations
         /// Clone the entry and return the copy.
         /// </summary>
         /// <returns>Return clone of self.</returns>
-        public IReplicate Clone()
+        public IEntry Clone()
         {
             return new MySqlEntry(this);
         }
+
+        /// <summary>
+        /// Clone the input object, if (and only if), it's an entry.
+        /// </summary>
+        /// <param name="obj"></param>
+        /// <returns></returns>
+        public object Clone(object obj)
+        {
+            if (obj is IEntry objectToClone)
+            {
+                return objectToClone.Clone();
+            }
+            return null;
+        }
+
+        #endregion
+
+        #region INullable
 
         //////
         // INullable
@@ -270,14 +549,55 @@ namespace ISTE.DAL.Database.Implementations
         /// Sets the value to null.
         /// </summary>
         /// <returns>Returns reference to self.</returns>
-        public INullable MakeNull()
+        public IEntry MakeNull()
         {
             this.SetValue(MySqlEntry.NULL_VALUE);
             return this;
         }
 
+        #endregion
+
+        //////////////////////
+        // Accessor(s).
+
+        #region Accessors.
+
+        //////
+        // IEntry
+
+        /// <summary>
+        /// Return the field value.
+        /// </summary>
+        /// <returns>Return a string.</returns>
+        public string GetField()
+        {
+            return this.field;
+        }
+
+        /// <summary>
+        /// Return the value as a string.
+        /// </summary>
+        /// <returns>Return a string.</returns>
+        public string GetValue()
+        {
+            return this.value;
+        }
+
+        /// <summary>
+        /// Create and return a key value pair linking the field to the value.
+        /// </summary>
+        /// <returns>Return key value pair object.</returns>
+        public KeyValuePair<string, string> GetData()
+        {
+            return new KeyValuePair<string, string>(this.GetField(), this.GetValue());
+        }
+
+        #endregion
+
         //////////////////////
         // Mutator(s).
+
+        #region Mutators.
 
         //////
         // IEntry
@@ -291,8 +611,20 @@ namespace ISTE.DAL.Database.Implementations
         {
             // Cannot set when readonly.
             if (this.IsReadOnly) { return this; }
-            this.Field = this.FormatField(field);
+            this.field = this.FormatField(field);
             return this;
+        }
+
+        /// <summary>
+        /// Attempt to set field.
+        /// </summary>
+        /// <param name="field">Data to set.</param>
+        /// <returns>Returns operation success.</returns>
+        public bool TrySetField(string field)
+        {
+            if (this.IsReadOnly) { return false; }
+            this.SetField(field);
+            return true;
         }
 
         /// <summary>
@@ -304,8 +636,20 @@ namespace ISTE.DAL.Database.Implementations
         {
             // Cannot set when readonly.
             if (this.IsReadOnly) { return this; }
-            this.Value = value;
+            this.value = value;
             return this;
+        }
+
+        /// <summary>
+        /// Attempt to set value.
+        /// </summary>
+        /// <param name="value">Data to set.</param>
+        /// <returns>Returns operation success.</returns>
+        public bool TrySetValue(string value)
+        {
+            if (this.IsReadOnly) { return false; }
+            this.SetValue(value);
+            return true;
         }
 
         /// <summary>
@@ -332,37 +676,121 @@ namespace ISTE.DAL.Database.Implementations
             return this;
         }
 
+        /// <summary>
+        /// Attempt to set data.
+        /// </summary>
+        /// <param name="data">Data to set.</param>
+        /// <returns>Returns operation success.</returns>
+        public bool TrySetData(KeyValuePair<string, string> data)
+        {
+            if (this.IsReadOnly) { return false; }
+            return this.TrySetField(data.Key) && this.TrySetValue(data.Value);
+        }
+
+        #endregion
+
+        #endregion
+
+    }
+        
+    /// <summary>
+    /// Represents a primary key entry.
+    /// </summary>
+    public class MySqlPrimaryKeyEntry : MySqlEntry, IPrimaryKey
+    {
+
         //////////////////////
-        // Accessor(s).
-
-        //////
-        // IEntry
+        // Field(s).
+        //////////////////////
 
         /// <summary>
-        /// Return the field value.
+        /// Primary key flag.
         /// </summary>
-        /// <returns>Return a string.</returns>
-        public string GetField()
+        private bool pkeyStatus;
+
+        //////////////////////
+        // Properties.
+        //////////////////////
+
+        /// <summary>
+        /// Primary key flag.
+        /// </summary>
+        public bool PrimaryKey
         {
-            return this.Field;
+            get { return this.pkeyStatus; }
+            set { this.pkeyStatus = value; }
+        }
+
+        //////////////////////
+        // Constructor(s).
+        //////////////////////
+
+        /// <summary>
+        /// Create a primary key.
+        /// </summary>
+        /// <param name="isPKey">Primary key flag.</param>
+        /// <param name="field">Fieldname.</param>
+        /// <param name="value">Value.</param>
+        public MySqlPrimaryKeyEntry(bool isPKey, string field, string value)
+            : base(field, value)
+        {
+            this.PrimaryKey = isPKey;
         }
 
         /// <summary>
-        /// Return the value as a string.
+        /// Create a primary key.
         /// </summary>
-        /// <returns>Return a string.</returns>
-        public string GetValue()
+        /// <param name="isPKey">Primary key flag.</param>
+        /// <param name="field">Fieldname.</param>
+        public MySqlPrimaryKeyEntry(bool isPKey, string field)
+            : base(field)
         {
-            return this.Value;
+            this.PrimaryKey = isPKey;
         }
 
         /// <summary>
-        /// Create and return a key value pair linking the field to the value.
+        /// Create a primary key.
         /// </summary>
-        /// <returns>Return key value pair object.</returns>
-        public KeyValuePair<string, string> GetData()
+        /// <param name="isPKey">Primary key flag.</param>
+        /// <param name="entry">Entry to get values from.</param>
+        public MySqlPrimaryKeyEntry(bool isPKey, IEntry entry)
+            : this(isPKey, entry.Field, entry.Value)
         {
-            return new KeyValuePair<string, string>(this.Field, this.Value);
-        }        
+        }
+
+        /// <summary>
+        /// Create a primary key.
+        /// </summary>
+        /// <param name="isPKey">Primary key flag.</param>
+        /// <param name="data">Data to get values from.</param>
+        public MySqlPrimaryKeyEntry(bool isPKey, KeyValuePair<string, string> data)
+            : this(isPKey, data.Key, data.Value)
+        {
+        }
+
+        //////////////////////
+        // Method(s).
+        //////////////////////
+
+        //////////////////////
+        // Service method(s).
+
+        /// <summary>
+        /// Format string to display entry.
+        /// </summary>
+        /// <returns></returns>
+        public override string ToString()
+        {
+            return $"MySqlEntry {{PRIMARY KEY {this.PrimaryKey}, Field: {this.Field}, Value: {this.Value}, IsNull: {this.IsNull}}}"; ;
+        }
+
+        /// <summary>
+        /// Toggle primary key status.
+        /// </summary>
+        public void TogglePrimaryKey()
+        {
+            this.PrimaryKey = !this.PrimaryKey;
+        }
+
     }
 }

@@ -22,7 +22,7 @@ namespace ISTE.DAL.Models.Implementations
     /// <summary>
     /// User property class.
     /// </summary>
-    public abstract class MySqlUserProperty : MySqlDatabaseObject, IUserProperty
+    public abstract class MySqlUserProperty : MySqlDatabaseObjectModel, IUserProperty
     {
         //////////////////////
         // Field(s).
@@ -43,7 +43,7 @@ namespace ISTE.DAL.Models.Implementations
         public UserProperties PropertyType
         {
             get { return this.propertyType; }
-            private set { this.propertyType = value; }
+            protected set { this.propertyType = value; }
         }
 
         /// <summary>
@@ -51,8 +51,8 @@ namespace ISTE.DAL.Models.Implementations
         /// </summary>
         public virtual IUIDFormat OwnerID
         {
-            get { return new MySqlID(this.GetValue("userID")); }
-            private set { this.SetValue("userID", value.SQLValue); }
+            get { return new MySqlID(this["userID"].Value); }
+            protected set { this["userID"].SetValue(value.SQLValue); }
         }
 
         //////////////////////
@@ -66,7 +66,7 @@ namespace ISTE.DAL.Models.Implementations
         /// <param name="userID">User ID.</param>
         public MySqlUserProperty(UserProperties type, IUIDFormat userID)
         {
-            this.Model.Add(new MySqlEntry("userID"));
+            this.Model.AddEntry(new MySqlPrimaryKeyEntry(true, "userID"));
             this.PropertyType = type;
             this.OwnerID = userID;
         }
@@ -104,7 +104,7 @@ namespace ISTE.DAL.Models.Implementations
         /// <param name="database">Database.</param>
         /// <param name="errorCode">Error code.</param>
         /// <returns>Returns a populated result set.</returns>
-        public virtual IResultSet Fetch(IReadable database, out DatabaseError errorCode)
+        public override IResultSet Fetch(IReadable database, out DatabaseError errorCode)
         {
             MySqlResultSet results = new MySqlResultSet();
             results.Error();
@@ -129,7 +129,7 @@ namespace ISTE.DAL.Models.Implementations
         /// <param name="results">Results.</param>
         /// <param name="errorCode">Error code.</param>
         /// <returns>Operation success.</returns>
-        public virtual bool TryFetch(IReadable database, out IResultSet results, out DatabaseError errorCode)
+        public override bool TryFetch(IReadable database, out IResultSet results, out DatabaseError errorCode)
         {
             results = new MySqlResultSet();
             results.Fail();
@@ -325,9 +325,10 @@ namespace ISTE.DAL.Models.Implementations
         /// <summary>
         /// Student identifier.
         /// </summary>
-        public abstract IUIDFormat StudentID {
-            get;
-            set;
+        public virtual IUIDFormat StudentID
+        {
+            get { return this.OwnerID; }
+            set { this.OwnerID = value; }
         }
 
         //////////////////////
@@ -354,10 +355,10 @@ namespace ISTE.DAL.Models.Implementations
         /// <summary>
         /// Student identifier.
         /// </summary>
-        public abstract IUIDFormat FacultyID
+        public virtual IUIDFormat FacultyID
         {
-            get;
-            set;
+            get { return this.OwnerID; }
+            set { this.OwnerID = value; }
         }
 
         //////////////////////
@@ -375,6 +376,8 @@ namespace ISTE.DAL.Models.Implementations
             this.FacultyID = userID;
         }
     }
+
+    /*
 
     /// <summary>
     /// Represents a student Capstone.
@@ -403,8 +406,8 @@ namespace ISTE.DAL.Models.Implementations
         /// </summary>
         public override IUIDFormat StudentID
         {
-            get { return new MySqlID(this.GetValue("studentID")); }
-            set { this.SetValue("studentID", value.SQLValue); }
+            get { return new MySqlID(this["studentID"].Value); }
+            set { this["studentID"].SetValue(value.SQLValue); }
         }
 
         /// <summary>
@@ -1059,6 +1062,7 @@ namespace ISTE.DAL.Models.Implementations
         }
     }
 
+    */
 
 
 }

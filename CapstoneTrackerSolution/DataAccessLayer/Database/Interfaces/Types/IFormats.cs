@@ -10,52 +10,6 @@ using System;
 namespace ISTE.DAL.Database.Interfaces
 {    
     /// <summary>
-    /// Interface representing type comparisons.
-    /// </summary>
-    /// <typeparam name="T">Type to compare.</typeparam>
-    public interface IComparison<T> where T : IComparable
-    {
-        //////////////////////
-        // Method(s).
-        //////////////////////
-
-        //////////////////////
-        // Services.	
-
-        /// <summary>
-        /// Return a 1, 0, or -1 representing the inequality (or equality) between the left and right value.
-        /// </summary>
-        /// <param name="left">Left value.</param>
-        /// <param name="right">Right value.</param>
-        /// <returns>Return comparison sort index.</returns>
-        int CompareValue(T left, T right);
-
-        /// <summary>
-        /// Compare two values.
-        /// </summary>
-        /// <param name="left">Left value.</param>
-        /// <param name="right">Right value.</param>
-        /// <returns>Returns true if both values are equal.</returns>
-        bool IsEqualValue(T left, T right);
-
-        /// <summary>
-        /// Returns true if the left value is greater than the right value.
-        /// </summary>
-        /// <param name="left">Left value.</param>
-        /// <param name="right">Right value.</param>
-        /// <returns>Returns true if the left value is greater than the right value.</returns>
-        bool IsGreaterThanValue(T left, T right);
-
-        /// <summary>
-        /// Returns true if the left value is less than the right value.
-        /// </summary>
-        /// <param name="left">Left value.</param>
-        /// <param name="right">Right value.</param>
-        /// <returns>Returns true if the left value is less than the right value.</returns>
-        bool IsLessThanValue(T left, T right);
-    }
-    
-    /// <summary>
     /// Helper format for converting between two types.
     /// </summary>
     /// <typeparam name="T">Data type for conversion.</typeparam>

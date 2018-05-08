@@ -1,18 +1,15 @@
-﻿/**
+﻿/*
  * MySqlOperation.cs
  * ---
  * Ian Effendi
  * */
 
-using System;
+// using statements.
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-using MySql.Data.MySqlClient;
-using Services.Interfaces;
+// additional using statements.
 using ISTE.DAL.Database.Interfaces;
+using Services.Interfaces;
 
 namespace ISTE.DAL.Database.Implementations
 {

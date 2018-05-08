@@ -1,19 +1,21 @@
 ﻿/****************************************
- *  MySqlRow.cs
+ *  MySqlResultSet.cs
  *  Ian Effendi
  *  ---
- *  Contains the implementation for IRow,
- *  an ICollection<IEntry> interface.
+ *  Contains the implementation for IResultSet.
  ****************************************/
 
+// using statements.
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using ISTE.DAL.Database.Interfaces;
+
+// additional using statements.
 using Services.Interfaces;
+using ISTE.DAL.Database.Interfaces;
 
 namespace ISTE.DAL.Database.Implementations
 {
@@ -21,22 +23,115 @@ namespace ISTE.DAL.Database.Implementations
     /// <summary>
     /// MySqlResultSet is a collection of MySqlRows.
     /// </summary>
-    public class MySqlResultSet : IResultSet
+    public class MySqlResultSet : FieldHandler, IResultSet
     {
+
+        //////////////////////
+        // Static Member(s).
+        //////////////////////
+
+        #region Static Members
+
+        //////////////////////
+        // Static method(s).
+
+        /// <summary>
+        /// Create and return a result set.
+        /// </summary>
+        /// <param name="rows">Rows to make result set from.</param>
+        /// <returns>Returns a new row.</returns>
+        public static IResultSet CreateResultSet(IList<IRow> rows)
+        {
+            return new MySqlResultSet(rows as List<IRow>);
+        }
+
+        /// <summary>
+        /// Create and return a result set.
+        /// </summary>
+        /// <param name="rows">Rows to make result set from.</param>
+        /// <returns>Returns a new row.</returns>
+        public static IResultSet CreateResultSet(params IRow[] rows) { return MySqlResultSet.CreateResultSet(rows.ToList<IRow>()); }
+
+        //////////////////////
+        // Conversion operators.
+
+        /// <summary>
+        /// Cast into a MySqlResultSet object.
+        /// </summary>
+        /// <param name="rows">Rows to cast.</param>
+        public static implicit operator MySqlResultSet(List<IRow> rows)
+        {
+            return new MySqlResultSet(rows);
+        }
+        
+        /// <summary>
+        /// Cast into a MySqlRow object.
+        /// </summary>
+        /// <param name="data">Dataset to cast.</param>
+        public static implicit operator MySqlResultSet(List<IDictionary<string, string>> data)
+        {
+            return new MySqlResultSet(MySqlRow.CreateRows(data));
+        }
+
+        /// <summary>
+        /// Cast into a collection of a collection of entries.
+        /// </summary>
+        /// <param name="results">Result set to cast.</param>
+        public static explicit operator List<IList<IEntry>>(MySqlResultSet results)
+        {
+            List<IList<IEntry>> list = new List<IList<IEntry>>();
+            foreach (IRow row in results)
+            {
+                list.Add(row.Entries);
+            }
+            return list;
+        }
+
+        /// <summary>
+        /// Cast into a collection of a collection of fields.
+        /// </summary>
+        /// <param name="results">Result set to cast.</param>
+        public static explicit operator List<IList<string>>(MySqlResultSet results)
+        {
+            List<IList<string>> rowFields = new List<IList<string>>();
+            foreach (IRow row in results)
+            {
+                rowFields.Add(row.Fields);
+            }
+            return rowFields;
+        }
+
+        /// <summary>
+        /// Cast into a collection of a collection of key/value pairs.
+        /// </summary>
+        /// <param name="results">Result set to cast.</param>
+        public static explicit operator List<IDictionary<string, string>>(MySqlResultSet results)
+        {
+            List<IDictionary<string, string>> collection = new List<IDictionary<string, string>>();
+            foreach (IRow row in results)
+            {
+                collection.Add(row.Data);
+            }
+            return collection;
+        }
+
+        #endregion
 
         //////////////////////
         // Field(s).
         //////////////////////
 
-        /// <summary>
-        /// Current state of the result set.
-        /// </summary>
-        private OperationStatus state;
+        #region Fields
 
         /// <summary>
         /// Collection of rows.
         /// </summary>
-        private List<IRow> rows;
+        private IList<IRow> rows;
+
+        /// <summary>
+        /// Current state of the result set.
+        /// </summary>
+        private OperationStatus state;
 
         /// <summary>
         /// Value storing the number of rows affected by a particular query.
@@ -48,12 +143,136 @@ namespace ISTE.DAL.Database.Implementations
         /// </summary>
         string query;
 
+        #endregion
+
         //////////////////////
         // Properties.
         //////////////////////
 
-        //////
-        // IOperationStateMachine
+        #region Properties
+
+        #region IResultSet
+
+        /// <summary>
+        /// Collection of <see cref="IRow"/> rows.
+        /// </summary>
+        public IList<IRow> Rows
+        {
+            get
+            {
+                if (this.rows == null) { this.rows = new List<IRow>(); }
+                return this.rows;
+            }
+        }
+
+        /// <summary>
+        /// Gets a count of all fields in a result set, in the order in which they appear.
+        /// </summary>
+        public IList<string> Fields
+        {
+            get
+            {
+                return this.GetRowHeader(0);
+            }
+        }
+
+        /// <summary>
+        /// All the data in a MySqlResultSet.
+        /// </summary>
+        public IList<IDictionary<string, string>> Data
+        {
+            get
+            {
+                List<IDictionary<string, string>> dataSet = new List<IDictionary<string, string>>();
+                foreach (IRow row in this)
+                {
+                    dataSet.Add(row.Data);
+                }
+                return dataSet;
+            }
+        }
+
+        /// <summary>
+        /// Number of rows affected by an SQL query.
+        /// </summary>
+        public int RowsAffected
+        {
+            get { return this.rowsAffected; }
+            private set { this.rowsAffected = value; }
+        }
+
+        /// <summary>
+        /// SQL query associated with a result set.
+        /// </summary>
+        public string Query
+        {
+            get { return this.query; }
+            private set { this.query = value.Trim().Replace('\n', ' '); }
+        }
+
+        #endregion
+
+        #region IListWrapper.
+
+        /// <summary>
+        /// IListWrapper reference.
+        /// </summary>
+        public IList<IRow> List
+        {
+            get { return this.Rows; }
+        }
+
+        /// <summary>
+        /// Number of rows in the result set.
+        /// </summary>
+        public int Count
+        {
+            get { return this.List.Count; }
+        }
+
+        #endregion
+
+        #region IReadOnly
+
+        /// <summary>
+        /// Flag determines if result set is readonly.
+        /// </summary>
+        public bool IsReadOnly
+        {
+            get
+            {
+                if (this.IsEmpty) { return false; }
+                foreach (IRow row in this)
+                {
+                    if (!row.IsReadOnly) { return false; }
+                }
+                return true;
+            }
+            set
+            {
+                foreach (IRow row in this)
+                {
+                    row.IsReadOnly = value;
+                }
+            }
+        }
+
+        #endregion
+
+        #region IEmpty
+
+        /// <summary>
+        /// Check if result set has any rows.
+        /// </summary>
+        /// <returns>Returns true if empty.</returns>
+        public bool IsEmpty
+        {
+            get { return (this.Count == 0); }
+        }
+
+        #endregion
+
+        #region IOperationStateMachine
 
         /// <summary>
         /// Reference to state of the result set.
@@ -87,103 +306,41 @@ namespace ISTE.DAL.Database.Implementations
             get { return this.IsState(OperationStatus.SUCCESS); }
         }
 
-        //////
-        // IResultSet
+        #endregion
+
+        //////////////////////
+        // Indexer(s).
+
+        #region Indexers.
 
         /// <summary>
-        /// Collection of <see cref="IRow"/> rows.
+        /// Return an element from the collection.
         /// </summary>
-        public List<IRow> Rows
-        {
-            get
-            {
-                if(this.rows == null) { this.rows = new List<IRow>(); }
-                return this.rows;
-            }
-        }
-
-        /// <summary>
-        /// Number of rows affected by an SQL query.
-        /// </summary>
-        public int RowsAffected
-        {
-            get { return this.rowsAffected; }
-            private set { this.rowsAffected = value; }
-        }
-
-        /// <summary>
-        /// SQL query associated with a result set.
-        /// </summary>
-        public string Query
-        {
-            get { return this.query; }
-            private set { this.query = value.Trim().Replace('\n', ' '); }
-        }
-
-        /// <summary>
-        /// Gets a count of all fields in a result set, in the order in which they appear.
-        /// </summary>
-        public List<string> Fields
-        {
-            get
-            {
-                List<string> fields = new List<string>();
-                if (!this.IsEmpty)
-                {
-                    foreach (IRow row in this)
-                    {
-                        if (fields.Count != row.Fields.Count) {
-                            foreach (string field in row.Fields)
-                            {
-                                if (!fields.Contains(field)) { fields.Add(field); }
-                            }
-                        }
-                    }
-                }
-                return fields;
-            }
-        }
-
-        //////
-        // ICollection
-
-        /// <summary>
-        /// Flag determines if result set is readonly.
-        /// </summary>
-        public bool IsReadOnly
-        {
-            get; set;
-        }
-
-        /// <summary>
-        /// Number of rows in the result set.
-        /// </summary>
-        public int Count
-        {
-            get { return this.Rows.Count; }
-        }
-
-        //////
-        // IEmpty
-
-        /// <summary>
-        /// Check if result set has any rows.
-        /// </summary>
-        /// <returns>Returns true if empty.</returns>
-        public bool IsEmpty
-        {
-            get { return this.HasExactlyThisMany(0); }
-        }
-
-        /// <summary>
-        /// Access collection of rows by index.
-        /// </summary>
-        /// <param name="index">Index of row to return.</param>
-        /// <returns>Return the row at the input index value.</returns>
+        /// <param name="index">Index of the element to get.</param>
+        /// <returns>Returns object at specific index.</returns>
         public IRow this[int index]
         {
-            get { return this.rows[index]; }
-            private set { this.rows[index] = value; }
+            get
+            {
+                return this.GetRow(index);
+            }
+            set
+            {
+                this.SetRow(index, value);
+            }
+        }
+
+        /// <summary>
+        /// Returns index of input element, if it exists in the collection.
+        /// </summary>
+        /// <param name="element">Element to find index of.</param>
+        /// <returns>Returns index of specific object.</returns>
+        public int this[IRow element]
+        {
+            get
+            {
+                return this.GetIndex(element);
+            }
         }
 
         /// <summary>
@@ -196,25 +353,11 @@ namespace ISTE.DAL.Database.Implementations
         {
             get
             {
-                if (this.HasIndex(rowIndex)) {
-                    IRow row = this[rowIndex];
-                    if(row != null && row.HasIndex(fieldIndex))
-                    {
-                        return row.GetEntry(fieldIndex);
-                    }
+                if (this.TryGetRow(rowIndex, out IRow row))
+                {
+                    return row.GetEntry(fieldIndex);
                 }
                 return null;
-            }
-            private set
-            {
-                if (this.HasIndex(rowIndex))
-                {
-                    IRow row = this[rowIndex];
-                    if (row != null && row.HasIndex(fieldIndex))
-                    {
-                        row.SetEntry(fieldIndex, value);
-                    }
-                }
             }
         }
 
@@ -228,13 +371,8 @@ namespace ISTE.DAL.Database.Implementations
         {
             get
             {
-                if (this.HasIndex(rowIndex))
-                {
-                    IRow row = this[rowIndex];
-                    if (row != null && row.HasField(key))
-                    {
-                        return row.GetEntry(key);
-                    }
+                if (this.TryGetRow(rowIndex, out IRow row)) {
+                    return row.GetEntry(key);
                 }
                 return null;
             }
@@ -245,29 +383,31 @@ namespace ISTE.DAL.Database.Implementations
         /// </summary>
         /// <param name="key">Field to access.</param>
         /// <returns>Returns collection of entries. Returns null if there is no field.</returns>
-        public List<IEntry> this[string key]
+        public IList<IEntry> this[string key]
         {
             get
             {
-                List<IEntry> entries = new List<IEntry>();
-                if (!this.IsEmpty)
+                IList<IEntry> entries = new List<IEntry>();
+                foreach (IRow row in this)
                 {
-                    foreach (IRow row in this)
+                    if (row.TryGetEntry(key, out IEntry entry))
                     {
-                        if (row.HasField(key))
-                        {
-                            IEntry entry = row.GetEntry(key);
-                            if(entry != null) { entries.Add(entry); }
-                        }
+                        entries.Add(entry);
                     }
                 }
                 return entries;
             }
         }
 
+        #endregion
+
+        #endregion
+
         //////////////////////
         // Constructor(s).
         //////////////////////
+
+        #region Constructor(s).
 
         /// <summary>
         /// Construct an empty <see cref="MySqlResultSet"/> <see cref="IResultSet"/>.
@@ -301,7 +441,7 @@ namespace ISTE.DAL.Database.Implementations
         /// <param name="query">SQL query associated with result set.</param>
         /// <param name="rowsAffected">Rows affected by execution of query. (Can be zero).</param>
         /// <param name="rows">Rows to add to the result set.</param>
-        public MySqlResultSet(string query, int rowsAffected, List<IRow> rows)
+        public MySqlResultSet(string query, int rowsAffected, IList<IRow> rows)
             : this(query, rowsAffected)
         {
             // Calls other constructor.
@@ -322,30 +462,501 @@ namespace ISTE.DAL.Database.Implementations
         }
 
         /// <summary>
+        /// Construct a result set from a collection of maps.
+        /// </summary>
+        /// <param name="rowData">Data per row.</param>
+        public MySqlResultSet(IList<IDictionary<string, string>> rowData)
+        {
+            foreach (Dictionary<string, string> data in rowData)
+            {
+                this.AddRow(new MySqlRow((IDictionary<string, string>) data));
+            }
+        }
+
+        /// <summary>
         /// Copy constructor.
         /// </summary>
         /// <param name="other">Other result set to create.</param>
         public MySqlResultSet(MySqlResultSet other)
             : this(other.Query, other.RowsAffected)
         {
-            // Calls other constructor for copy of immutable references.
-            // Deep copies rows:
-            foreach (IRow row in other)
+            // Copy.
+            if (other != null && this != other && !this.IsEqual(other))
             {
-                // Clones the row that requires deeper copying.
-                this.Rows.Add(row.Clone() as IRow);
+                // Clone the collection of entries.
+                foreach (IRow row in other)
+                {
+                    this.rows.Add(row.Clone());
+                }
             }
         }
+
+        #endregion
 
         //////////////////////
         // Method(s).
         //////////////////////
 
+        #region Methods
+
         //////////////////////
         // Service(s).
 
-        ///////
-        // IOperationStateMachine
+        #region Service methods.
+
+        #region General methods.
+
+        /// <summary>
+        /// Return this result set's metadata as a string.
+        /// </summary>
+        /// <returns>Returns the result set as a formatted string.</returns>
+        public override string ToString()
+        {
+            // Example:
+            // [MySqlResultSet] {(Empty set). 'SELECT * FROM capstonedb.users' - 0 rows affected.}
+            return $"[MySqlResultSet] {{({((this.IsEmpty) ? "Empty set" : $"{this.Count} total elements")}). '{((this.Query.Length == 0) ? "No query set" : this.Query)}' - {this.RowsAffected} rows affected.}}";
+        }
+
+        #endregion
+
+        #region FieldHandler - HasField(string)
+
+        /// <summary>
+        /// Check if a field exists.
+        /// </summary>
+        /// <param name="key">Key to check.</param>
+        /// <returns>Returns true if found.</returns>
+        public override bool HasField(string key)
+        {
+            if (this.IsEmpty) { return false; }
+            IRow row = this.GetRow(0);
+            return (row != null) ? this.GetRow(0).HasField(key) : false;
+        }
+
+        #endregion
+        
+        #region IResultSetComparison - Size, Field, Value<T>, Value, and Total comparisons.
+
+        #region Total Comparisons - Compare(object), Compare(IRow), IsEqual(IRow)
+
+        /// <summary>
+        /// Compare to current instance.
+        /// </summary>
+        /// <param name="obj">Object to compare.</param>
+        /// <returns></returns>
+        public int CompareTo(object obj)
+        {
+            if (obj == null) { return 1; }
+            if (this == obj) { return 0; }
+            if (obj is IResultSet that)
+            {
+                return this.Compare(that);
+            }
+            return 1;
+        }
+
+        /// <summary>
+        /// Check instances.
+        /// </summary>
+        /// <param name="other">Other instance.</param>
+        /// <returns>Return comparison result.</returns>
+        public int Compare(IResultSet other)
+        {
+            if (other == null) { return 1; }
+            if (this == other) { return 0; }
+            return this.CompareValue(this, other);
+        }
+
+        /// <summary>
+        /// Check instances for equality.
+        /// </summary>
+        /// <param name="other">Other instance.</param>
+        /// <returns>Return comparison result.</returns>
+        public bool IsEqual(IResultSet other)
+        {
+            if (other == null) { return false; }
+            if (this == other) { return true; }
+            return (this.IsEqualValue(this, other));
+        }
+
+        #endregion
+
+        #region Size Comparisons. - CompareSize(IRow, IRow), IsEqualSize(IRow, IRow), IsGreaterThanSize(IRow, IRow), IsLessThanSize(IRow, IRow)
+
+        /// <summary>
+        /// Return a 1, 0, or -1 representing the inequality (or equality) between the left and right value.
+        /// </summary>
+        /// <param name="left">Left value.</param>
+        /// <param name="right">Right value.</param>
+        /// <returns>Return comparison sort index.</returns>
+        public int CompareSize(IResultSet left, IResultSet right)
+        {
+            return left.List.Count.CompareTo(right.List.Count);
+        }
+
+        /// <summary>
+        /// Compare two collection sizes.
+        /// </summary>
+        /// <param name="left">Left value.</param>
+        /// <param name="right">Right value.</param>
+        /// <returns>Returns true if both values are equal.</returns>
+        public bool IsEqualSize(IResultSet left, IResultSet right) { return (this.CompareSize(left, right) == 0); }
+
+        /// <summary>
+        /// Returns true if the left value is greater than the right value.
+        /// </summary>
+        /// <param name="left">Left value.</param>
+        /// <param name="right">Right value.</param>
+        /// <returns>Returns true if the left value is greater than the right value.</returns>
+        public bool IsGreaterThanSize(IResultSet left, IResultSet right) { return (this.CompareSize(left, right) >= 1); }
+
+        /// <summary>
+        /// Returns true if the left value is less than the right value.
+        /// </summary>
+        /// <param name="left">Left value.</param>
+        /// <param name="right">Right value.</param>
+        /// <returns>Returns true if the left value is less than the right value.</returns>
+        public bool IsLessThanSize(IResultSet left, IResultSet right) { return (this.CompareSize(left, right) <= -1); }
+
+        #endregion
+
+        #region Field comparisons. - CompareFields(IRow, IRow), IsEqualFields(IRow, IRow), IsGreaterThanFields(IRow, IRow), IsLessThanFields(IRow, IRow)
+
+        /// <summary>
+        /// Return a 1, 0, or -1 representing the inequality (or equality) between the left and right value.
+        /// </summary>
+        /// <param name="left">Left value.</param>
+        /// <param name="right">Right value.</param>
+        /// <returns>Return comparison sort index.</returns>
+        public int CompareFields(IResultSet left, IResultSet right)
+        {
+            int comparison = this.CompareSize(left, right);
+            if (comparison != 0) { return comparison; }
+
+            // Same size of fields.
+            IList<string> leftfields = left.Fields;
+            IList<string> rightfields = right.Fields;
+
+            // Sort the fields.
+            (leftfields as List<string>).Sort();
+            (rightfields as List<string>).Sort();
+
+            // Compare each field, and, return first difference found when comparing.
+            for (int i = 0; i < leftfields.Count; i++)
+            {
+                int fieldComparison = leftfields[i].CompareTo(rightfields[i]);
+                if (fieldComparison != 0) { return fieldComparison; }
+            }
+
+            return comparison;
+        }
+
+        /// <summary>
+        /// Compare two fields.
+        /// </summary>
+        /// <param name="left">Left value.</param>
+        /// <param name="right">Right value.</param>
+        /// <returns>Returns true if both values are equal.</returns>
+        public bool IsEqualFields(IResultSet left, IResultSet right) { return (this.CompareFields(left, right) == 0); }
+
+        /// <summary>
+        /// Returns true if the left value is greater than the right value.
+        /// </summary>
+        /// <param name="left">Left value.</param>
+        /// <param name="right">Right value.</param>
+        /// <returns>Returns true if the left value is greater than the right value.</returns>
+        public bool IsGreaterThanField(IResultSet left, IResultSet right) { return (this.CompareFields(left, right) >= 1); }
+
+        /// <summary>
+        /// Returns true if the left value is less than the right value.
+        /// </summary>
+        /// <param name="left">Left value.</param>
+        /// <param name="right">Right value.</param>
+        /// <returns>Returns true if the left value is less than the right value.</returns>
+        public bool IsLessThanField(IResultSet left, IResultSet right) { return (this.CompareFields(left, right) <= -1); }
+
+        #endregion
+
+        #region Value<T> comparisons.
+
+        /// <summary>
+        /// Return a 1, 0, or -1 representing the inequality (or equality) between the left and right value.
+        /// </summary>
+        /// <param name="left">Left value.</param>
+        /// <param name="right">Right value.</param>
+        /// <returns>Return comparison sort index.</returns>
+        public int CompareValue<T>(T left, T right) where T : IComparable
+        {
+            if (left == null && right == null) { return 0; }
+            if (left == null) { return -1; }
+            if (right == null) { return 1; }
+
+            if (left is IResultSet leftSet && right is IResultSet rightSet)
+            {
+                return this.CompareValue(left, right);
+            }
+
+            if (left is IResultSet) { return 1; }
+            if (right is IResultSet) { return -1; }
+
+            return left.CompareTo(right);
+        }
+
+        /// <summary>
+        /// Compare two values.
+        /// </summary>
+        /// <param name="left">Left value.</param>
+        /// <param name="right">Right value.</param>
+        /// <returns>Returns true if both values are equal.</returns>
+        public bool IsEqualValue<T>(T left, T right) where T : IComparable { return (this.CompareValue<T>(left, right) == 0); }
+
+        /// <summary>
+        /// Returns true if the left value is greater than the right value.
+        /// </summary>
+        /// <param name="left">Left value.</param>
+        /// <param name="right">Right value.</param>
+        /// <returns>Returns true if the left value is greater than the right value.</returns>
+        public bool IsGreaterThanValue<T>(T left, T right) where T : IComparable { return (this.CompareValue<T>(left, right) >= 1); }
+
+        /// <summary>
+        /// Returns true if the left value is less than the right value.
+        /// </summary>
+        /// <param name="left">Left value.</param>
+        /// <param name="right">Right value.</param>
+        /// <returns>Returns true if the left value is less than the right value.</returns>
+        public bool IsLessThanValue<T>(T left, T right) where T : IComparable { return (this.CompareValue<T>(left, right) <= -1); }
+
+        #endregion
+
+        #region Value comparisons.
+
+        /// <summary>
+        /// Return a 1, 0, or -1 representing the inequality (or equality) between the left and right value.
+        /// </summary>
+        /// <param name="left">Left value.</param>
+        /// <param name="right">Right value.</param>
+        /// <returns>Return comparison sort index.</returns>
+        public int CompareValue(IResultSet left, IResultSet right)
+        {
+            int comparison = 1;
+            comparison = (this.IsGreaterThanValue(left, right)) ? 1 : comparison;
+            comparison = (this.IsLessThanValue(left, right)) ? -1 : comparison;
+            comparison = (this.IsEqualValue(left, right)) ? 0 : comparison;
+            return comparison;
+        }
+
+        /// <summary>
+        /// Compare two values.
+        /// </summary>
+        /// <param name="left">Left value.</param>
+        /// <param name="right">Right value.</param>
+        /// <returns>Returns true if both values are equal.</returns>
+        public bool IsEqualValue(IResultSet left, IResultSet right)
+        {
+            if (this.CompareFields(left, right) != 0) { return false; }
+
+            IList<IRow> leftEntries = left.Rows;
+            IList<IRow> rightEntries = right.Rows;
+
+            (leftEntries as List<IRow>).Sort();
+            (rightEntries as List<IRow>).Sort();
+
+            for (int i = 0; i < leftEntries.Count; i++)
+            {
+                if (!leftEntries[i].IsEqual(rightEntries[i])) { return false; }
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// Returns true if the left value is greater than the right value.
+        /// </summary>
+        /// <param name="left">Left value.</param>
+        /// <param name="right">Right value.</param>
+        /// <returns>Returns true if the left value is greater than the right value.</returns>
+        public bool IsGreaterThanValue(IResultSet left, IResultSet right)
+        {
+            if (this.CompareFields(left, right) >= 1) { return true; }
+
+            IList<IRow> leftEntries = left.Rows;
+            IList<IRow> rightEntries = right.Rows;
+
+            (leftEntries as List<IRow>).Sort();
+            (rightEntries as List<IRow>).Sort();
+
+            for (int i = 0; i < leftEntries.Count; i++)
+            {
+                int comparison = leftEntries[i].Compare(rightEntries[i]);
+                if (leftEntries[i].Compare(rightEntries[i]) != 0)
+                {
+                    return (comparison >= 1);
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Returns true if the left value is less than the right value.
+        /// </summary>
+        /// <param name="left">Left value.</param>
+        /// <param name="right">Right value.</param>
+        /// <returns>Returns true if the left value is less than the right value.</returns>
+        public bool IsLessThanValue(IResultSet left, IResultSet right)
+        {
+            if (this.CompareFields(left, right) <= -1) { return true; }
+
+            IList<IRow> leftEntries = left.Rows;
+            IList<IRow> rightEntries = right.Rows;
+
+            (leftEntries as List<IRow>).Sort();
+            (rightEntries as List<IRow>).Sort();
+
+            for (int i = 0; i < leftEntries.Count; i++)
+            {
+                int comparison = leftEntries[i].Compare(rightEntries[i]);
+                if (leftEntries[i].Compare(rightEntries[i]) != 0)
+                {
+                    return (comparison <= -1);
+                }
+            }
+
+            return false;
+        }
+
+        #endregion
+
+        #endregion
+                    
+        #region IListWrapper<IEntry> - HasElement(IEntry), HasElements(IList<IEntry>), HasElements(params IEntry[]), HasAnyElements(IList<IEntry>), HasAnyElements(params IEntry[])
+
+        /// <summary>
+        /// Checks if the element is contained within the collection.
+        /// </summary>
+        /// <param name="element">Element to check.</param>
+        /// <returns>Returns true if element is found.</returns>
+        public bool HasElement(IRow element)
+        {
+            if (element == null) { return false; }
+            return this.List.Contains(element);
+        }
+
+        /// <summary>
+        /// Check if all elements are present within the collection. Returns false if a single one is missing.
+        /// </summary>
+        /// <param name="elements">Collection of elements to check.</param>
+        /// <returns>Returns true if elements are found.</returns>
+        public bool HasElements(IList<IRow> elements)
+        {
+            foreach (IRow row in elements)
+            {
+                if (!this.HasElement(row)) { return false; }
+            }
+            return true;
+        }
+
+        /// <summary>
+        /// Check if all elements are present within the collection. Returns false if a single one is missing.
+        /// </summary>
+        /// <param name="elements">Collection of elements to check.</param>
+        /// <returns>Returns true if elements are found.</returns>
+        public bool HasElements(params IRow[] elements) { return this.HasElements(elements.ToList<IRow>()); }
+
+        /// <summary>
+        /// Check if any of the elements are present within the collection. Returns false if all are missing.
+        /// </summary>
+        /// <param name="elements">Collection of elements to check.</param>
+        /// <returns>Returns true if elements are found.</returns>
+        public bool HasAnyElements(IList<IRow> elements)
+        {
+            foreach (IRow row in elements)
+            {
+                if (this.HasElement(row)) { return true; }
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Check if any of the elements are present within the collection. Returns false if all are missing.
+        /// </summary>
+        /// <param name="elements">Collection of elements to check.</param>
+        /// <returns>Returns true if elements are found.</returns>
+        public bool HasAnyElements(params IRow[] elements) { return this.HasElements(elements.ToList<IRow>()); }
+
+        #endregion
+
+        #region IResultSet - HasFields(List<string>), HasFields(params string[])
+
+        /// <summary>
+        /// Check if all fields are present in a row.
+        /// </summary>
+        /// <param name="fieldnames">Collection of field names to look for.</param>
+        /// <returns>Returns true if ALL names are found.</returns>
+        public bool HasFields(IList<string> fieldnames)
+        {
+            foreach (string field in fieldnames)
+            {
+                if (!this.HasField(field)) { return false; }
+            }
+            return true;
+        }
+
+        /// <summary>
+        /// Check if all fields are present in a row.
+        /// </summary>
+        /// <param name="fieldnames">Collection of field names to look for.</param>
+        /// <returns>Returns true if ALL names are found.</returns>
+        public bool HasFields(params string[] fieldnames) { return this.HasFields(fieldnames.ToList<string>()); }
+
+        #endregion
+
+        #region IEmpty - MakeEmpty(void)
+
+        /// <summary>
+        /// When called, turns the instance into its 'empty' form.
+        /// </summary>
+        /// <returns>Returns reference to self.</returns>
+        public IResultSet MakeEmpty()
+        {
+            this.List.Clear();
+            return this;
+        }
+
+        #endregion
+
+        #region IReplicate - IResultSet Clone()
+
+        /// <summary>
+        /// Clone an object.
+        /// </summary>
+        /// <param name="obj">Object to clone.</param>
+        /// <returns>Create a clone.</returns>
+        public object Clone(object obj)
+        {
+            if (obj is IResultSet row)
+            {
+                return row.Clone();
+            }
+            if (obj is IReplicate copy)
+            {
+                return copy.Clone(copy);
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// Create a deep-copy of this row.
+        /// </summary>
+        /// <returns>Returns a row, cloned from this row.</returns>
+        public IResultSet Clone()
+        {
+            return new MySqlResultSet(this);
+        }
+
+        #endregion
+
+        #region IOperationStateMachine - IsState(OperationStatus), IsState(int), Error(), Fail(), Pass()
 
         /// <summary>
         /// Check if matches input state.
@@ -364,7 +975,7 @@ namespace ISTE.DAL.Database.Implementations
         /// <returns>Returns true if match made.</returns>
         public bool IsState(int code)
         {
-            if(code >= -1 && code < 2)
+            if (code >= -1 && code < 2)
             {
                 return this.state == (OperationStatus)code;
             }
@@ -395,198 +1006,90 @@ namespace ISTE.DAL.Database.Implementations
             this.SetState(OperationStatus.SUCCESS);
         }
 
-        /// <summary>
-        /// Return this result set's metadata as a string.
-        /// </summary>
-        /// <returns>Returns the result set as a formatted string.</returns>
-        public override string ToString()
-        {
-            // Example:
-            // [MySqlResultSet] {(Empty set). 'SELECT * FROM capstonedb.users' - 0 rows affected.}
-            return $"[MySqlResultSet] {{({((this.IsEmpty) ? "Empty set" : $"{this.Count} total elements")}). '{((this.Query.Length == 0) ? "No query set" : this.Query)}' - {this.RowsAffected} rows affected.}}";
-        }
+        #endregion
 
-        //////
-        // IComparable
+        #endregion
+
+        //////////////////////
+        // Helper(s).
+
+        #region Helper methods.
+
+        #region IListWrapper - IsValidIndex(int)
 
         /// <summary>
-        /// Check if reference is the same, or if all rows match.
+        /// Check if index is valid.
         /// </summary>
-        /// <param name="obj">IResultSet to be compared.</param>
-        /// <returns>Returns true if equal. False, if otherwise.</returns>
-        public override bool Equals(object obj)
+        /// <param name="index">Index to check.</param>
+        /// <returns>Returns true if in bounds.</returns>
+        public bool IsValidIndex(int index)
         {
-            if (obj is MySqlResultSet set)
-            {
-                if (this.Count == set.Count)
-                {
-                    for (int index = 0; index < this.Count; index++)
-                    {
-                        IRow rowA = this[index];
-                        IRow rowB = set.GetRow(index);
-                        if (!rowA.Equals(rowB)) { return false; }                        
-                    }
-                    return true;
-                }
-            }
-            return false;
+            return (index < this.List.Count && index >= 0);
         }
 
-        /// <summary>
-        /// Returns the hashcode of all the internal rows.
-        /// </summary>
-        /// <returns>Returns hashcode compilation of all rows.</returns>
-        public override int GetHashCode()
-        {
-            int hash = base.GetHashCode();
-            foreach (IRow row in this)
-            {
-                hash = hash ^ row.GetHashCode();
-            }
-            return hash;
-        }
+        #endregion
 
-        /// <summary>
-        /// Compare two record sets. Matches based on row-to-row comparison.
-        /// </summary>
-        /// <param name="obj">IResultSet to be compared.</param>
-        /// <returns>Returns zero if equal. Returns greater value if more rows and unequal. Returns smaller value if less rows.</returns>
-        public int CompareTo(object obj)
-        {
-            if (obj != null && obj is IResultSet set)
-            {
-
-                // If the same, return 0.
-                if (this.Equals(obj)) { return 0; }
-
-                // If not the same, find the difference.
-                // If the row count is the same, check if rows are different.
-                if (this.Count == set.Count)
-                {
-                    // If difference, return the compare between them.
-                    for (int index = 0; index < this.Count; index++)
-                    {
-                        IRow rowA = this[index];
-                        IRow rowB = set.GetRow(index);
-                        if (rowA == null)
-                        {
-                            if (rowB == null) { continue; }
-                            else { return -1; }
-                        }
-                        else
-                        {
-                            if (rowB == null) { return 1; }
-                            int comparison = rowA.CompareTo(rowB);
-                            if (comparison != 0) { return comparison; }
-                        }
-                    }
-
-                    // If no conflict found, return as equal.
-                    return 0;
-                }
-                else
-                {
-                    return this.Count.CompareTo(set.Count);
-                }
-            }
-
-            // If not of a compatible type, return nothing.
-            throw new ArgumentException("Input object is not of type IResultSet.");
-        }
-
-        //////
-        // ICollectionWrapper
-
-        /// <summary>
-        /// Check if the result set has at least as many rows as the specified input.
-        /// </summary>
-        /// <param name="count">Amount of rows to check if result set has.</param>
-        /// <returns>Returns true if count is greater than or equal to input value.</returns>
-        public bool HasAtLeastThisMany(int count)
-        {
-            return (this.Count >= count);
-        }
-
-        /// <summary>
-        /// Check if the result set has exactly as many rows as the specified input.
-        /// </summary>
-        /// <param name="count">Amount of rows to check if result set has.</param>
-        /// <returns>Returns true if count is equal to input value.</returns>
-        public bool HasExactlyThisMany(int count)
-        {
-            return (this.Count == count);
-        }
-        
-        /// <summary>
-        /// Check if it has a particular index.
-        /// </summary>
-        /// <param name="index">Index to check for.</param>
-        /// <returns>Returns true if the index is in bounds. False, if otherwise.</returns>
-        public bool HasIndex(int index)
-        {
-            return (index >= 0 && index < this.Count);
-        }
-
-        //////
-        // ICollection
-
-        /// <summary>
-        /// Clear the collection.
-        /// </summary>
-        public void Clear()
-        {
-            this.Rows.Clear();
-        }
-
-        /// <summary>
-        /// Check if collection contains the specified item.
-        /// </summary>
-        /// <param name="item">Item to search for.</param>
-        /// <returns>Returns true if found.</returns>
-        public bool Contains(IRow item)
-        {
-            return this.Rows.Contains(item);
-        }
-
-        /// <summary>
-        /// Copy items into the input array.
-        /// </summary>
-        /// <param name="array">Array to copy items into.</param>
-        /// <param name="arrayIndex">Starting index for array.</param>
-        public void CopyTo(IRow[] array, int arrayIndex)
-        {
-            this.Rows.CopyTo(array, arrayIndex);
-        }
-        
-        //////
-        // IReplicate
-
-        /// <summary>
-        /// Return a cloned copy of the results.
-        /// </summary>
-        /// <returns>Returns a results set.</returns>
-        public IReplicate Clone()
-        {
-            return new MySqlResultSet(this);
-        }
+        #endregion
 
         //////////////////////
         // Accessor(s).
 
-        //////
-        // IOperationStateMachine
+        #region Accessor methods.
+
+        #region IListWrapper
 
         /// <summary>
-        /// Return current state.
+        /// Returns an enumerator that iterates through the collection.
         /// </summary>
-        /// <returns>Returns OperationStatus.</returns>
-        public OperationStatus GetState()
+        /// <returns>Returns an enumerator that iterates through the collection.</returns>
+        public IEnumerator<IRow> GetEnumerator()
         {
-            return this.state;
+            return this.Rows.GetEnumerator();
         }
 
-        //////
-        // IResultSet
+        #region int GetIndex(IRow), IEntry GetElement(int), bool TryGetElement(int, out IRow)
+
+        /// <summary>
+        /// Return the index of a row if it's in the collection.
+        /// </summary>
+        /// <param name="row">Row to find index for.</param>
+        /// <returns>Returns the index of the row. Returns -1 if no row found.</returns>
+        public int GetIndex(IRow row)
+        {
+            if (this.IsEmpty || row == null || !this.HasElement(row)) { return -1; }
+            return this.List.IndexOf(row);
+        }
+        
+        /// <summary>
+        /// Return element at specified index. Returns null if element doesn't exist.
+        /// </summary>
+        /// <param name="index">Index of element reference.</param>
+        /// <returns>Returns null if element doesn't exist.</returns>
+        public IRow GetElement(int index)
+        {
+            if (!this.IsValidIndex(index)) { return null; }
+            return this.List[index];
+        }
+
+        /// <summary>
+        /// Return element at specified index via out parameter. Returns false if element doesn't exist.
+        /// </summary>
+        /// <param name="index">Index of element reference.</param>
+        /// <param name="result">Element to affect.</param>
+        /// <returns>Returns null if element doesn't exist.</returns>
+        public bool TryGetElement(int index, out IRow result)
+        {
+            result = this.GetElement(index);
+            return (result != null);
+        }
+
+        #endregion
+
+        #endregion
+
+        #region IResultSet
+
+        #region int GetRowsAffected(void), string GetQuery(void)
 
         /// <summary>
         /// Return the number of rows affected.
@@ -606,37 +1109,90 @@ namespace ISTE.DAL.Database.Implementations
             return this.Query;
         }
 
-        /// <summary>
-        /// Returns a row based on its index value.
-        /// </summary>
-        /// <param name="rowIndex">Row index to access.</param>
-        /// <returns>Returns a single row.</returns>
-        public IRow GetRow(int rowIndex)
-        {
-            // Validate input.
-            if (rowIndex < 0 || rowIndex >= this.Count) { return null; }
+        #endregion
+        
+        #region int GetIndex(string), string GetFieldName(int), bool TryGetFieldName(int, out string)
 
-            // Return row at index.
-            return this[rowIndex];
+        /// <summary>
+        /// Return index of specified fieldname. Returns -1 if it doesn't exist.
+        /// </summary>
+        /// <param name="fieldname">Fieldname to access.</param>
+        /// <returns>Returns index.</returns>
+        public int GetIndex(string fieldname)
+        {
+            int index = -1;
+            if (this.TryGetRow(0, out IRow row))
+            {
+                index = row.GetIndex(fieldname);
+            }
+            return index;
         }
+
+        /// <summary>
+        /// Return the fieldname at the specified index.
+        /// </summary>
+        /// <param name="index">Field index to access.</param>
+        /// <returns>Returns formatted fieldname. Throws exception if index out of bounds.</returns>
+        public string GetFieldName(int index)
+        {
+            if (!IsValidIndex(index)) { return null; }
+            return this.Fields[index];
+        }
+
+        /// <summary>
+        /// Return the fieldname at the specified index.
+        /// </summary>
+        /// <param name="index">Field index to access.</param>
+        /// <param name="fieldname">Fieldname to return.</param>
+        /// <returns>Returns formatted fieldname. Throws exception if index out of bounds.</returns>
+        public bool TryGetFieldName(int index, out string fieldname)
+        {
+            fieldname = this.GetFieldName(index);
+            return (!String.IsNullOrEmpty(fieldname));
+        }
+
+        #endregion
+
+        #region IRow GetRow(int), bool TryGetRow(int, out IRow)
+
+        /// <summary>
+        /// Return row at field index.
+        /// </summary>
+        /// <param name="index">Field index to access.</param>
+        /// <returns>Returns row. Throws exception if index out of bounds.</returns>
+        public IRow GetRow(int index)
+        {
+            return this.GetElement(index);
+        }
+
+        /// <summary>
+        /// Return row at field index.
+        /// </summary>
+        /// <param name="index">Field index to access.</param>
+        /// <param name="row">Entry to retrieve.</param>
+        /// <returns>Returns row. Throws exception if index out of bounds.</returns>
+        public bool TryGetRow(int index, out IRow row)
+        {
+            row = this.GetRow(index);
+            return (row != null);
+        }
+
+        #endregion
+
+        #region IList<string> GetRowHeader(int), IList<IEntry> GetRowEntries(int), IDictionary<string, string> GetRowMap(int), IList<KeyValuePair<string, string>> GetRowData(int)
 
         /// <summary>
         /// Returns a header based on the row index.
         /// </summary>
         /// <param name="rowIndex">Row index to access.</param>
         /// <returns>Returns collection of row</returns>
-        public List<string> GetRowHeader(int rowIndex)
+        public IList<string> GetRowHeader(int rowIndex)
         {
-            List<string> header = new List<string>();
-            IRow row = this.GetRow(rowIndex);
-            if (row != null && row.HasFields)
+            if (this.TryGetRow(rowIndex, out IRow row))
             {
-                foreach (string field in row.Fields)
-                {
-                    header.Add(field);
-                }
+                return row.Fields;
             }
-            return header;
+            return new List<string>();
         }
 
         /// <summary>
@@ -644,28 +1200,13 @@ namespace ISTE.DAL.Database.Implementations
         /// </summary>
         /// <param name="rowIndex">Row index to access.</param>
         /// <returns>Returns collection of entries (by ref).</returns>
-        public List<IEntry> GetRowEntries(int rowIndex)
+        public IList<IEntry> GetRowEntries(int rowIndex)
         {
-            List<IEntry> rowEntries = new List<IEntry>();
-            IRow row = this.GetRow(rowIndex);
-            if (row != null)
+            if (this.TryGetRow(rowIndex, out IRow row))
             {
-                foreach (IEntry entry in row.Entries)
-                {
-                    rowEntries.Add(entry);
-                }
+                return row.Entries;
             }
-            return rowEntries;
-        }
-
-        /// <summary>
-        /// Returns collection of data entries in a single row.
-        /// </summary>
-        /// <param name="rowIndex">Row index to access.</param>
-        /// <returns>Returns collection of entry data pairs.</returns>
-        public List<KeyValuePair<string, string>> GetRowData(int rowIndex)
-        {
-            return this.GetRowMap(rowIndex).ToList<KeyValuePair<string, string>>();
+            return new List<IEntry>();
         }
 
         /// <summary>
@@ -675,109 +1216,184 @@ namespace ISTE.DAL.Database.Implementations
         /// <returns>Returns collection of entry data pairs.</returns>
         public IDictionary<string, string> GetRowMap(int rowIndex)
         {
-            IDictionary<string, string> dictionary = new Dictionary<string, string>();
-            IRow row = this.GetRow(rowIndex);
-            if(row != null)
+            if (this.TryGetRow(rowIndex, out IRow row))
             {
-                foreach (IEntry entry in row.Entries)
-                {
-                    dictionary.Add(entry.GetData());
-                }
+                return row.Data;
             }
-            return dictionary;
+            return new Dictionary<string, string>();
         }
 
         /// <summary>
-        /// Return a subset of cloned rows from the current instance, using the input parameters to narrow selection.
+        /// Returns collection of data entries in a single row.
         /// </summary>
-        /// <param name="start">Start index of subset parsing.</param>
+        /// <param name="rowIndex">Row index to access.</param>
+        /// <returns>Returns collection of entry data pairs.</returns>
+        public IList<KeyValuePair<string, string>> GetRowData(int rowIndex)
+        {
+            return this.GetRowMap(rowIndex).ToList<KeyValuePair<string, string>>();
+        }
+
+        #endregion
+        
+        #region IEntry GetEntry(int, int), bool TryGetEntry(int, int, out IEntry), IEntry GetEntry(int, string), bool TryGetEntry(int, string, out IEntry)
+
+        /// <summary>
+        /// Return row index referenced row's entry at field index.
+        /// </summary>
+        /// <param name="rowIndex">Row index to access.</param>
+        /// <param name="colIndex">Field index to access.</param>
+        /// <returns>Returns entry. Throws exception if index out of bounds.</returns>
+        public IEntry GetEntry(int rowIndex, int colIndex)
+        {
+            if (this.TryGetRow(rowIndex, out IRow row))
+            {
+                return row.GetEntry(colIndex);
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// Return entry at field index.
+        /// </summary>
+        /// <param name="rowIndex">Row index to access.</param>
+        /// <param name="colIndex">Field index to access.</param>
+        /// <param name="entry">Entry to retrieve.</param>
+        /// <returns>Returns entry. Throws exception if index out of bounds.</returns>
+        public bool TryGetEntry(int rowIndex, int colIndex, out IEntry entry)
+        {
+            entry = this.GetEntry(rowIndex, colIndex);
+            return (entry != null);
+        }
+
+        /// <summary>
+        /// Return entry associated with the field.
+        /// </summary>
+        /// <param name="rowIndex">Row index to access.</param>
+        /// <param name="fieldname">Field to access.</param>
+        /// <returns>Returns entry. Returns null if field doesn't exist.</returns>
+        public IEntry GetEntry(int rowIndex, string fieldname)
+        {
+            if (this.TryGetRow(rowIndex, out IRow row))
+            {
+                return row.GetEntry(fieldname);
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// Return entry associated with the field.
+        /// </summary>
+        /// <param name="rowIndex">Row index to access.</param>
+        /// <param name="fieldname">Field to access.</param>
+        /// <param name="entry">Entry to retrieve.</param>
+        /// <returns>Returns entry. Returns null if field doesn't exist.</returns>
+        public bool TryGetEntry(int rowIndex, string fieldname, out IEntry entry)
+        {
+            entry = this.GetEntry(rowIndex, fieldname);
+            return (entry != null);
+        }
+
+        #endregion
+
+        #region IList<IRow> - GetRange(int), GetRange(int, int)
+
+        /// <summary>
+        /// Returns a subset of this row, as a list of entries, using the input values.
+        /// </summary>
+        /// <param name="start">Starting index to begin subset parsing.</param>
+        /// <returns>Returns a new collection of entries.</returns>
+        public IList<IRow> GetRange(int start = 0)
+        {
+            if (start == 0) { return this.Rows; }
+            if (!this.IsValidIndex(start)) { return new List<IRow>(); }
+            return (this.Rows as List<IRow>).GetRange(start, this.Count);
+        }
+
+        /// <summary>
+        /// Returns a subset of this row, as a list of entries, using the input values.
+        /// </summary>
+        /// <param name="start">Starting index to begin subset parsing.</param>
         /// <param name="length">Length of subset parsing.</param>
-        /// <returns>Returns new collection of rows.</returns>
-        public List<IRow> GetRange(int start = 0, int length = -1)
+        /// <returns>Returns a new collection of entries.</returns>
+        public IList<IRow> GetRange(int start = 0, int length = -1)
         {
-            List<IRow> subset = new List<IRow>();
+            if (length <= -1 || length >= this.Count) { return this.GetRange(start); }
+            if (length == 0 || !this.IsValidIndex(start)) { return new List<IRow>(); }
+            return (this.Rows as List<IRow>).GetRange(start, length);
+        }
 
-            if (start > 0 && start < this.Count)
-            {
-                foreach (IRow row in this)
-                {
-                    if (length == -1 || subset.Count < length)
-                    {
-                        // Add entry (and its associated field).
-                        subset.Add(row);
-                    }
-                }
-            }
+        #endregion
 
-            return subset;
+        #region KeyValuePair<string, string> GetData(int, int), bool TryGetData(int, int, KeyValuePair<string, string>),  KeyValuePair<string, string> GetData(int, string), bool TryGetData(int, string, KeyValuePair<string, string>)  
+
+        /// <summary>
+        /// Get tabular data linking a fieldname to a value.
+        /// </summary>
+        /// <param name="rowIndex">Row index to access.</param>
+        /// <param name="colIndex">Field index to get data from.</param>
+        /// <returns>Returns key/value pair if field exists at index. Throws exception if index out of bounds.</returns>
+        public KeyValuePair<string, string> GetData(int rowIndex, int colIndex)
+        {
+            if (!this.TryGetEntry(rowIndex, colIndex, out IEntry entry)) { return new KeyValuePair<string, string>("", ""); }
+            return entry.Data;
         }
 
         /// <summary>
-        /// Return an entry from a given [row, col] indexing system.
+        /// Get tabular data linking a fieldname to a value.
         /// </summary>
         /// <param name="rowIndex">Row index to access.</param>
-        /// <param name="fieldIndex">Field index to access.</param>
-        /// <returns>Returns entry. Will throw exception if index out of bounds.</returns>
-        public IEntry GetEntry(int rowIndex, int fieldIndex)
+        /// <param name="colIndex">Field index to get data from.</param>
+        /// <param name="data">Data to retrieve.</param>
+        /// <returns>Returns key/value pair if field exists at index. Throws exception if index out of bounds.</returns>
+        public bool TryGetData(int rowIndex, int colIndex, out KeyValuePair<string, string> data)
         {
-            IRow row = this.GetRow(rowIndex);
-            if (row == null) { return null; }
-            return row.GetEntry(fieldIndex);
+            data = this.GetData(rowIndex, colIndex);
+            return (!String.IsNullOrWhiteSpace(data.Key));
         }
 
         /// <summary>
-        /// Return an entry from a given [row, key] indexing system.
+        /// Get tabular data linking a fieldname to a value.
         /// </summary>
         /// <param name="rowIndex">Row index to access.</param>
-        /// <param name="fieldKey">Field to access.</param>
-        /// <returns>Returns entry. Will throw exception if index out of bounds. Returns null if field cannot be found.</returns>
-        public IEntry GetEntry(int rowIndex, string fieldKey)
+        /// <param name="fieldname">Fieldname to search data from.</param>
+        /// <returns>Returns key/value pair if field exists at index. Returns null if fieldname doesn't exist.</returns>
+        public KeyValuePair<string, string> GetData(int rowIndex, string fieldname)
         {
-            IRow row = this.GetRow(rowIndex);
-            if(row == null) { return null; }
-            return row.GetEntry(fieldKey);
+            if (!this.TryGetEntry(rowIndex, fieldname, out IEntry entry)) { return new KeyValuePair<string, string>("", ""); }
+            return entry.Data;
         }
 
         /// <summary>
-        /// Return data from entry from a given [row, col] indexing system.
+        /// Get tabular data linking a fieldname to a value.
         /// </summary>
         /// <param name="rowIndex">Row index to access.</param>
-        /// <param name="fieldIndex">Field index to access.</param>
-        /// <returns>Returns entry. Will throw exception if index out of bounds.</returns>
-        public KeyValuePair<string, string> GetEntryData(int rowIndex, int fieldIndex)
+        /// <param name="fieldname">Fieldname to search data from.</param>
+        /// <param name="data">Data to retrieve.</param>
+        /// <returns>Returns key/value pair if field exists at index. Returns null if fieldname doesn't exist.</returns>
+        public bool TryGetData(int rowIndex, string fieldname, out KeyValuePair<string, string> data)
         {
-            IRow row = this.GetRow(rowIndex);
-            if (row == null) { return new KeyValuePair<string, string>("", ""); }
-            IEntry entry = row.GetEntry(rowIndex);
-            return (entry == null) ? new KeyValuePair<string, string>("", "") : entry.GetData();
+            data = this.GetData(rowIndex, fieldname);
+            return (!String.IsNullOrWhiteSpace(data.Key));
         }
 
-        /// <summary>
-        /// Return data from entry from a given [row, key] indexing system.
-        /// </summary>
-        /// <param name="rowIndex">Row index to access.</param>
-        /// <param name="fieldKey">Field to access.</param>
-        /// <returns>Returns entry. Will throw exception if index out of bounds. Returns null if field cannot be found.</returns>
-        public KeyValuePair<string, string> GetEntryData(int rowIndex, string fieldKey)
-        {
-            IRow row = this.GetRow(rowIndex);
-            if(row == null) { return new KeyValuePair<string, string>("", ""); }
-            IEntry entry = row.GetEntry(fieldKey);
-            return (entry == null) ? new KeyValuePair<string, string>("", "") : entry.GetData();
-        }
+        #endregion
+
+        #region IList<IEntry> GetEntries(int), IList<IEntry> GetEntries(string), IList<KeyValuePair<string, string>> GetData(int), IList<KeyValuePair<string, string>> GetData(string) 
 
         /// <summary>
         /// Creates a list of entries corresponding to the input fieldindex from all rows.
         /// </summary>
         /// <param name="fieldIndex">Field index to access entries from.</param>
         /// <returns>Returns collection of entries (by reference).</returns>
-        public List<IEntry> GetEntries(int fieldIndex)
+        public IList<IEntry> GetEntries(int fieldIndex)
         {
             List<IEntry> entries = new List<IEntry>();
             foreach (IRow row in this)
             {
-                IEntry entry = row.GetEntry(fieldIndex);
-                if (entry != null) { entries.Add(entry); }
+                if(row.TryGetEntry(fieldIndex, out IEntry entry))
+                {
+                    entries.Add(entry);
+                }
             }
             return entries;
         }
@@ -787,15 +1403,17 @@ namespace ISTE.DAL.Database.Implementations
         /// </summary>
         /// <param name="fieldname">Field to access entries from.</param>
         /// <returns>Returns collection of entries (by reference).</returns>
-        public List<IEntry> GetEntries(string fieldname)
+        public IList<IEntry> GetEntries(string fieldname)
         {
-            List<IEntry> entries = null;
-            if (!this.IsEmpty)
+            List<IEntry> entries = new List<IEntry>();
+            foreach (IRow row in this)
             {
-                int index = this[0].GetIndex(fieldname);
-                if (index != -1) { entries = this.GetEntries(index); }
+                if (row.TryGetEntry(fieldname, out IEntry entry))
+                {
+                    entries.Add(entry);
+                }
             }
-            return entries ?? new List<IEntry>();
+            return entries;
         }
 
         /// <summary>
@@ -803,16 +1421,16 @@ namespace ISTE.DAL.Database.Implementations
         /// </summary>
         /// <param name="fieldIndex">Field index to access entries from.</param>
         /// <returns>Returns collection of entries (by value).</returns>
-        public List<KeyValuePair<string, string>> GetEntryData(int fieldIndex)
+        public IList<KeyValuePair<string, string>> GetData(int fieldIndex)
         {
             List<KeyValuePair<string, string>> data = new List<KeyValuePair<string, string>>();
-
             foreach (IRow row in this)
             {
-                IEntry entry = row.GetEntry(fieldIndex);
-                if(entry != null) { data.Add(entry.GetData()); }
+                if (row.TryGetEntry(fieldIndex, out IEntry entry))
+                {
+                    data.Add(entry.Data);
+                }
             }
-
             return data;
         }
 
@@ -821,100 +1439,193 @@ namespace ISTE.DAL.Database.Implementations
         /// </summary>
         /// <param name="fieldname">Field to access entries from.</param>
         /// <returns>Returns collection of entries (by reference).</returns>
-        public List<KeyValuePair<string, string>> GetEntryData(string fieldname)
+        public IList<KeyValuePair<string, string>> GetData(string fieldname)
         {
-            List<KeyValuePair<string, string>> data = null;
-            if (!this.IsEmpty)
+            List<KeyValuePair<string, string>> data = new List<KeyValuePair<string, string>>();
+            foreach (IRow row in this)
             {
-                int index = this[0].GetIndex(fieldname);
-                if (index != -1) { data = this.GetEntryData(index); }
+                if (row.TryGetEntry(fieldname, out IEntry entry))
+                {
+                    data.Add(entry.Data);
+                }
             }
-            return data ?? new List<KeyValuePair<string, string>>();
+            return data;
         }
+
+        #endregion
         
-        //////
-        // ICollectionWrapper<IRow>
+        #endregion
+
+        #region IOperationStateMachine - GetState()
 
         /// <summary>
-        /// Return the index of a row if it's in the collection.
+        /// Return current state.
         /// </summary>
-        /// <param name="row">Row to find index for.</param>
-        /// <returns>Returns the index of the row. Returns -1 if no row found.</returns>
-        public int GetIndex(IRow row)
-        {            
-            // Return a -1 if empty collection. Otherwise, attempt to find index of input row.
-            return ((this.IsEmpty) ? -1 : this.Rows.IndexOf(row));
-        }
-
-        /// <summary>
-        /// Return the row at the specified index.
-        /// </summary>
-        /// <param name="index">Index to retrieve item from.</param>
-        /// <param name="item">Item to be output.</param>
-        /// <returns>Returns true if successfully obtained item. Returns item if index is in bounds.</returns>
-        public bool GetItem(int index, out IRow item)
+        /// <returns>Returns OperationStatus.</returns>
+        public OperationStatus GetState()
         {
-            // Validate input.
-            if (!this.HasIndex(index))
-            {
-                throw new IndexOutOfRangeException($"Cannot get row from collection. Index [{index}] out of range ({this.Count} total element(s)).");
-            }
-
-            // Return reference.
-            item = this[index];
-            return item != null;
-        }
-        
-        /// <summary>
-        /// Returns an enumerator that iterates through the collection.
-        /// </summary>
-        /// <returns>Returns an enumerator that iterates through the collection.</returns>
-        public IEnumerator<IRow> GetEnumerator()
-        {
-            return this.Rows.GetEnumerator();
+            return this.state;
         }
 
-        /// <summary>
-        /// Returns an enumerator that iterates through the collection.
-        /// </summary>
-        /// <returns>Returns an enumerator that iterates through the collection.</returns>
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return this.GetEnumerator();
-        }
+        #endregion
+
+        #endregion
 
         //////////////////////
         // Mutator(s).
 
-        //////
-        // IOperationStateMachine
+        #region Mutator methods.
+
+        #region IListWrapper
+
+        #region IRow AddElement(IRow), bool TryAddElement(IRow, out IRow), bool AddElements(IList<IRow>), bool AddElements(params IRow[] elements)
 
         /// <summary>
-        /// Set the current state to input value.
+        /// Add element to the collection if it doesn't already exist.
         /// </summary>
-        /// <param name="other">Value to assign.</param>
-        public void SetState(OperationStatus other)
+        /// <param name="element">Element to affect.</param>
+        /// <returns>Returns operation success.</returns>
+        public IRow AddElement(IRow element)
         {
-            this.state = other;
+            if (this.HasElement(element)) { return null; }
+            if (element == null) { return null; }
+            this.List.Add(element);
+            return element;
         }
 
         /// <summary>
-        /// Set the current state based on input integer code.
+        /// Add element to the collection if it doesn't already exist.
         /// </summary>
-        /// <param name="code">Reference to value to assign.</param>
-        public bool SetState(int code)
+        /// <param name="element">Element to affect.</param>
+        /// <param name="result">Resulting element.</param>
+        /// <returns>Returns operation success.</returns>
+        public bool TryAddElement(IRow element, out IRow result)
         {
-            if (code >= -1 && code < 2)
+            result = this.AddElement(element);
+            return (result != null);
+        }
+
+        /// <summary>
+        /// Add a collection of elements to the current collection. Returns false if any elements already exist in the set.
+        /// </summary>
+        /// <param name="elements">Elements to add.</param>
+        /// <returns>Returns operation success.</returns>
+        public bool AddElements(IList<IRow> elements)
+        {
+            if (this.HasAnyElements(elements))
             {
-                OperationStatus status = (OperationStatus)code;
-                this.SetState(status);
-                return true;
+                return false;
             }
-            return false;
+
+            // Validate all entries.
+            foreach (IRow entry in elements)
+            {
+                if (entry == null) { return false; }
+            }
+
+            // Add the elements.
+            (this.Rows as List<IRow>).AddRange(elements);
+            return true;
         }
-        
-        //////
-        // IResultSet
+
+        /// <summary>
+        /// Add a collection of elements to the current collection.
+        /// </summary>
+        /// <param name="elements">Elements to add.</param>
+        /// <returns>Returns operation success.</returns>
+        public bool AddElements(params IRow[] elements) { return this.AddElements(elements.ToList<IRow>()); }
+
+        #endregion
+
+        #region IRow SetElement(int, IRow), bool TrySetElement(int, IRow, out IRow)
+
+        /// <summary>
+        /// Set existing index to reference the input element.
+        /// </summary>
+        /// <param name="index">Index of element reference.</param>
+        /// <param name="element">Element to affect.</param>
+        /// <returns>Returns operation success.</returns>
+        public IRow SetElement(int index, IRow element)
+        {
+            if (!this.IsValidIndex(index)) { return null; }
+            if (element == null) { return null; }
+            this.List[index] = element;
+            return this.List[index];
+        }
+
+        /// <summary>
+        /// Set existing index to reference the input element.
+        /// </summary>
+        /// <param name="index">Index of element reference.</param>
+        /// <param name="element">Element to affect.</param>
+        /// <param name="result">Resulting element.</param>
+        /// <returns>Returns operation success.</returns>
+        public bool TrySetElement(int index, IRow element, out IRow result)
+        {
+            result = this.SetElement(index, element);
+            return (result != null);
+        }
+
+        #endregion
+
+        #region IRow RemoveElement(IRow), bool TryRemoveElement(IRow, out IRow), IRow RemoveAt(int), bool TryRemoveAt(int, out IRow)
+
+        /// <summary>
+        /// Remove element from the collection if it exists. Returns null if element was not found or could not be removed.
+        /// </summary>
+        /// <param name="element">Element to affect.</param>
+        /// <returns>Returns removed element.</returns>
+        public IRow RemoveElement(IRow element)
+        {
+            if (!this.HasElement(element)) { return null; }
+            this.List.Remove(element);
+            return element;
+        }
+
+        /// <summary>
+        /// Remove element from the collection if it exists. Returns null if element was not found or could not be removed via out parameter. Returns false if element doesn't exist.
+        /// </summary>
+        /// <param name="element">Element to affect.</param>
+        /// <param name="result">Element to return.</param>
+        /// <returns>Returns operation success.</returns>
+        public bool TryRemoveElement(IRow element, out IRow result)
+        {
+            result = this.RemoveElement(element);
+            return (result != null);
+        }
+
+        /// <summary>
+        /// Remove element from the collection if it exists, by index. Returns null if element was not found or could not be removed.
+        /// </summary>
+        /// <param name="index">Index of element reference.</param>
+        /// <returns>Returns removed element.</returns>
+        public IRow RemoveAt(int index)
+        {
+            if (!this.IsValidIndex(index)) { return null; }
+            IRow result = this.GetElement(index);
+            if (result != null) { this.List.RemoveAt(index); }
+            return result;
+        }
+
+        /// <summary>
+        /// Remove element from the collection if it exists, by index. Returns null if element was not found or could not be removed via out parameter. Returns false if element doesn't exist.
+        /// </summary>
+        /// <param name="index">Index of element reference.</param>
+        /// <param name="result">Element to return.</param>
+        /// <returns>Returns operation success.</returns>
+        public bool TryRemoveAt(int index, out IRow result)
+        {
+            result = this.RemoveAt(index);
+            return (result != null);
+        }
+
+        #endregion
+
+        #endregion
+
+        #region IResultSet
+
+        #region IResultSet SetRowsAffected(int), IResultSet SetQuery(string)
 
         /// <summary>
         /// Set the value of rows affected due to query execution.
@@ -939,59 +1650,35 @@ namespace ISTE.DAL.Database.Implementations
             return this;
         }
 
+        #endregion
+
+        #region IResultSet SetRow(int, IRow), bool TrySetRow(int, IRow, out IRow)
+
         /// <summary>
         /// Set row at a particular index.
         /// </summary>
-        /// <param name="rowIndex">Row index to access.</param>
+        /// <param name="index">Row index to access.</param>
         /// <param name="row">Row to set.</param>
         /// <returns>Returns reference to self.</returns>
-        public IResultSet SetRow(int rowIndex, IRow row)
+        public IResultSet SetRow(int index, IRow row)
         {
-            if(this.IsReadOnly || !this.HasIndex(rowIndex) || row == null) { return null; }
-            this.Rows[rowIndex] = row;
-            return this;
+            return (this.TrySetElement(index, row.Clone(), out IRow result)) ? this : null;
         }
 
         /// <summary>
         /// Set row at a particular index.
         /// </summary>
-        /// <param name="rowIndex">Row index to access.</param>
-        /// <param name="entries">Row entries to set.</param>
+        /// <param name="index">Row index to access.</param>
+        /// <param name="row">Row to set.</param>
         /// <returns>Returns reference to self.</returns>
-        public IResultSet SetRow(int rowIndex, List<IEntry> entries)
+        public bool TrySetRow(int index, IRow row)
         {
-            if (this.IsReadOnly || entries == null) { return null; }
-            return this.SetRow(rowIndex, new MySqlRow(entries));
+            return (this.SetRow(index, row) != null);
         }
 
-        /// <summary>
-        /// Set row at a particular index.
-        /// </summary>
-        /// <param name="rowIndex">Row index to access.</param>
-        /// <param name="data">Row entry data to set.</param>
-        /// <returns>Returns reference to self.</returns>
-        public IResultSet SetRow(int rowIndex, List<KeyValuePair<string, string>> data)
-        {
-            if (this.IsReadOnly || data == null) { return null; }
-            List<IEntry> entries = new List<IEntry>();
-            foreach (KeyValuePair<string, string> datum in data)
-            {
-                entries.Add(new MySqlEntry(datum));
-            }
-            return this.SetRow(rowIndex, entries);
-        }
+        #endregion
 
-        /// <summary>
-        /// Set row at a particular index.
-        /// </summary>
-        /// <param name="rowIndex">Row index to access.</param>
-        /// <param name="data">Row entry data to set.</param>
-        /// <returns>Returns reference to self.</returns>
-        public IResultSet SetRow(int rowIndex, IDictionary<string, string> data)
-        {
-            if(this.IsReadOnly || data == null) { return null; }
-            return this.SetRow(rowIndex, data.ToList<KeyValuePair<string, string>>());
-        }
+        #region IResultSet AddRow(IRow), bool TryAddRow(IRow row), bool AddRows(IList<IRow>), bool AddRows(params IRow[]), bool AddRows(IResultSet)
 
         /// <summary>
         /// Add a row to the result set.
@@ -1002,68 +1689,42 @@ namespace ISTE.DAL.Database.Implementations
         {
             // Add row if not null.
             if (this.IsReadOnly || row == null) { return null; }
-            this.Rows.Add(row);
-            return this;
+            return (this.TryAddElement(row, out IRow result)) ? this : null;
         }
 
         /// <summary>
-        /// Add a new row to the result set, containing the entries.
+        /// Add a row to the result set.
         /// </summary>
-        /// <param name="entries">Entries to place into a new row.</param>
-        /// <returns>Returns reference to self.</returns>
-        public IResultSet AddRow(List<IEntry> entries)
+        /// <param name="row">Row to add.</param>
+        /// <returns>Operation success.</returns>
+        public bool TryAddRow(IRow row)
         {
-            if (this.IsReadOnly || entries == null) { return null; }
-            return this.AddRow(new MySqlRow(entries));
+            return (this.AddRow(row) != null);
         }
-
+        
         /// <summary>
-        /// Add a new row to the result set, containing the entries.
+        /// Add a collection of rows to the result set.
         /// </summary>
-        /// <param name="entries">Entries to place into a new row.</param>
+        /// <param name="rows">Rows to add.</param>
         /// <returns>Returns reference to self.</returns>
-        public IResultSet AddRow(params IEntry[] entries)
+        public bool AddRows(IList<IRow> rows)
         {
-            if (this.IsReadOnly || entries == null) { return null; }
-            return this.AddRow(entries.ToList<IEntry>());
-        }
-
-        /// <summary>
-        /// Add a new row to the result set, containing the entries.
-        /// </summary>
-        /// <param name="data">Data to place into a new row.</param>
-        /// <returns>Returns reference to self.</returns>
-        public IResultSet AddRow(List<KeyValuePair<string, string>> data)
-        {
-            if (this.IsReadOnly || data == null) { return null; }
-            List<IEntry> entries = new List<IEntry>();
-            foreach (KeyValuePair<string, string> datum in data)
+            if (this.IsReadOnly || rows == null) { return false; }
+            foreach (IRow row in rows)
             {
-                entries.Add(new MySqlEntry(datum));
+                this.AddRow(row);
             }
-            return this.AddRow(entries);
+            return true;
         }
-
+        
         /// <summary>
-        /// Add a new row to the result set, containing the entries.
+        /// Add a collection of rows to the result set.
         /// </summary>
-        /// <param name="data">Data to place into a new row.</param>
+        /// <param name="rows">Rows to add.</param>
         /// <returns>Returns reference to self.</returns>
-        public IResultSet AddRow(params KeyValuePair<string, string>[] data)
+        public bool AddRows(params IRow[] rows)
         {
-            if (this.IsReadOnly || data == null) { return null; }
-            return this.AddRow(data.ToList<KeyValuePair<string, string>>());
-        }
-
-        /// <summary>
-        /// Add a new row to the result set, containing the entries.
-        /// </summary>
-        /// <param name="data">Data to place into a new row.</param>
-        /// <returns>Returns reference to self.</returns>
-        public IResultSet AddRow(IDictionary<string, string> data)
-        {
-            if (this.IsReadOnly || data == null) { return null; }
-            return this.AddRow(data.ToList<KeyValuePair<string, string>>());
+            return this.AddRows(rows.ToList<IRow>());
         }
 
         /// <summary>
@@ -1071,37 +1732,14 @@ namespace ISTE.DAL.Database.Implementations
         /// </summary>
         /// <param name="resultSet">Result set rows to concatenate.</param>
         /// <returns>Returns reference to self.</returns>
-        public IResultSet AddRows(IResultSet resultSet)
+        public bool AddRows(IResultSet resultSet)
         {
-            if (this.IsReadOnly || resultSet == null) { return null; }
             return this.AddRows(resultSet.Rows);
         }
 
-        /// <summary>
-        /// Add a collection of rows to the result set.
-        /// </summary>
-        /// <param name="rows">Rows to add.</param>
-        /// <returns>Returns reference to self.</returns>
-        public IResultSet AddRows(List<IRow> rows)
-        {
-            if (this.IsReadOnly || rows == null) { return null; }
-            foreach (IRow row in rows)
-            {
-                this.AddRow(row);
-            }
-            return this;
-        }
+        #endregion
 
-        /// <summary>
-        /// Add a collection of rows to the result set.
-        /// </summary>
-        /// <param name="rows">Rows to add.</param>
-        /// <returns>Returns reference to self.</returns>
-        public IResultSet AddRows(params IRow[] rows)
-        {
-            if (this.IsReadOnly || rows == null) { return null; }
-            return this.AddRows(rows.ToList<IRow>());
-        }
+        #region IRow RemoveRow(int), bool TryRemoveRow(int, out IRow), IRow RemoveRow(IRow), IRow TryRemoveRow(IRow, out IRow)
 
         /// <summary>
         /// Remove row based on row index.
@@ -1110,11 +1748,23 @@ namespace ISTE.DAL.Database.Implementations
         /// <returns>Returns removed row. Will throw exception if index out of bounds.</returns>
         public IRow RemoveRow(int rowIndex)
         {
-            if (this.IsReadOnly || !this.HasIndex(rowIndex)) { return null; }
+            if (this.TryRemoveAt(rowIndex, out IRow result))
+            {
+                return result;
+            }
+            return null;
+        }
 
-            IRow row = this.Rows[rowIndex];
-            this.Rows.RemoveAt(rowIndex);
-            return row;
+        /// <summary>
+        /// Remove row based on row index.
+        /// </summary>
+        /// <param name="rowIndex">Row index to access.</param>
+        /// <param name="results">Results to return.</param>
+        /// <returns>Operation success.</returns>
+        public bool TryRemoveRow(int rowIndex, out IRow results)
+        {
+            results = this.RemoveRow(rowIndex);
+            return (results != null);
         }
 
         /// <summary>
@@ -1125,155 +1775,61 @@ namespace ISTE.DAL.Database.Implementations
         public IRow RemoveRow(IRow row)
         {
             if (this.IsReadOnly) { return null; }
-            return this.RemoveRow(this.GetIndex(row));
-        }
-
-        //////
-        // ICollectionWrapper<IRow>
-
-        /// <summary>
-        /// Replace row at specified index, if index is in bounds.
-        /// </summary>
-        /// <param name="index">Index to replace row at.</param>
-        /// <param name="row">Row to be set.</param>
-        /// <returns>Return reference to row.</returns>
-        public IRow SetItem(int index, IRow row)
-        {
-            // If read only, do not do anything.
-            if (this.IsReadOnly) { return null; }
-
-            // Validate input.
-            if (!this.HasIndex(index))
+            if (this.TryRemoveElement(row, out IRow result))
             {
-                throw new IndexOutOfRangeException($"Cannot set row. Index [{index}] out of range ({this.Count} total element(s)).");
+                return result;
             }
-
-            // Overwrite row at current index.
-            this[index] = row;
-
-            // Return reference to row.
-            return row;
+            return null;
         }
 
         /// <summary>
-        /// Add a row to the result set collection.
-        /// </summary>
-        /// <param name="row">Row to add.</param>
-        /// <returns>Return reference to row.</returns>
-        public IRow AddItem(IRow row)
-        {
-            // If read only, do not do anything.
-            if (this.IsReadOnly) { return null; }
-
-            this.Rows.Add(row);
-            return row;
-        }
-
-        /// <summary>
-        /// Add a collection of rows to the result set.
-        /// </summary>
-        /// <param name="rows">Rows to add.</param>
-        /// <returns>Return reference to rows.</returns>
-        public List<IRow> AddItems(List<IRow> rows)
-        {
-            // If read only, do not do anything.
-            if (this.IsReadOnly) { return null; }
-
-            foreach (IRow row in rows)
-            {
-                this.AddItem(row);
-            }
-            return rows;
-        }
-
-        /// <summary>
-        /// Add a collection of rows to the result set.
-        /// </summary>
-        /// <param name="rows">Rows to add.</param>
-        /// <returns>Return reference to self.</returns>
-        public List<IRow> AddItems(params IRow[] rows)
-        {
-            // If read only, do not do anything.
-            if (this.IsReadOnly) { return null; }
-
-            return this.AddItems(rows.ToList<IRow>());
-        }
-
-        /// <summary>
-        /// Add row to the row list.
-        /// </summary>
-        /// <param name="item"></param>
-        public void Add(IRow item)
-        {
-            this.AddItem(item);
-        }
-
-        /// <summary>
-        /// Remove row from the collection.
-        /// </summary>
-        /// <param name="index">Index of the row to remove.</param>
-        /// <returns>Return removed row. Returns null if no row found.</returns>
-        public IRow RemoveItem(int index)
-        {
-            // If read only, do not do anything.
-            if (this.IsReadOnly) { return null; }
-
-            // Validate input.
-            if (!this.HasIndex(index))
-            {
-                throw new IndexOutOfRangeException($"Cannot remove row. Index [{index}] out of range ({this.Count} total element(s)).");
-            }
-
-            // Retrieve whatever row exists at that index.
-            IRow row = this[index];
-
-            // Remove the row.
-            this.Rows.RemoveAt(index);
-
-            // Return retrieved row.
-            return row;
-        }
-
-        /// <summary>
-        /// Remove row if it exists in the collection.
+        /// Remove row based on row index.
         /// </summary>
         /// <param name="row">Row to remove.</param>
-        /// <returns>Return removed row. Returns null if no row found.</returns>
-        public IRow RemoveItem(IRow row)
+        /// <param name="results">Results to return.</param>
+        /// <returns>Operation success.</returns>
+        public bool TryRemoveRow(IRow row, out IRow results)
         {
-            // If read only, do not do anything.
-            if (this.IsReadOnly) { return null; }
-
-            // Remove the input row by index. This row may be null if there is no index.
-            int index = this.GetIndex(row);
-            return (index == -1) ? null : this.RemoveItem(index);
+            results = this.RemoveRow(row);
+            return (results != null);
         }
 
-        /// <summary>
-        /// Remove row from the collection.
-        /// </summary>
-        /// <param name="index"></param>
-        /// <param name="row"></param>
-        /// <returns></returns>
-        public bool RemoveItem(int index, out IRow row)
-        {
-            // If read only, do not do anything.
-            row = null;
-            if (this.IsReadOnly) { return false; }
-
-            row = this.RemoveItem(index);
-            return (row != null);
-        }
+        #endregion
                 
+        #endregion
+
+        #region IOperationStateMachine - SetState(OperationStatus), bool SetState(int)
+
         /// <summary>
-        /// Remove item from collection. Will return false if row doesn't exist in the collection.
+        /// Set the current state to input value.
         /// </summary>
-        /// <param name="item">Item to remove.</param>
-        /// <returns>Returns true if operation is successful.</returns>
-        public bool Remove(IRow item)
+        /// <param name="other">Value to assign.</param>
+        public void SetState(OperationStatus other)
         {
-            return (this.RemoveItem(item) != null);
+            this.state = other;
         }
+
+        /// <summary>
+        /// Set the current state based on input integer code.
+        /// </summary>
+        /// <param name="code">Reference to value to assign.</param>
+        public bool SetState(int code)
+        {
+            if (code >= -1 && code < 2)
+            {
+                OperationStatus status = (OperationStatus)code;
+                this.SetState(status);
+                return true;
+            }
+            return false;
+        }
+
+        #endregion
+
+        #endregion
+
+        #endregion
+
     }
 
 }
