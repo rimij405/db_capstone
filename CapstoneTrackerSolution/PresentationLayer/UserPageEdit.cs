@@ -38,7 +38,7 @@ namespace PresentationLayer
         // Load any information that needs to be displayed in the form
         private void LoadValues()
         {
-            firstName.Text = fh.GetBusinessUserPageEdit().UPEGetFirstName();
+            /* firstName.Text = fh.GetBusinessUserPageEdit().UPEGetFirstName();
             lastName.Text = fh.GetBusinessUserPageEdit().UPEGetLastName();
             userRole.Text = fh.GetBusinessUserPageEdit().UPEGetUserRole();
             emailTypeList = fh.GetBusinessUserPageEdit().UPEGetEmailTypes();
@@ -52,7 +52,7 @@ namespace PresentationLayer
             for (int i = 0; i < phoneList.Count; i++)
             {
                 phones.Items.Add(phoneList[i]);
-            }
+            }*/
         }
 
         // Closes entire application when the x button is pressed
@@ -113,25 +113,25 @@ namespace PresentationLayer
                 phoneList.Add(phones.Items[i].ToString());
             }
 
-            fh.GetBusinessUserPageEdit().UPESaveChanges(emailList, phoneList, emailTypeList, phoneTypeList);
+            /*fh.GetBusinessUserPageEdit().UPESaveChanges(emailList, phoneList, emailTypeList, phoneTypeList);
 
             if (fh.GetUserPage() == null) // in case page has already been created
             {
                 fh.CreateUserPage();
             }
             fh.GetUserPage().Show();
-            fh.GetUserPageEdit().Hide();
+            fh.GetUserPageEdit().Hide();*/
         }
 
         // Return to user page if user doesn't want to save changes
         private void cancel_Click(object sender, EventArgs e)
         {
-            if (fh.GetUserPage() == null) // in case page has already been created
+            /*if (fh.GetUserPage() == null) // in case page has already been created
             {
                 fh.CreateUserPage();
             }
             fh.GetUserPage().Show();
-            fh.GetUserPageEdit().Hide();
+            fh.GetUserPageEdit().Hide();*/
         }
 
         // Add email

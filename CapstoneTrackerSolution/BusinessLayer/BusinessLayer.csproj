@@ -51,11 +51,29 @@
     <Compile Include="BusinessUserList.cs" />
     <Compile Include="BusinessUserPage.cs" />
     <Compile Include="BusinessUserPageEdit.cs" />
+    <Compile Include="Implementations\BusinessRole.cs" />
+    <Compile Include="Implementations\BusinessUser.cs" />
+    <Compile Include="Implementations\RoleType.cs" />
+    <Compile Include="Interfaces\IBusinessCodes.cs" />
+    <Compile Include="Interfaces\IBusinessObject.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\DataAccessLayer\DataAccessLayer.csproj">
+      <Project>{dd66ad0b-74bf-4b26-862a-412afaef6608}</Project>
+      <Name>DataAccessLayer</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Services\Services.csproj">
+      <Project>{db4ff430-f936-4746-a50b-41d18815a2e0}</Project>
+      <Name>Services</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Exceptions\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

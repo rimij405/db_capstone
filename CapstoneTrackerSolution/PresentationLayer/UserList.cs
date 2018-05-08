@@ -33,11 +33,12 @@ namespace PresentationLayer
         // Load any information that needs to be displayed in the form
         private void LoadValues()
         {
+            /*
             List<string> users = fh.GetBusinessUserList().UserListGetUsers(0, 0);
             for(int i = 0; i < users.Count; i++)
             {
                 usersList.Items.Add(users[i]);
-            }
+            }*/
         }
 
         // Closes entire application when the x button is pressed
@@ -49,12 +50,14 @@ namespace PresentationLayer
         // Navigate back to user page on click
         private void userPageReturn_Click(object sender, EventArgs e)
         {
+            /*
             if (fh.GetUserPage() == null) // in case page has already been created
             {
                 fh.CreateUserPage();
             }
             fh.GetUserPage().Show();
             fh.GetUserList().Hide();
+            */
         }
 
         // Deselect user when mouse clicked elsewhere in the form
@@ -66,6 +69,7 @@ namespace PresentationLayer
         // Update user order when value is changed
         private void OrderValues_IndexChanged(object sender, EventArgs e)
         {
+            /*
             List<string> users = fh.GetBusinessUserList().UserListGetUsers(
                 orderValues.SelectedIndex, 
                 selectValues.SelectedIndex
@@ -75,11 +79,13 @@ namespace PresentationLayer
                 usersList.Items.Clear();
                 usersList.Items.Add(users[i]);
             }
+            */
         }
 
         // Update user selection when value is changed
         private void SelectValues_IndexChanged(object sender, EventArgs e)
         {
+            /*
             List<string> users = fh.GetBusinessUserList().UserListGetUsers(
                 orderValues.SelectedIndex,
                 selectValues.SelectedIndex
@@ -89,6 +95,7 @@ namespace PresentationLayer
                 usersList.Items.Clear();
                 usersList.Items.Add(users[i]);
             }
+            */
         }
 
         // Navigate to selected user's user page on double click
@@ -96,6 +103,7 @@ namespace PresentationLayer
         {
             if (usersList.SelectedItem != null)
             {
+                /*
                 fh.SetSelectedUser(usersList.SelectedValue.ToString());
                 if (fh.GetUserPage() == null) // in case page has already been created
                 {
@@ -103,6 +111,7 @@ namespace PresentationLayer
                 }
                 fh.GetUserPage().Show();
                 fh.GetUserList().Hide();
+                */
             }
         }
 
@@ -111,6 +120,7 @@ namespace PresentationLayer
         {
             if (firstName.Text != "" && lastName.Text != "") // if something is entered
             {
+                /*
                 fh.GetBusinessUserList().UserListAddUser(firstName.Text, lastName.Text, roles.SelectedText);
                 List<string> users = fh.GetBusinessUserList().UserListGetUsers(
                     orderValues.SelectedIndex, 
@@ -127,7 +137,7 @@ namespace PresentationLayer
                 roles.SelectedIndex = 0;
                 error.Text = "Successfully added user";
                 error.BackColor = Color.DarkSeaGreen;
-                error.Visible = true;
+                error.Visible = true;*/
             }
             else // error
             {

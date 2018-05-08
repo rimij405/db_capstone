@@ -33,6 +33,14 @@ namespace ISTE.DAL.Models.Implementations
         //////////////////////
         // Static field(s).
 
+        public const string SELECT = "SELECT userID, username, password, firstName, lastName FROM capstonedb.users WHERE userID=@userID;";
+
+        public const string SELECT_ROLECODE = "SELECT roleCode FROM capstonedb.userroles INNER JOIN capstonedb.users USING(userID) WHERE userID=@userID;";
+
+        public const string INSERT = "INSERT INTO capstonedb.users(username, password, firstName, lastName) VALUES(@username, SHA2(@password, 0), @firstName, @lastName);";
+
+        public const string UPDATE = "UPDATE capstonedb.users SET firstName=@firstName, lastName=@lastName WHERE userID=@userID;";
+
         //////////////////////
         // Static method(s).
 
@@ -280,6 +288,45 @@ namespace ISTE.DAL.Models.Implementations
         // Service method(s).
 
         /// <summary>
+        /// Check if the user exists in the database.
+        /// </summary>
+        /// <returns>Returns authentication status.</returns>
+        public bool Authenticate(MySqlDatabase database, out IResultSet results)
+        {
+            // Set up the query.
+            string SQLQuery = "SELECT username FROM capstonedb.users WHERE username=@username;";
+            MySqlParameters SQLParameters = new Dictionary<string, string>() {
+                {"@username", this.Username }
+            };
+
+            // Check if username exists.
+            if (!database.IsConnected) { database.Connect(); }
+            results = database.GetData(SQLQuery, SQLParameters.Dictionary) as MySqlResultSet;
+            if (results.IsEmpty) { return false; }
+            return true;
+        }
+
+        /// <summary>
+        /// Check if the user password exists in the database.
+        /// </summary>
+        /// <returns>Returns authentication status.</returns>
+        public bool Authorize(MySqlDatabase database, out IResultSet results)
+        {
+            // Set up the query.
+            string SQLQuery = "SELECT userID, username FROM capstonedb.users WHERE username=@username AND password=SHA2(@password, 0);";
+            MySqlParameters SQLParameters = new Dictionary<string, string>() {
+                {"@username", this.Username },
+                {"@password", this.Password }
+            };
+
+            // Check if username exists.
+            if (!database.IsConnected) { database.Connect(); }
+            results = database.GetData(SQLQuery, SQLParameters.Dictionary) as MySqlResultSet;
+            if (results.IsEmpty) { return false; }
+            return true;
+        }
+
+        /// <summary>
         /// Return true if user has role and it's current.
         /// </summary>
         /// <param name="roleCode">Role to check.</param>
@@ -394,46 +441,96 @@ namespace ISTE.DAL.Models.Implementations
             return this;
         }
 
-        public IResultSet Fetch(IReadable database, out DatabaseError errorCode)
-        {
-            throw new NotImplementedException();
-        }
+        /// <summary>
+        /// Fetch user data.
+        /// </summary>
+        /// <param name="database"></param>
+        /// <param name="errorCode"></param>
+        /// <returns></returns>
+        public override IResultSet Fetch(IReadable database, out DatabaseError errorCode)
+        { 
+            // Results to return.
+            MySqlResultSet results = new MySqlResultSet();
+            results.Error(); // Set to error state by default.
+            errorCode = DatabaseError.NONE;
 
-        public bool TryFetch(IReadable database, out IResultSet results, out DatabaseError errorCode)
-        {
-            throw new NotImplementedException();
-        }
+            // Check primary keys
+            foreach (IPrimaryKey key in this.PrimaryKeys)
+            {
+                if (key.PrimaryKey)
+                {
+                    if (key.IsNull || String.IsNullOrWhiteSpace(key.Value))
+                    {
+                        errorCode = DatabaseError.MISSING_DATA;
+                        throw new DatabaseOperationException(errorCode, $"Cannot fetch data - unique identifier {key.Value} is missing.");
+                    }
+                }
+            }
 
+            // Determine the query.
+            // Defer to code when possible, but, if null, attempt selection by name.
+            string query = SELECT;
+
+            // Create the parameters.
+            MySqlParameters parameters = GetParameters(query);
+
+            // If there is no database we cannot fetch.
+            if (database == null || !(database is MySqlDatabase))
+            {
+                errorCode = DatabaseError.MISSING_DATA;
+                throw new DatabaseOperationException(errorCode, "Cannot fetch data from non-MySQL database.");
+            }
+
+            // Using the database, fetch the data.
+            if (database is MySqlDatabase mysqldb)
+            {
+                // Cast IResultSet to new form.
+                results = mysqldb.GetData(query, parameters) as MySqlResultSet;
+
+                if (results == null || results.IsEmpty) { results.Fail(); }
+                else
+                {
+                    this.SetResults(results);
+                    results.Pass();
+                }
+            }
+
+            return results;
+        }
+        
+        /// <summary>
+        /// Insert a new user.
+        /// </summary>
+        /// <param name="database"></param>
+        /// <param name="errorCode"></param>
+        /// <returns></returns>
         public IResultSet Insert(IWritable database, out DatabaseError errorCode)
         {
             throw new NotImplementedException();
         }
-
-        public bool TryInsert(IWritable database, out IResultSet results, out DatabaseError errorCode)
-        {
-            throw new NotImplementedException();
-        }
-
+        
+        /// <summary>
+        /// Delete user.
+        /// </summary>
+        /// <param name="database"></param>
+        /// <param name="errorCode"></param>
+        /// <returns></returns>
         public IResultSet Delete(IWritable database, out DatabaseError errorCode)
         {
             throw new NotImplementedException();
         }
-
-        public bool TryDelete(IWritable database, out IResultSet results, out DatabaseError errorCode)
-        {
-            throw new NotImplementedException();
-        }
-
+        
+        /// <summary>
+        /// Update existing user.
+        /// </summary>
+        /// <param name="database"></param>
+        /// <param name="errorCode"></param>
+        /// <returns></returns>
         public IResultSet Update(IWritable database, out DatabaseError errorCode)
         {
             throw new NotImplementedException();
         }
-
-        public bool TryUpdate(IWritable database, out IResultSet results, out DatabaseError errorCode)
-        {
-            throw new NotImplementedException();
-        }
-        
+                
         /// <summary>
         /// Adds a property to the collection.
         /// </summary>
@@ -572,17 +669,84 @@ namespace ISTE.DAL.Models.Implementations
 
         protected override string GetQuery()
         {
-            throw new NotImplementedException();
+            return "";
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="query"></param>
+        /// <returns></returns>
         protected override MySqlParameters GetParameters(string query)
         {
-            throw new NotImplementedException();
+            MySqlParameters parameters = new MySqlParameters();
+            switch (query)
+            {
+                case SELECT:
+                case SELECT_ROLECODE:
+                    parameters.AddWithValue("@userID", this.UserID.SQLValue);
+                    break;
+            }
+            return parameters;
         }
-
+        
         public override int CompareModels(IDatabaseObjectModel left, IDatabaseObjectModel right)
         {
             throw new NotImplementedException();
+        }
+
+        public bool TryInsert(IWritable database, out IResultSet results, out DatabaseError errorCode)
+        {
+            throw new NotImplementedException();
+        }
+
+        public bool TryUpdate(IWritable database, out IResultSet results, out DatabaseError errorCode)
+        {
+            throw new NotImplementedException();
+        }
+
+        public bool TryDelete(IWritable database, out IResultSet results, out DatabaseError errorCode)
+        {
+            throw new NotImplementedException();
+        }
+
+        public IResultSet FetchRoleCode(MySqlDatabase database, out DatabaseError errorCode)
+        {
+            // Results to return.
+            MySqlResultSet results = new MySqlResultSet();
+            results.Error(); // Set to error state by default.
+            errorCode = DatabaseError.NONE;
+            
+            // Determine the query.
+            // Defer to code when possible, but, if null, attempt selection by name.
+            string query = SELECT_ROLECODE;
+
+            // Create the parameters.
+            MySqlParameters parameters = GetParameters(query);
+
+            // If there is no database we cannot fetch.
+            if (database == null || !(database is MySqlDatabase))
+            {
+                errorCode = DatabaseError.MISSING_DATA;
+                throw new DatabaseOperationException(errorCode, "Cannot fetch data from non-MySQL database.");
+            }
+
+            // Using the database, fetch the data.
+            if (database is MySqlDatabase mysqldb)
+            {
+                // Cast IResultSet to new form.
+                results = mysqldb.GetData(query, parameters) as MySqlResultSet;
+
+                if (results == null || results.IsEmpty) { results.Fail(); }
+                else
+                {
+                    this.SetResults(results);
+                    results.Pass();
+                }
+            }
+
+            return results;
+
         }
 
         /*

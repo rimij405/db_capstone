@@ -4,36 +4,26 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace BusinessLayer
+namespace ISTE.BAL.Implementations
 {
     // Business layer class that handles taking data from the database and converting it to a usable format for the
     // presentation layer and vice versa for the user page form
     // Author: Jake Toporoff
     public class BusinessUserPage
     {
-        string fName;
-        string lName;
-        string role;
-        List<string> emails;
-        List<string> emailTypes;
-        List<string> phones;
-        List<string> phoneTypes;
 
-        // UserPage Get Functions
-        public string UPGetFirstName()
+        BusinessUser currentUser;
+
+        public BusinessUserPage(BusinessUser user)
         {
-            return "Firstname";
+            currentUser = user;
         }
 
-        public string UPGetLastName()
+        public BusinessUser User
         {
-            return "Lastname";
+            get { return currentUser; }
         }
-
-        public string UPGetUserRole()
-        {
-            return "Role";
-        }
+        
 
         public List<string> UPGetEmails() // Type appended to email
         {

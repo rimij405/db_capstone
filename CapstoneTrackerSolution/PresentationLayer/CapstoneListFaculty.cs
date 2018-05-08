@@ -30,6 +30,7 @@ namespace PresentationLayer
         // Load any information that needs to be displayed in the form
         private void LoadValues()
         {
+            /*
             List<string> pendingCapstones = fh.GetBusinessCapstoneListFaculty().CapstoneLFGetPendingCapstones();
             List<string> currentCapstones = fh.GetBusinessCapstoneListFaculty().CapstoneLFGetCurrentCapstones();
             List<string> grades = fh.GetBusinessCapstoneListFaculty().CapstoneLFGetCurrentGrades();
@@ -44,6 +45,7 @@ namespace PresentationLayer
                 capstoneCurrentList.Items.Add(currentCapstones[i]);
                 capstoneGradeList.Items.Add(grades[i]);
             }
+            */
         }
 
         // Navigate to selected capstone from current capstones list on double click
@@ -51,6 +53,7 @@ namespace PresentationLayer
         {
             if (capstoneCurrentList.SelectedItem != null)
             {
+                /*
                 fh.SetSelectedCapstone(capstoneCurrentList.SelectedValue.ToString(), 0);
                 if (fh.GetCapstonePageView() == null) // in case page has already been created
                 {
@@ -58,6 +61,7 @@ namespace PresentationLayer
                 }
                 fh.GetCapstonePageView().Show();
                 fh.GetCapstoneListFaculty().Hide();
+                */
             }
         }
 
@@ -66,6 +70,7 @@ namespace PresentationLayer
         {
             if (capstonePendingList.SelectedItem != null)
             {
+                /*
                 fh.SetSelectedCapstone(capstonePendingList.SelectedValue.ToString(), 0);
                 if (fh.GetCapstonePageView() == null) // in case page has already been created
                 {
@@ -73,6 +78,7 @@ namespace PresentationLayer
                 }
                 fh.GetCapstonePageView().Show();
                 fh.GetCapstoneListFaculty().Hide();
+                */
             }
         }
 
@@ -85,12 +91,14 @@ namespace PresentationLayer
         // Navigate back to user page on click
         private void userPageReturn_Click(object sender, EventArgs e)
         {
+            /*
             if (fh.GetUserPage() == null) // in case page has already been created
             {
                 fh.CreateUserPage();
             }
             fh.GetUserPage().Show();
             fh.GetCapstoneListFaculty().Hide();
+            */
         }
 
         // Accept capstone invitation and move selection from pending list to current list
@@ -98,7 +106,7 @@ namespace PresentationLayer
         {
             if (capstonePendingList.SelectedItem != null)
             {
-                fh.GetBusinessCapstoneListFaculty().CapstoneLFAcceptInvitation(capstonePendingList.SelectedItem.ToString());
+                // fh.GetBusinessCapstoneListFaculty().CapstoneLFAcceptInvitation(capstonePendingList.SelectedItem.ToString());
 
                 capstoneCurrentList.Items.Add(capstonePendingList.SelectedItem);
                 capstonePendingList.Items.Remove(capstonePendingList.SelectedItem);
@@ -119,7 +127,7 @@ namespace PresentationLayer
         {
             if (capstonePendingList.SelectedItem != null)
             {
-                fh.GetBusinessCapstoneListFaculty().CapstoneLFRejectInvitation(capstonePendingList.SelectedItem.ToString());
+                // fh.GetBusinessCapstoneListFaculty().CapstoneLFRejectInvitation(capstonePendingList.SelectedItem.ToString());
 
                 capstonePendingList.Items.Remove(capstonePendingList.SelectedItem);
                 error.Text = "Successfully declined capstone committee request";

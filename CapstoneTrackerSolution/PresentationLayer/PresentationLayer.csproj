@@ -165,6 +165,14 @@
       <Project>{0DE6D35F-38AA-4905-A479-02CE3DCE01AD}</Project>
       <Name>BusinessLayer</Name>
     </ProjectReference>
+    <ProjectReference Include="..\DataAccessLayer\DataAccessLayer.csproj">
+      <Project>{DD66AD0B-74BF-4B26-862A-412AFAEF6608}</Project>
+      <Name>DataAccessLayer</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Services\Services.csproj">
+      <Project>{DB4FF430-F936-4746-A50B-41D18815A2E0}</Project>
+      <Name>Services</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

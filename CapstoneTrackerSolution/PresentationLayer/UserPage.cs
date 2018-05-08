@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ISTE.BAL.Implementations;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -29,15 +30,16 @@ namespace PresentationLayer
         // Load any information that needs to be displayed in the form
         private void LoadValues()
         {
-            // Determine which parts of the form are visible depending on user type
-            string userRoleStr = fh.GetBusinessUserPage().UPGetUserRole();
-            switch (userRoleStr)
+            // Get the user role.
+            BusinessRole currentUserRole = fh.Settings.CurrentUser.UserRole;
+
+            switch (currentUserRole.Role)
             {
-                case "Staff":
+                case Roles.STAFF:
                     isStaff = true;
                     viewUsers.Visible = true;
                     break;
-                case "Faculty":
+                case Roles.FACULTY:
                     isFaculty = true;
                     viewUsers.Visible = true;
                     break;
@@ -46,19 +48,11 @@ namespace PresentationLayer
                     break;
             }
 
-            firstName.Text = fh.GetBusinessUserPage().UPGetFirstName();
-            lastName.Text = fh.GetBusinessUserPage().UPGetLastName();
-            userRole.Text = userRoleStr;
-            List<string> emailList = fh.GetBusinessUserPage().UPGetEmails();
-            for(int i = 0; i < emailList.Count; i++)
-            {
-                emails.Text += emailList[i] + Environment.NewLine;
-            }
-            List<string> phoneList = fh.GetBusinessUserPage().UPGetPhones();
-            for(int i = 0; i < phoneList.Count; i++)
-            {
-                phones.Text += phoneList[i] + Environment.NewLine;
-            }
+            // Get details from the current user.
+            firstName.Text = fh.Settings.CurrentUser.FirstName;
+            lastName.Text = fh.Settings.CurrentUser.LastName;
+            userRole.Text = currentUserRole.Name;
+            
         }
 
         // Closes entire application when the x button is pressed
@@ -70,6 +64,7 @@ namespace PresentationLayer
         // Navigates to capstone view page for students, capstone list for staff, and associated capstones list for faculty
         private void viewCapstones_Click(object sender, EventArgs e)
         {
+            /*
             if(firstName.Text != fh.GetBusinessUserPage().UPGetFirstName() && lastName.Text != fh.GetBusinessUserPage().UPGetLastName())
             {
                 fh.SetSelectedCapstone(fh.GetUsername(), 1);
@@ -102,28 +97,33 @@ namespace PresentationLayer
                 fh.GetCapstonePageView().Show();
                 fh.GetUserPage().Hide();
             }
+            */
         }
 
         // Navigates to user list form (only visible if a staff member)
         private void viewUsers_Click(object sender, EventArgs e)
         {
+            /*
             if(fh.GetUserList() == null) // in case page has already been created
             {
                 fh.CreateUserList();
             }
             fh.GetUserList().Show();
             fh.GetUserPage().Hide();
+            */
         }
 
         // Navigates to form used to edit a user profile
         private void editProfile_Click(object sender, EventArgs e)
         {
+            /*
             if(fh.GetUserPageEdit() == null) // in case page has already been created
             {
                 fh.CreateUserPageEdit();
             }
             fh.GetUserPageEdit().Show();
             fh.GetUserPage().Hide();
+            */
         }
     }
 }

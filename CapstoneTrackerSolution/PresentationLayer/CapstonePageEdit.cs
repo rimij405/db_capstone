@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ISTE.BAL.Implementations;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -32,9 +33,9 @@ namespace PresentationLayer
         // Load any information that needs to be displayed in the form
         private void LoadValues()
         {
-            string role = fh.GetRole();
-            if (role == "staff") isStaff = true;
-            if (role == "faculty") isFaculty = true;
+           // Roles role = fh.GetRole();
+            //if (role == Roles.STAFF) isStaff = true;
+            //if (role == Roles.FACULTY) isFaculty = true;
 
 
             // load page differently based on user type
@@ -59,8 +60,8 @@ namespace PresentationLayer
                     statuses.Visible = true;
                 }
             }
-
-            titleValue.Text = fh.GetBusinessCapstonePageEdit().CapstonePEGetTitle();
+            /*
+            titleValue.Text = fh.Settings.CapstonePageEdit.CapstonePEGetTitle();
             abstractValue.Text = fh.GetBusinessCapstonePageEdit().CapstonePEGetAbstract();
             List<string> faculty = fh.GetBusinessCapstonePageEdit().CapstonePEGetFaculty();
             for (int i = 0; i < faculty.Count; i++)
@@ -70,7 +71,7 @@ namespace PresentationLayer
             defenseDateValue.Value = fh.GetBusinessCapstonePageEdit().CapstonePEGetDefenseDate();
             statuses.SelectedText = fh.GetBusinessCapstonePageEdit().CapstonePEGetStatus();
             gradeValue.Text = fh.GetBusinessCapstonePageEdit().CapstonePEGetGrade();
-            plagarismScoreValue.Text = fh.GetBusinessCapstonePageEdit().CapstonePEGetPlagarismScore();
+            plagarismScoreValue.Text = fh.GetBusinessCapstonePageEdit().CapstonePEGetPlagarismScore();*/
         }
 
         // Place helpful text for user if they aren't currently entering a new faculty member
@@ -120,6 +121,8 @@ namespace PresentationLayer
             {
                 faculty.Add(facultyValue.Items[i].ToString());
             }
+
+            /*
             fh.GetBusinessCapstonePageEdit().CapstonePESaveChanges(
                 titleValue.Text,
                 abstractValue.Text,
@@ -135,18 +138,19 @@ namespace PresentationLayer
                 fh.CreateCapstonePageView();
             }
             fh.GetCapstonePageView().Show();
-            fh.GetCapstonePageEdit().Hide();
+            fh.GetCapstonePageEdit().Hide();*/
         }
 
         // Discard any user made changes and navigate back to the capstone's viewing page
         private void cancel_Click(object sender, EventArgs e)
         {
+            /*
             if (fh.GetCapstonePageView() == null) // in case page has already been created
             {
                 fh.CreateCapstonePageView();
             }
             fh.GetCapstonePageView().Show();
-            fh.GetCapstonePageEdit().Hide();
+            fh.GetCapstonePageEdit().Hide();*/
         }
 
         // Remove faculty member from capstone

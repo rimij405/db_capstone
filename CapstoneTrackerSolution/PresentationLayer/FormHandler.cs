@@ -1,4 +1,5 @@
 ﻿using BusinessLayer;
+using ISTE.DAL.Database.Implementations;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -6,24 +7,37 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
+using ISTE.BAL.Implementations;
+using Services;
+
 namespace PresentationLayer
 {
     /*Form handler singleton to manage form navigation, information access and updating, and temporary information management 
      * (ex: current user logged in and their role)
-     * Author: Jake Toporoff
+     * Author: Jake Toporoff, Ian Effendi
      */
     public class FormHandler
     {
-        private static FormHandler instance;
+        //////////////////////
+        // Static Member(s).
+        //////////////////////
 
-        private FormHandler() { }
+        //////////////////////
+        // Static field(s).
+
+        private static FormHandler instance;
+        private static MySqlDatabase database;
+        private static Logger log;
+
+        //////////////////////
+        // Static method(s).
 
         // Classes can use this to instantiate the form handler and access methods
         public static FormHandler Instance
         {
             get
             {
-                if(instance == null)
+                if (instance == null)
                 {
                     instance = new FormHandler();
                 }
@@ -31,50 +45,71 @@ namespace PresentationLayer
             }
         }
 
+        //////////////////////
+        // Conversion operators.
+
+        //////////////////////
+        // Field(s).
+        //////////////////////
+
         // Global form variables that need to be tracked across pages
-        string username;
-        string selectedUser;
-        string selectedCapstone;
-        string userRole;
+        FormHandlerProperties settings;
 
-        // Get user role to determine how certain forms will load
-        public string GetRole()
-        {
-            return userRole;
+        // Business classes.
+        BusinessLogin B_Login;
+                                
+        //////////////////////
+        // Properties.
+        //////////////////////
+
+        public FormHandlerProperties Settings { get { return (this.settings ?? (this.settings = new FormHandlerProperties())); } }
+        
+        public MySqlDatabase Database { get { return this.Settings.Database; } }
+
+        public BusinessLogin BusinessLogin { get { return (B_Login ?? (B_Login = new BusinessLogin(this.Database, this.Settings.CurrentUser))); } }
+        
+        //////////////////////
+        // Indexer(s).
+
+        //////////////////////
+        // Constructor(s).
+        //////////////////////
+
+        private FormHandler() {
+            settings = new FormHandlerProperties();
         }
 
-        // Get username to be used on userpage
-        public string GetUsername()
-        {
-            return username;
-        }
+        //////////////////////
+        // Method(s).
+        //////////////////////
 
-        // Set global username variable (and user role) once user has logged in
-        public void SetUsername(string user)
-        {
-            username = user;
-            //TODO - Set userRole
-        }
+        //////////////////////
+        // Service method(s).
+                
+        //////////////////////
+        // Helper method(s).
 
-        // Set global selected username variable in order to load correct user page when a user is selected
-        public void SetSelectedUser(string user)
-        {
-            selectedUser = user;
-        }
+        //////////////////////
+        // Accessor method(s).
+   
+        //////////////////////
+        // Mutator method(s).
+                
+    }
 
-        // Set global selected capstone variable in order to load correct capstone when one is selected
-        // input type determines whether capstone is being set with a capstone name (0) or a username (1)
-        public void SetSelectedCapstone(string capstone, int inputType)
-        {
-            if (inputType == 0)
-            {
-                selectedCapstone = capstone;
-            }
-            else
-            {
-                //selectedCapstone = capstone name retrieved from username
-            }
-        }
+    /// <summary>
+    /// Collection of values to store.
+    /// Author: Ian Effendi
+    /// </summary>
+    public class FormHandlerProperties
+    {
+        //////////////////////
+        // Field(s).
+        //////////////////////
+
+        private MySqlDatabase db;
+        private BusinessUser user;
+        private Logger log;
 
         // All forms start out as null since they may not be used every session
         Login login = null;
@@ -87,49 +122,106 @@ namespace PresentationLayer
         UserList userList = null;
         StatusHistory statusHistory = null;
 
-        // Constructors to initialize forms on use
-        public void CreateLogin()  { login = new Login(); }
-        public void CreateUserPage() { userPage = new UserPage(); }
-        public void CreateUserPageEdit() { userPageEdit = new UserPageEdit(); }
-        public void CreateCapstonePageView() { capstonePageView = new CapstonePageView(); }
-        public void CreateCapstonePageEdit() { capstonePageEdit = new CapstonePageEdit(); }
-        public void CreateCapstoneListStaff() { capstoneListStaff = new CapstoneListStaff(); }
-        public void CreateCapstoneListFaculty() { capstoneListFaculty = new CapstoneListFaculty(); }
-        public void CreateUserList() { userList = new UserList(); }
-        public void CreateStatusHistory() { statusHistory = new StatusHistory(); }
+        //////////////////////
+        // Properties.
+        //////////////////////
 
-        // Form Accessors
-        public Login GetLogin() { return login; }
-        public UserPage GetUserPage() { return userPage; }
-        public UserPageEdit GetUserPageEdit() { return userPageEdit; }
-        public CapstonePageEdit GetCapstonePageEdit() { return capstonePageEdit; }
-        public CapstonePageView GetCapstonePageView() { return capstonePageView; }
-        public CapstoneListStaff GetCapstoneListStaff() { return capstoneListStaff; }
-        public CapstoneListFaculty GetCapstoneListFaculty() { return capstoneListFaculty; }
-        public UserList GetUserList() { return userList; }
-        public StatusHistory GetStatusHistory() { return statusHistory; }
+        public MySqlDatabase Database
+        {
+            get { return db ?? (db = new MySqlDatabase(new MySqlConfiguration())); }
+        }
+
+        public BusinessUser CurrentUser
+        {
+            get { return this.user; }
+            set { this.user = value; }
+        }
+
+        public Logger Log
+        {
+            get { return (log ?? (log = new Logger("", "presentation", "log"))); }
+        }
+
+        public Login Login {
+            get { return (login ?? (login = new Login())); }
+        }
+
+        public UserPage UserPage
+        {
+            get { return (userPage ?? (userPage = new UserPage())); }
+        }
+
+        public UserPageEdit UserPageEdit {
+            get { return (userPageEdit ?? (userPageEdit = new UserPageEdit())); }
+        }
+
+        public CapstonePageView CapstonePageView
+        {
+            get { return (capstonePageView ?? (capstonePageView = new CapstonePageView())); }
+        }
+
+        public CapstonePageEdit CapstonePageEdit
+        {
+            get { return (capstonePageEdit ?? (capstonePageEdit = new CapstonePageEdit())); }
+        }
+
+        public CapstoneListStaff CapstoneListStaff
+        {
+            get { return (capstoneListStaff ?? (capstoneListStaff = new CapstoneListStaff())); }
+        }
+
+        public CapstoneListFaculty CapstoneListFaculty
+        {
+            get { return (capstoneListFaculty ?? (capstoneListFaculty = new CapstoneListFaculty())); }
+        }
+
+        public UserList UserList
+        {
+            get { return (userList ?? (userList = new UserList())); }
+        }
+
+        public StatusHistory StatusHistory
+        {
+            get { return (statusHistory ?? (statusHistory = new StatusHistory())); }
+        }
+
+        //////////////////////
+        // Indexer(s).
+
+        //////////////////////
+        // Constructor(s).
+        //////////////////////
+
+        public FormHandlerProperties()
+        {
+
+        }
+
+        //////////////////////
+        // Method(s).
+        //////////////////////
+
+        //////////////////////
+        // Service method(s).
+
+        //////////////////////
+        // Helper method(s).
+
+        //////////////////////
+        // Accessor method(s).
+
+        //////////////////////
+        // Mutator method(s).
+
+        public void CreateUser(string username, string password)
+        {
+            this.user = new BusinessUser(this.Database, username, password);
+        }
 
 
-        // Business layer classes
-        BusinessLogin b_L = new BusinessLogin();
-        BusinessUserPage b_UP = new BusinessUserPage();
-        BusinessUserPageEdit b_UPE = new BusinessUserPageEdit();
-        BusinessCapstonePageView b_CPV = new BusinessCapstonePageView();
-        BusinessCapstonePageEdit b_CPE = new BusinessCapstonePageEdit();
-        BusinessCapstoneListStaff b_CLS = new BusinessCapstoneListStaff();
-        BusinessCapstoneListFaculty b_CLF = new BusinessCapstoneListFaculty();
-        BusinessUserList b_UL = new BusinessUserList();
-        BusinessStatusHistory b_SH = new BusinessStatusHistory();
-
-        // Business layer accessors
-        public BusinessLogin GetBusinessLogin() { return b_L; }
-        public BusinessUserPage GetBusinessUserPage() { return b_UP; }
-        public BusinessUserPageEdit GetBusinessUserPageEdit() { return b_UPE; }
-        public BusinessCapstonePageView GetBusinessCapstonePageView() { return b_CPV; }
-        public BusinessCapstonePageEdit GetBusinessCapstonePageEdit() { return b_CPE; }
-        public BusinessCapstoneListStaff GetBusinessCapstoneListStaff() { return b_CLS; }
-        public BusinessCapstoneListFaculty GetBusinessCapstoneListFaculty() { return b_CLF; }
-        public BusinessUserList GetBusinessUserList() { return b_UL; }
-        public BusinessStatusHistory GetBusinessStatusHistory() { return b_SH; }
     }
+
+
+
+
 }
